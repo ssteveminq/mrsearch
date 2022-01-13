@@ -11,6 +11,7 @@ Panels:
         - /RobotModel2
         - /Axes1
         - /Axes2
+        - /RobotModel3
         - /Map5
         - /PoseArray1
         - /Path1
@@ -233,6 +234,66 @@ Visualization Manager:
       Radius: 0.10000000149011612
       Reference Frame: <Fixed Frame>
       Value: false
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        back_left_caster_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        back_right_caster_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        camera_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        camera_rgb_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        velodyne:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        velodyne_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: RobotModel
+      Robot Description: spot3/robot_description
+      TF Prefix: spot3
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
     - Alpha: 0.699999988079071
       Class: rviz/Map
       Color Scheme: map
@@ -274,7 +335,7 @@ Visualization Manager:
       Marker Topic: /clusters
       Name: MarkerArray
       Namespaces:
-        {}
+        unknowns: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -374,25 +435,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 47.064239501953125
+      Distance: 42.36450958251953
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -3.6250195503234863
-        Y: -3.046748638153076
-        Z: -2.31156063079834
+        X: 0.06384572386741638
+        Y: -4.739923477172852
+        Z: -1.9706659317016602
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1703993082046509
+      Pitch: 1.1103990077972412
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.038548469543457
+      Yaw: 3.733546495437622
     Saved: ~
 Window Geometry:
   Displays:
@@ -410,5 +471,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 960
-  X: 1075
-  Y: 1136
+  X: 798
+  Y: 337
