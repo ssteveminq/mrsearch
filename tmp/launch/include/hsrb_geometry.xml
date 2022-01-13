@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="namespace" default="/hsrb"/>
+  <group ns="$(arg namespace)">
+      <node pkg="tf2_ros" type="buffer_server" name="tf2_buffer_server" />
+  </group>
+</launch>

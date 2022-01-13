@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="namespace" default="/hsrb" />
+  <arg name="use_laser_odom" default="true" />
+  <arg name="robot_pos"  default="-x 2 -y 2 -z 0 -Y 0" />
+
+  <arg name="robot_model" default="hsrb4s" />
+    <arg name="visualization" default="true" />
+    <arg name="implicit_damping" default="false" />
+    
+
+   <param name="robot_description"
+      command="$(find xacro)/xacro --inorder $(find hsrb_description)/robots/$(arg robot_model).urdf.xacro gazebo_visualization_enabled:=$(arg visualization) implicit_damping:=$(arg implicit_damping)" />
+    <param name="robot_collision_pair" textfile="$(find hsrb_description)/robots/collision_pair_hsrb.xml" />
+
+
+  <group ns="$(arg namespace)">
+    <!--<rosparam file="$(find hsrb_common_config)/params/hsrb_sensor_config.yaml" command="load" />-->
+    <rosparam file="$(find tmp)/params/hsrb_sensor_config.yaml" command="load" />
+  <!--</group>-->
+  <rosparam file="$(find hsrb_gazebo_bringup)/params/hsrb_sensor_config.yaml" command="load" />
+    <remap from="joint_states" to="/$(arg namespace)/robot_state/joint_states" />
+
+  <!--<arg name="robot_model" default="hsrb4s" />-->
+    <!--<arg name="visualization" default="true" />-->
+    <!--<arg name="implicit_damping" default="false" />-->
+
+   <param name="robot_description"
+      command="$(find xacro)/xacro --inorder $(find hsrb_description)/robots/$(arg robot_model).urdf.xacro gazebo_visualization_enabled:=$(arg visualization) implicit_damping:=$(arg implicit_damping)" />
+    <param name="robot_collision_pair" textfile="$(find hsrb_description)/robots/collision_pair_hsrb.xml" />
+
+  <!--<param name="robot_description" textfile="$(find tmp)/robots/$(arg robot_model).urdf"/>-->
+   <!--<param name="robot_description"-->
+      <!--command="$(find xacro)/xacro -inorder $(find tmp)/robots/$(arg robot_model).urdf.xacro implicit_damping:=$(arg implicit_damping)" />-->
+    <!--<param name="robot_collision_pair" textfile="$(find hsrb_description)/robots/collision_pair_hsrb.xml" />-->
+
+    <node name="spawn_hsrb_model" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param robot_description -model hsrb $(arg robot_pos) -J arm_lift_joint 0.05 -J arm_flex_joint 0.0 -J arm_roll_joint -1.57 -J wrist_flex_joint -1.57 -J wrist_roll_joint 0.0 -J head_pan_joint 0.0 -J head_tilt_joint 0.0 -J hand_motor_joint 1.2"
+          respawn="false" output="screen" />
+
+
+
+  <!-- convert joint states to TF transforms for rviz, etc -->
+   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+        respawn="false" output="screen" >
+        <!--<param name="tf_prefix" type="string" value="$(arg namespace)"/>-->
+    </node>
+
+   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"
+        respawn="false" output="screen" >
+    <rosparam param="source_list">["/hsrb/joint_states"]</rosparam>
+   </node>
+  </group>
+
+
+  <!-- laser-odometry -->
+  <!--<group ns="$(arg namespace)" if="$(arg use_laser_odom)">-->
+    <!--<node pkg="laser_scan_matcher" type="laser_scan_matcher_node" name="laser_scan_matcher_node">-->
+      <!--<remap from="scan" to="$(arg namespace)/base_scan"/>-->
+      <!--<remap from="scan" to="/base_scan"/>-->
+      <!--<remap from="pose_stamped" to="$(arg namespace)/base_pose"/>-->
+    <!--</node>-->
+
+  <!-- pose_to_odom -->
+    <node name="pose_stamped_to_odometry" pkg="topic_tools" type="transform"
+          args="$(arg namespace)/base_pose $(arg namespace)/laser_odom nav_msgs/Odometry
+		'nav_msgs.msg.Odometry(header=m.header, pose=geometry_msgs.msg.PoseWithCovariance(pose=m.pose))'
+		--import nav_msgs geometry_msgs --wait-for-start" />
+  <!--</group>-->
+
+  <node name="head_l_stereo_camera_frame_pub" pkg="tf" type="static_transform_publisher"
+      args="0 0 0 0 0 0 hsrb/head_l_stereo_camera_link hsrb/head_l_stereo_camera_frame 100" />
+
+  <node name="head_r_stereo_camera_frame_pub" pkg="tf" type="static_transform_publisher"
+        args="0 0 0 0 0 0 hsrb/head_r_stereo_camera_link hsrb/head_r_stereo_camera_frame 100" />
+
+  <node name="head_rgbd_sensor_rgb_frame_pub" pkg="tf" type="static_transform_publisher"
+        args="0 0 0 0 0 0 hsrb/head_rgbd_sensor_link hsrb/head_rgbd_sensor_rgb_frame 100" />
+
+  <node name="head_rgbd_sensor_depth_frame_pub" pkg="tf" type="static_transform_publisher"
+        args="0 0 0 0 0 0 hsrb/head_rgbd_sensor_link hsrb/head_rgbd_sensor_depth_frame 100" />
+
+  <!--<node name="head_rgbd_sensor_rgb_frame_pub2" pkg="tf" type="static_transform_publisher"-->
+      <!--args="0 0 0 0 0 0 hsrb/head_rgbd_sensor_rgb_frame head_rgbd_sensor_rgb_frame 100" />-->
+
+  <!--<node name="head_rgbd_sensor_depth_frame_pub2" pkg="tf" type="static_transform_publisher"-->
+      <!--args="0 0 0 0 0 0 hsrb/head_rgbd_sensor_depth_frame head_rgbd_sensor_depth_frame 100" />-->
+
+
+
+  <!--<group ns="$(arg namespace)">-->
+  <!--<node name="head_l_stereo_camera_frame_pub" pkg="tf" type="static_transform_publisher"-->
+        <!--args="0 0 0 0 0 0 head_l_stereo_camera_link head_l_stereo_camera_frame 100" />-->
+
+  <!--<node name="head_r_stereo_camera_frame_pub" pkg="tf" type="static_transform_publisher"-->
+        <!--args="0 0 0 0 0 0 head_r_stereo_camera_link head_r_stereo_camera_frame 100" />-->
+
+  <!--<node name="head_rgbd_sensor_rgb_frame_pub" pkg="tf" type="static_transform_publisher"-->
+        <!--args="0 0 0 0 0 0 head_rgbd_sensor_link head_rgbd_sensor_rgb_frame 100" />-->
+
+  <!--<node name="head_rgbd_sensor_depth_frame_pub" pkg="tf" type="static_transform_publisher"-->
+        <!--args="0 0 0 0 0 0 head_rgbd_sensor_link head_rgbd_sensor_depth_frame 100" />-->
+
+  <include file="$(find hsrb_gazebo_bringup)/launch/include/hsrb_relay_topics.xml">
+    <arg name="namespace" value="$(arg namespace)" />
+  </include>
+  <!--</group>-->
+
+  <group ns="$(arg namespace)">
+    <arg name="odometry_config" default="$(find tmp)/params/hsrb_odometry_config.yaml" />
+    <node name="odometry_switcher" pkg="tmc_odometry_switcher" type="odometry_switcher_node">
+      <remap from="switched_odom" to="$(arg namespace)/odom"/>
+      <rosparam command="load" file="$(arg odometry_config)"/>
+      <param name="initial_odom" value="laser_odom" if="$(arg use_laser_odom)"/>
+      <param name="initial_odom" value="wheel_odom" unless="$(arg use_laser_odom)"/>
+    </node>
+  </group>
+
+
+
+</launch>

@@ -1,0 +1,14 @@
+waypoints:
+    ref_frame: "map"
+    locations: ["door", "left_b", "left_t","center_b", "center_t", "right_b", "right_t", "upper_o", "upper_right"]
+    door: [6.1,10.2]
+    left_b: [-2.0, 11.1]
+    left_t: [-7.8, 11.0]
+    center_b: [-6.5, 7.0]
+    center_t: [-2.5, 7.0]
+    right_b: [1.0, 7.0]
+    right_t: [5.5, 7.45]
+    upper_o: [4.8, 2.8]
+    upper_right: [-4.0, 3.15]
+    #lower_o: [-0.1,2.5]
+    #left_o: [-6.4, 2.3]

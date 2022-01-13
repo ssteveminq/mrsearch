@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="tf2_ros" type="buffer_server" name="tf2_buffer_server" />
+</launch>

@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="robot_name" default="hsrb" />
+  <arg name="sim" default="false" />
+  <arg name="agent_num"/>
+  <group ns="agent$(arg agent_num)">
+  <include file="$(find hsrb_web_tools_config)/launch/web_tools.launch">
+    <arg name="robot_name" value="$(arg robot_name)" />
+    <arg name="sim" value="$(arg sim)" />
+  </include>
+  </group>
+</launch>

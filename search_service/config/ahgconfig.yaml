@@ -1,0 +1,46 @@
+villa_navi_service:
+    ref_frame: "map"
+    door:
+        x: 8.75
+        y: -6.3
+        t: 0.0
+    door_front:
+        x: 7.89
+        y: -6.3
+        t: 0.0
+    diningroom:
+        x: 2.4
+        y: -3.65
+        t: 0.00
+    livingroom:
+        x: 2.0
+        y: -7.2
+        t: -0.5
+    home:
+        x: 0.0
+        y: 0.0
+        t: 0.0
+    bedroom:
+        x: 6.2
+        y: -0.1
+        t: 0.0
+    kitchen:
+        x: 6.3
+        y: -3.8
+        t: 0.0
+    foyer:
+        x: 1.4
+        y: -0.0
+        t: 0.00
+    left_corridor:
+        x: -1.5
+        y: 0.0
+        t: 0.00
+    right_corridor:
+        x: 10.6
+        y: -6.0
+        t: 0.00
+    office:
+        x: 6.7
+        y: -8.0
+        t: 0.00

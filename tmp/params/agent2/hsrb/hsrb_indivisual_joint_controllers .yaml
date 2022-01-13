@@ -1,0 +1,31 @@
+arm_lift_joint_position_controller:
+  type: "position_controllers/JointPositionController"
+  joint: agent2/arm_lift_joint
+arm_flex_joint_position_controller:
+  type: "position_controllers/JointPositionController"
+  joint: agent2/arm_flex_joint
+arm_roll_joint_position_controller:
+  type: "position_controllers/JointPositionController"
+  joint: agent2/arm_roll_joint
+wrist_flex_joint_position_controller:
+  type: "position_controllers/JointPositionController"
+  joint: agent2/wrist_flex_joint
+wrist_roll_joint_position_controller:
+  type: "position_controllers/JointPositionController"
+  joint: agent2/wrist_roll_joint
+head_pan_joint_position_controller:
+  type: "position_controllers/JointPositionController"
+  joint: agent2/head_pan_joint
+head_tilt_joint_position_controller:
+  type: "position_controllers/JointPositionController"
+  joint: agent2/head_tilt_joint
+
+base_roll_joint_position_controller:
+  type: "position_controllers/JointPositionController"
+  joint: agent2/base_roll_joint
+base_l_drive_wheel_joint_velocity_controller:
+  type: "velocity_controllers/JointVelocityController"
+  joint: agent2/base_l_drive_wheel_joint
+base_r_drive_wheel_joint_velocity_controller:
+  type: "velocity_controllers/JointVelocityController"
+  joint: agent2/base_r_drive_wheel_joint

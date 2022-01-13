@@ -1,0 +1,7 @@
+#goal definition
+---
+#result definition
+bool is_done
+---
+#feedback
+geometry_msgs/PoseStamped cur_pose

@@ -1,0 +1,12 @@
+<launch>
+    <arg name="robot_pos" default=""/>
+    <arg name="gazebo_visualization" default="true"/>
+    <arg name="use_laser_odom" default="true" />
+    <arg name="fast_physics" default="false" />
+    <arg name="robot_name" default="hsrb" />
+
+    <include file="$(find tmp)/launch/include/turtle/hsrb_no_controllers.xml" pass_all_args="true" />
+    <include file="$(find hsrb_gazebo_bringup)/launch/include/hsrb_default_controllers.xml">
+        <arg name="use_laser_odom" value="$(arg use_laser_odom)" />
+    </include>
+</launch>

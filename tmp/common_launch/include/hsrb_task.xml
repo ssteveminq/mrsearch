@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="sim" default="false" />
+
+  <!-- データベースのクリア -->
+  <node pkg="tmc_env_db" name="restoredb" type="restoredb.sh"
+        args="$(find tmc_env_database)/db/env_hsrb.db.sql $(env HOME)/.ros/env.db">
+  </node>
+  <node pkg="tmc_env_db" type="env_db_node" name="env_db" output="screen">
+    <param name="db_file" type="str" value="$(env HOME)/.ros/env.db"/>
+  </node>
+  <!-- アクションマネージャ -->
+  <include file="$(find tmc_action_manager)/launch/action_manager.launch" />
+
+  <!-- タスクマネージャ -->
+  <include file="$(find tmc_task_manager)/launch/task_manager.launch" >
+    <arg name="topological_position_id" value="252" />
+    <arg name="topological_position_name" value="living_room" />
+  </include>
+
+  <include file="$(find tmc_manipulation_action)/launch/action_take_hsrb.launch" />
+  <include file="$(find tmc_manipulation_action)/launch/action_give_hsrb.launch" />
+  <include file="$(find tmc_manipulation_action)/launch/action_pick_up_hsrb.launch"/>
+  <include file="$(find tmc_manipulation_action)/launch/action_put_hsrb.launch"/>
+
+  <!-- 音声の日本語化辞書 -->
+  <include file="$(find tmc_dictionary)/launch/include/upload_dictionaries.xml"/>
+
+  <!-- 音声認識 -->
+  <arg name="use_julius" value="$(optenv USE_JULIUS true)" />
+  <group unless="$(arg sim)">
+    <include file="$(find tmc_rosjulius)/launch/speech_recognition.launch"
+             if="$(arg use_julius)" />
+  </group>
+</launch>

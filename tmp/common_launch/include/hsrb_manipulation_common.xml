@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="namespace" default="/hsrb" />
+  <arg name="sim" default="false" />
+  <arg name="agent_num"/>
+
+  <remap from="/collision_object" to="known_object" />
+
+  <!-- メッシュサーバー -->
+  <include file="$(find tmc_mesh_data_server)/launch/mesh_data_server.launch" />
+
+  <!-- 環境サーバーを動かす -->
+  <node name="collision_environment" pkg="tmc_collision_environment" type="collision_environment">
+    <param name="object_life_time" value="60.0"/>
+  </node>
+
+  <!-- 物体送信ノードを動かす -->
+  <node pkg="tmc_object_information_publisher" name="object_information_publisher" type="object_information_publisher">
+    <param name="send_frame_header_name" value="/KNOWNOBJECT/"/>
+  </node>
+
+  <!-- attached object -->
+  <include file="$(find tmc_attached_object_publisher)/launch/attached_object_publisher.launch" />
+
+  <!-- trajectory filter -->
+  <include file="$(find hsrb_trajectory_filter)/launch/trajectory_filter.launch" />
+
+  <!-- wholebody timeopt filter -->
+  <include file="$(find hsrb_timeopt_ros)/launch/hsrb_timeopt_filter.launch" />
+
+  <!-- base only timeopt filter -->
+  <include file="$(find hsrb_trajectory_filter)/launch/hsrb_timeopt_filter.launch" />
+
+  <!-- perspective transformer -->
+  <remap from="/camera/depth_registered/points" to="$(arg namespace)/head_rgbd_sensor/depth_registered/rectified_points"/>
+  <!-- nodelet only for robot -->
+  <node pkg="nodelet" name="perspective_transformer" type="nodelet"
+        args="load tmc_perspective_transformer/PerspectiveTransformer $(arg namespace)/head_rgbd_sensor/head_rgbd_sensor_nodelet_manager"
+	respawn="true"
+              unless="$(arg sim)">
+    <param name="camera_info_file_name" value="$(find tmc_perspective_transformer)/config/camera_info.yaml" />
+    <param name="camera_info_frame_id" value="/head_rgbd_sensor_rgb_frame" />
+  </node>
+  <!-- node for simulation -->
+  <include file="$(find tmc_perspective_transformer)/launch/perspective_transformer.launch"
+           if="$(arg sim)">
+    <arg name="camera_info_frame_id" value="/head_rgbd_sensor_rgb_frame" />
+  </include>
+
+  <!-- 姿勢遷移 -->
+  <include file="$(find hsrb_manipulation_launch)/launch/safe_pose_changer.launch" />
+
+  <!-- 全身での手先インピーダンス制御 -->
+  <include file="$(find tmp)/launch/impedance_control_node.launch"
+      ns="$(arg namespace)$(arg agent_num)">
+    <arg name="agent_num" value="$(arg agent_num)"/>
+  </include>
+
+  <!-- grasp state observer -->
+  <include file="$(find tmp)/launch/grasp_state_observer.launch">
+    <arg name="sim" value="$(arg sim)"/>
+    <arg name="agent_num" value="$(arg agent_num)"/>
+  </include>
+
+  <!-- 自己干渉フィルタ -->
+  <node name="collision_trajectory_filter_head" pkg="tmc_collision_trajectory_filter" type="collision_trajectory_filter" >
+      <remap from="command_trajectory" to="agent$(arg agent_num)/$(arg namespace)/head_trajectory_controller/collisionable_command" />
+    <remap from="filtered_command_trajectory" to="agent$(arg agent_num)/$(arg namespace)/head_trajectory_controller/command" />
+  </node>
+  <node name="collision_trajectory_filter_arm" pkg="tmc_collision_trajectory_filter" type="collision_trajectory_filter" >
+    <remap from="command_trajectory" to="agent$(arg agent_num)/$(arg namespace)/arm_trajectory_controller/collisionable_command" />
+    <remap from="filtered_command_trajectory" to="agent$(arg agent_num)/$(arg namespace)/arm_trajectory_controller/command" />
+  </node>
+</launch>

@@ -1,0 +1,143 @@
+#!/usr/bin/env python
+
+# Based on the teleop_twist_keyboard script from brown-ros-pkg
+# Original Authors: Trevor Jay
+# Original License: BSD
+# See https://code.google.com/p/brown-ros-pkg/ for more details
+from __future__ import print_function
+import rospy
+
+from geometry_msgs.msg import Twist
+
+import sys, select, termios, tty
+
+instructions = """
+Reading from the keyboard and publishing to Twist!
+---------------------------
+Moving around:
+   u    i    o
+   j    k    l
+        ,    
+
+q/z : increase/decrease max speeds by 10%
+w/x : increase/decrease only linear speed by 10%
+e/c : increase/decrease only angular speed by 10%
+
+u/o : forward and turn left/right
+j/l : turn left/right
+h/; : strafe left/right
+,   : back
+
+anything else : stop
+
+CTRL-C to quit
+"""
+
+
+
+
+moveBindings = {
+    'i': (1, 0),
+    'o': (1, -1),
+    'j': (0, 1),
+    'l': (0, -1),
+    'u': (1, 1),
+    ',': (-1, 0),
+}
+
+speedBindings = {
+    'q': (1.1, 1.1),
+    'z': (.9, .9),
+    'w': (1.1, 1),
+    'x': (.9, 1),
+    'e': (1, 1.1),
+    'c': (1, .9),
+}
+
+strafeBindings = {
+    'h': (0, 1),
+    ';': (0, -1)
+}
+
+
+
+def getKey(translator=None):
+    fd = sys.stdin.fileno()
+    tty.setraw(fd)
+    key = sys.stdin.read(1)
+    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, original_settings)
+    key = key.lower()
+    if translator is not None:
+        key = translator.get(key, key)
+    return key
+
+
+def publish_base_velocity(x, y, th):
+    twist = Twist()
+    twist.linear.x = x
+    twist.linear.y = y
+    twist.linear.z = 0
+    twist.angular.x = 0
+    twist.angular.y = 0
+    twist.angular.z = th
+    velPub.publish(twist)
+
+
+def stop_all():
+    publish_base_velocity(0, 0, 0)
+
+latest_positions = None
+
+
+def states_cb(msg):
+    global latest_positions
+    positions = {}
+    for name, i in zip(msg.name, range(len(msg.name))):
+        positions[name] = msg.position[i]
+    latest_positions = positions
+
+
+def vels(linear, angular):
+    return "Linear speed %.2f\tAngular speed %.2f " % (linear, angular)
+
+
+if __name__ == "__main__":
+    original_settings = termios.tcgetattr(sys.stdin)
+    rospy.init_node('spot_teleop_twist_keyboard', anonymous=True)
+    linear = 0.35
+    angular = 0.25
+
+    keyTranslator = None
+
+    velPub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+
+    x = 0
+    th = 0
+    y = 0
+
+    print(instructions)
+    print(vels(linear, angular), end="\r")
+    while not rospy.is_shutdown():
+        key = getKey(keyTranslator)
+        if key in moveBindings.keys():
+            x = linear * moveBindings[key][0]
+            y = 0
+            th = angular * moveBindings[key][1]
+            publish_base_velocity(x, y, th)
+        elif key in speedBindings.keys():
+            linear = linear * speedBindings[key][0]
+            angular = angular * speedBindings[key][1]
+            print(vels(linear, angular), end="\r")
+        elif key in strafeBindings.keys():
+            x = linear * strafeBindings[key][0]
+            y = linear * strafeBindings[key][1]
+            th = 0
+            publish_base_velocity(x, y, th)
+        elif key == '\x03':
+            # Break on Control C
+            break
+        else:
+            stop_all()
+
+    stop_all()
+    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, original_settings)

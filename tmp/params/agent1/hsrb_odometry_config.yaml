@@ -1,0 +1,6 @@
+odom_topics:
+  wheel_odom: agent1/wheel_odom
+  laser_odom: agent1/laser_odom
+initial_odom: agent1/laser_odom
+odom_frame: agent1/odom
+odom_child_frame: agent1/base_footprint

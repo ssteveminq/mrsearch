@@ -1,0 +1,7 @@
+#goal definition
+int32 num_agent
+---
+#result definition
+bool sucess
+---
+#feedback

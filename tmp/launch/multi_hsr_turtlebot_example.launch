@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/> -->
+  <!-- <arg name="agent1_hsrb"  default="agent1/hsrb"/> -->
+  <!-- <arg name="agent2_hsrb" default="agent2/hsrb"/> -->
+  <arg name="namespace1"  default="agent1/hsrb"/>
+  <arg name="namespace2"  default="agent2/hsrb"/>
+  <arg name="paused" default="true" />
+  <arg name="gui" default="true" />
+  <arg name="debug" default="false"/>
+
+  <arg name="agent1_init_pose" default="-x 2 -y 2 -z 0" />
+  <arg name="agent2_init_pose" default="-x 5 -y 5 -z 0" />
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="world_name" value="$(find tmc_gazebo_worlds)/worlds/apartment_no_objects.world"/>
+  </include>  
+
+  
+  <!-- BEGIN ROBOT 1-->
+  <group ns="agent1">
+    <param name="tf_prefix" value="hsrb" />
+    <include file="$(find tmp)/launch/hsrb.launch" >
+      <arg name="init_pose" value="$(arg agent1_init_pose)" />
+      <arg name="robot_name"  value="hsrb" />
+      <arg name="namespace" value="$(arg namespace1)"/>
+      <arg name="model_name" value="agent1/hsrb" />
+    </include>
+    <!-- <param name="robot_description" textfile="$(find tmp)/robots/agent1_hsrb.urdf" /> -->
+    <param name="robot_description" textfile="$(find hsrb_description)/robots/hsrb.urdf" />
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+        respawn="false" output="screen" />
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"
+        respawn="false" output="screen" >
+    </node>
+
+    <node name="spawn_hsrb_model" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -param robot_description -model hsrb $(arg agent1_init_pose) -J arm_lift_joint 0.05 -J arm_flex_joint 0.0 -J arm_roll_joint -1.57 -J wrist_flex_joint -1.57 -J wrist_roll_joint 0.0 -J head_pan_joint 0.0 -J head_tilt_joint 0.0 -J hand_motor_joint 1.2"
+    respawn="false" output="screen" />
+
+  </group>
+
+  <!-- BEGIN ROBOT 2-->
+  <!--<group ns="agent2">-->
+    <!--<param name="tf_prefix" value="hsrb" />-->
+    <!--<include file="$(find tmp)/launch/hsrb.launch" >-->
+      <!--<arg name="init_pose" value="$(arg agent2_init_pose)" />-->
+      <!--<arg name="robot_name"  value="hsrb2" />-->
+      <!--<arg name="namespace" value="$(arg namespace2)"/>-->
+      <!--<arg name="model_name" value="agent2/hsrb" />-->
+    <!--</include>-->
+    <!-- <param name="robot_description" textfile="$(find tmp)/robots/agent1_hsrb.urdf" /> -->
+    <!--<param name="robot_description" textfile="$(find hsrb_description)/robots/hsrb.urdf" />-->
+
+    <!--<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"-->
+        <!--respawn="false" output="screen" />-->
+    <!--<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"-->
+        <!--respawn="false" output="screen" >-->
+    <!--</node>-->
+
+    <!--<node name="spawn_hsrb_model" pkg="gazebo_ros" type="spawn_model"-->
+          <!--args="-urdf -param robot_description -model hsrb2 $(arg agent2_init_pose) -J arm_lift_joint 0.05 -J arm_flex_joint 0.0 -J arm_roll_joint -1.57 -J wrist_flex_joint -1.57 -J wrist_roll_joint 0.0 -J head_pan_joint 0.0 -J head_tilt_joint 0.0 -J hand_motor_joint 1.2"-->
+    <!--respawn="false" output="screen" />-->
+
+  <!--</group>-->
+
+
+ 
+  <!-- BEGIN ROBOT 2-->
+  <!-- <group ns="agent2">
+    <param name="tf_prefix" value="agent2/hsrb" />
+    <include file="$(find tmp)/launch/hsrb.launch" >
+      <arg name="init_pose" value="$(arg agent2_init_pose)" />
+      <arg name="robot_name"  value="agent2/hsrb" />
+      <arg name="namespace" value="$(arg namespace2)"/>
+      <arg name="model_name" value="agent2/hsrb" />
+    </include>
+    <param name="robot_description" textfile="$(find tmp)/robots/agent2_hsrb.urdf" /> -->
+    <!-- <param name="robot_description" textfile="$(find hsrb_description)/robots/hsrb.urdf" /> 
+  </group> -->
+
+<!--   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find hsrb_common_launch)/config/hsrb_display_full_hsrb.rviz"/>
+ -->
+
+</launch>
+

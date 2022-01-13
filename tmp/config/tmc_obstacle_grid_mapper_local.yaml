@@ -1,0 +1,7 @@
+obstacle_grid_map_size_x: 100
+obstacle_grid_map_size_y: 100
+distance_potential_min: 100
+distance_potential_length: 0.35
+distance_potential_level: 1
+exception_potential_distance: 0.25
+

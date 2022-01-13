@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="namespace" default="/hsrb" />
+  <arg name="sim" default="false" />
+  <arg name="robot_name" default="hsrb" />
+
+  <include file="$(find hsrb_common_launch)/launch/include/hsrb_manipulation_common.xml">
+    <arg name="namespace" value="$(arg namespace)" />
+    <arg name="sim" value="$(arg sim)" />
+  </include>
+
+  <!-- プランナを動かす -->
+  <include file="$(find hsrb_manipulation_launch)/launch/planner.launch">
+    <arg name="analytic_ik_plugin" value="hsrb_analytic_ik::HsrcIKSolver" />
+  </include>
+
+  <!-- perspective transformer -->
+  <include file="$(find hsrb_manipulation_launch)/launch/interactive_grasp_planner.launch">
+    <arg name="robot_name" value="$(arg robot_name)"/>
+  </include>
+
+</launch>

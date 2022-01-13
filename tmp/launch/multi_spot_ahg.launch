@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="namespace" default="/hsrb"/>
+  <arg name="debug" default="false"/>
+  <arg name="gui" default="true" />
+  <arg name="rviz" default="true"/>
+  <arg name="gazebo_visualization" default="false" />
+  <arg name="paused" default="true" />
+  <arg name="spot_x" default="0.0"/>
+  <arg name="spot_y" default ="-2.0"/> 
+  <arg name="spot2_x" default="0.0"/>
+  <arg name="spot2_y" default ="2.0"/> 
+
+ <arg name="ahg_sim" default="true" />
+  <arg name="world_name" value="$(find tmp)/worlds/test_humantrajectory.world"/>
+  <arg name="map" default="$(find tmp)/maps/ahg_map_rev.yaml" />
+  <!--<arg name="map" default="$(find spot_navigation)/maps/ahg_map.yaml" />-->
+  <param name="/use_sim_time" value="true"/>
+  <arg name="param_file" default="$(optenv HOME ~)/.ros/params.yaml" />
+  <!--<arg name="world_name" default="worlds/empty.world" />-->
+  <!--<param name="/tmp" command="rosrun tmc_roslaunch_tools symboliclink $(arg param_file) $(find hsrb_common_launch)/params/empty_params.yaml" />-->
+
+  <rosparam file="$(find search_service)/config/ahg.yaml"/>
+
+  <group if="$(arg ahg_sim)">
+      <include file="$(find ahg_gazebo_simulation)/launch/ahg_apartment.launch">
+          <arg name="gui" value="true" />
+          <arg name="use_sim_time" value="true"/>
+      </include>
+  </group>
+
+
+  <arg name="spot_namespace"  default="spot"/>
+  <group ns ="$(arg spot_namespace)">
+      <param name="robot_description" command="$(find xacro)/xacro --inorder $(find spot_description)/urdf/spot.urdf.xacro"/>
+
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <rosparam param="source_list">["/spot/joint_states"]</rosparam>
+  </node>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+      <param name="tf_prefix" type="string" value="$(arg spot_namespace)" />
+  </node>
+  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model spot -x $(arg spot_x) -y $(arg spot_y)" output="screen"/>
+
+  <include file="$(find spot_gazebo)/launch/velodyne_2d.launch">
+      <arg name="tf_prefix" value="$(arg spot_namespace)"/>
+  </include>
+
+  <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find spot_navigation)/maps/ahg_map.pgm 0.05"/>-->
+
+
+ <include file="$(find tmp)/launch/amcl_diff.launch">
+      </include>
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+    <rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find tmp)/config/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find tmp)/config/global_costmap_params.yaml" command="load" /> 
+    <rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />
+    <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
+ </node>
+  </group>
+
+ <!--<include file="$(find tmp)/launch/amcl_diff.launch">-->
+          <!--<arg name="namespace" value="$(arg spot_namespace)" />-->
+
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
+
+  <arg name="spot2_namespace"  default="spot2"/>
+  <group ns ="$(arg spot2_namespace)">
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find spot_description)/urdf/spot.urdf.xacro"/>
+
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <rosparam param="source_list">["/spot/joint_states"]</rosparam>
+  </node>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+      <param name="tf_prefix" type="string" value="$(arg spot2_namespace)" />
+  </node>
+  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model spot2 -x $(arg spot2_x) -y $(arg spot2_y)" output="screen"/>
+
+  <include file="$(find spot_gazebo)/launch/velodyne_2d.launch">
+      <arg name="tf_prefix" value="$(arg spot2_namespace)"/>
+  </include>
+
+  <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find spot_navigation)/maps/ahg_map.pgm 0.05"/>-->
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
+
+  <!--<node name="costmap_node" pkg="costmap_2d" type="costmap_2d_node" output="screen">-->
+    <!--<rosparam file="$(find spot_navigation)/config/spot2_params.yaml" command="load" ns="costmap" />-->
+  <!--</node>-->
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find tmp)/config/costmap_common_params_spot2.yaml" command="load" ns="global_costmap" /> 
+    <rosparam file="$(find tmp)/config/costmap_common_params_spot2.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find tmp)/config/local_costmap_params_spot2.yaml" command="load" />
+    <rosparam file="$(find tmp)/config/global_costmap_params_spot2.yaml" command="load" /> 
+    <rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />
+    <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
+ </node>
+
+ <include file="$(find tmp)/launch/amcl_diff2.launch"/>
+  </group>
+
+  <!--<node name ="map_to_odom" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map spot/odom 10"/>-->
+  <!--<node name ="map_to_odom2" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map spot/odom2 10"/>-->
+
+  <!--<node name="scaled_map_converter" pkg="navi_manager" type="global_planner" output="screen"/>-->
+  <!--<node pkg="human_filter" type="srs_leg_detector" name="srs_leg_detector_front" args="scan:=hsrb/base_scan $(find human_filter)/config/trained_leg_detector.yaml front" output="screen" />-->
+  <!--<node pkg="visual_perception" type="visible_manager" name="visible_region" output="screen" />-->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find tmp)/config/a1.rviz" if="$(arg rviz)"/>
+
+</launch>

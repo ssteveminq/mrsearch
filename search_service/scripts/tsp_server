@@ -1,0 +1,229 @@
+#!/usr/bin/env python
+import roslib
+import rospy
+import math
+import sys
+import actionlib
+import os
+from nav_msgs.msg import Odometry, Path
+from geometry_msgs.msg import PoseStamped, Point, Quaternion, Pose
+from search_service.msg import TSPSolveAction, TSPSolveFeedback, TSPSolveResult
+import csv
+from mtsp import tsp_manager
+from actionlib_msgs.msg import GoalStatus
+# import pandas as pd
+
+class tspmanager(object):
+    def __init__(self, name, wait=0.0):
+        self._action_name=name
+        self.pathpub1=rospy.Publisher('goal_agent1',Path,queue_size=10)
+        self.pathpub2=rospy.Publisher('goal_agent2',Path,queue_size=10)
+        self.pathpub3=rospy.Publisher('goal_agent3',Path,queue_size=10)
+
+        self.path_msg= Path()
+        self.path_msg2= Path()
+        self.path_msg3= Path()
+
+        self._as = actionlib.SimpleActionServer(self._action_name, TSPSolveAction, execute_cb=self.execute_cb, auto_start = False)
+        self.feedback_ = TSPSolveFeedback()
+        self.result_= TSPSolveResult()
+
+        self._as.start()
+        rospy.loginfo("tsp_solve_action_server started")
+        # rospy.spin()
+        self.num_agent=3
+        self.starter()
+
+        '''
+        dir_path="/home/amrl/data"
+        file_name =dir_path+"/cluster_sol.csv"
+        file_name2 =dir_path+"/cluster_con.csv"
+        print("file_name", file_name)
+        pos_x=[]
+        pos_y=[]
+        labels=[]
+        with open(file_name,mode='r') as csvfile:
+            datareader = csv.reader(csvfile, delimiter='\t',quotechar='|' )
+            for row in datareader:
+                pos_x.append(float(row[1]))
+                pos_y.append(float(row[2]))
+                labels.append(int(row[3]))
+
+        center_x=[]
+        center_y=[]
+        with open(file_name2,mode='r') as csvfile:
+            datareader = csv.reader(csvfile, delimiter='\t',quotechar='|' )
+            for row in datareader:
+                center_x.append(float(row[1]))
+                center_y.append(float(row[2]))
+
+        self.cluster_goals=[[] for j in range(self.num_agent)]
+        for i in range(len(pos_x)):
+            for j in range(self.num_agent):
+                if labels[i]==j:
+                    self.cluster_goals[j].append([pos_x[i], pos_y[i]])
+
+        print("cluster_goals", self.cluster_goals)
+        self.centers=[[]for j in range(self.num_agent)]
+        for i in range(self.num_agent):
+            self.centers[i]=[center_x[i], center_y[i]]
+            
+        print("centers", self.centers)
+        self.centers[1][0]=10
+        self.centers[1][1]=8
+        tsp_paths=[]
+        for i in range(self.num_agent):
+            tspmanager = tsp_manager(1, self.cluster_goals[i], self.centers[i]) #individual tsp problem 
+            best_tsppath = tspmanager.get_path()
+            tsp_paths.append(best_tsppath)
+        print("tsp_paths", tsp_paths)
+        self.sendpath(tsp_paths)
+        '''
+        # while not rospy.is_shutdown():
+            # self.pathpub1.publish(self.path_msg)
+            # self.pathpub2.publish(self.path_msg2)
+            # self.pathpub3.publish(self.path_msg3)
+            # rospy.sleep(5.0)
+
+    def execute_cb(self, goal):
+        rospy.loginfo("tsp_solve execute_cb")
+        self.num_agent=2
+        # dir_path = os.path.dirname(os.path.realpath(__file__))
+        # print("dir_path", dir_path)
+        # dir_path=dir_path[:-7]
+        dir_path="/home/amrl/data"
+        file_name =dir_path+"/cluster_sol.csv"
+        file_name2 =dir_path+"/cluster_con.csv"
+        print("file_name", file_name)
+        pos_x=[]
+        pos_y=[]
+        labels=[]
+        with open(file_name,mode='r') as csvfile:
+            datareader = csv.reader(csvfile, delimiter='\t',quotechar='|' )
+            for row in datareader:
+                pos_x.append(float(row[1]))
+                pos_y.append(float(row[2]))
+                labels.append(int(row[3]))
+
+        center_x=[]
+        center_y=[]
+        with open(file_name2,mode='r') as csvfile:
+            datareader = csv.reader(csvfile, delimiter='\t',quotechar='|' )
+            for row in datareader:
+                center_x.append(float(row[1]))
+                center_y.append(float(row[2]))
+
+        self.cluster_goals=[[] for j in range(self.num_agent)]
+        for i in range(len(pos_x)):
+            for j in range(self.num_agent):
+                if labels[i]==j:
+                    self.cluster_goals[j].append([pos_x[i], pos_y[i]])
+
+        print("cluster_goals", self.cluster_goals)
+        self.centers=[[]for j in range(self.num_agent)]
+        for i in range(self.num_agent):
+            self.centers[i]=[center_x[i], center_y[i]]
+            
+        print("centers", self.centers)
+        self.centers[1][0]=10
+        self.centers[1][1]=8
+        tsp_paths=[]
+        for i in range(self.num_agent):
+            tspmanager = tsp_manager(1, self.cluster_goals[i], self.centers[i]) #individual tsp problem 
+            best_tsppath = tspmanager.get_path()
+            tsp_paths.append(best_tsppath)
+        self.sendpath(tsp_paths)
+        # print("tsp_paths", tsp_paths)
+
+
+ 
+ 
+ 
+    def sendpath(self, tsp_paths):
+        self.path_msg.header.stamp = rospy.Time.now()
+        self.path_msg.header.frame_id = "map"
+        #print("tsp_path_agent1")
+        agent1_path = tsp_paths[0][0]
+        print("tsp_path_agent1", agent1_path)
+        for i in range(len(agent1_path)):
+            tmp_pose = PoseStamped()
+            tmp_pose.header.frame_id="map"
+            tmp_pose.pose.position.x=self.cluster_goals[0][agent1_path[i]][0]
+            tmp_pose.pose.position.y=self.cluster_goals[0][agent1_path[i]][1]
+            #print("x: ", x, ", y: ", y)
+            tmp_pose.pose.orientation.w=1.0
+            self.path_msg.poses.append(tmp_pose)
+        
+        self.path_msg2.header.stamp = rospy.Time.now()
+        self.path_msg2.header.frame_id = "map"
+        agent2_path = tsp_paths[1][0]
+        # for i in range(len(tsp_paths[1][0])):
+        for i in range(len(agent2_path)):
+            tmp_pose = PoseStamped()
+            tmp_pose.header.frame_id="map"
+            tmp_pose.pose.position.x=self.cluster_goals[1][agent2_path[i]][0]
+            tmp_pose.pose.position.y=self.cluster_goals[1][agent2_path[i]][1]
+            tmp_pose.pose.orientation.w=1.0
+            self.path_msg2.poses.append(tmp_pose)
+        
+        # path_msg3= Path()
+        self.path_msg3.header.stamp = rospy.Time.now()
+        self.path_msg3.header.frame_id = "map"
+        for i in range(len(tsp_paths[2][0])):
+            tmp_pose = PoseStamped()
+            tmp_pose.header.frame_id="map"
+            tmp_pose.pose.position.x=self.cluster_goals[2][agent3_path[i]][0]
+            tmp_pose.pose.position.y=self.cluster_goals[2][agent3_path[i]][1]
+            tmp_pose.pose.orientation.w=1.0
+            self.path_msg3.poses.append(tmp_pose)
+
+        '''
+        # self.pathpub1.publish(self.path_msg)
+        #self.pathpub2.publish(self.path_msg2)
+        #self.pathpub3.publish(self.path_msg3)
+        # if action_state == GoalStatus.SUCCEEDED:
+            # rospy.loginfo("Navigation Succeeded")
+    def starter(self,wait=0.0):
+        # make sure the cont0roller is running
+        while not rospy.is_shutdown():
+            self.pathpub1.publish(self.path_msg)
+            self.pathpub2.publish(self.path_msg2)
+            # self.pathpub3.publish(self.path_msg3)
+            rospy.sleep(4.0)
+          
+if __name__ == '__main__':
+    rospy.init_node('tsp_solve_action')
+    tsp_manager_ = tspmanager('tsp_solve_action')
+    # tsp_manager_.starter()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

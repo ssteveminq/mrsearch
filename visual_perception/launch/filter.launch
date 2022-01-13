@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+<rosparam file="$(find search_service)/config/ahg.yaml"/>
+<node pkg="visual_perception" type="prediction_server" name="unknown_server" output="screen"/>
+</launch>
+

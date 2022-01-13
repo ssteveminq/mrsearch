@@ -1,0 +1,468 @@
+<?xml version="1.0" ?>
+<sdf version='1.6'>
+  <world name='default'>
+    <include>
+      <uri>model://ahg_apartment</uri>
+      <name>apartment</name>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <gravity>0 0 -9.8</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type='adiabatic'/>
+    <physics name='default_physics' default='0' type='ode'>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>1</shadows>
+    </scene>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>0</latitude_deg>
+      <longitude_deg>0</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose frame=''>-3.49618 -17.106 26.617 0 0.921797 1.26012</pose>
+        <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
+
+
+<actor name="human_34903">
+  <pose>
+    4.825313723695335 3.254767308208083 0 0 0 -1.65801548069713356
+  </pose>
+  <link name="link">
+    <collision name="box">
+      <pose>0 0 0.9 0 0 0</pose>
+      <geometry>
+        <box>
+          <size>0.76 0.33 1.77</size>
+        </box>
+      </geometry>
+    </collision>
+    <visual name="visual">
+      <pose>0 0 0.02 0.04 0 0</pose>
+      <geometry>
+        <mesh>
+          <uri>model://elegant_female2/meshes/elegant_female2.dae</uri>
+        </mesh>
+      </geometry>
+    </visual>
+  </link>
+</actor>
+
+<actor name="human_34912">
+  <pose>
+    -3.4125313723695335 3.854767308208083 0 0 0 1.75801548069713356
+  </pose>
+
+  <link name="link">
+    <collision name="box">
+      <pose>0 0 0.9 0 0 0</pose>
+      <geometry>
+        <box>
+          <size>0.76 0.33 1.77</size>
+        </box>
+      </geometry>
+    </collision>
+    <visual name="visual">
+      <pose>0 0 1.05 0.04 0 0.00</pose>
+      <geometry>
+        <mesh>
+          <uri>model://actor/meshes/SKIN_man_green_shirt.dae</uri>
+        </mesh>
+      </geometry>
+    </visual>
+  </link>
+
+</actor>
+
+
+
+
+<actor name="human_34907">
+  <pose>
+    2.3125313723695335 -0.454767308208083 0 0 0 -0.15801548069713356
+  </pose>
+
+  <link name="link">
+    <collision name="box">
+      <pose>0 0 0.9 0 0 0</pose>
+      <geometry>
+        <box>
+          <size>0.76 0.33 1.77</size>
+        </box>
+      </geometry>
+    </collision>
+    <visual name="visual">
+      <pose>0 0 0.02 0.04 0 0</pose>
+      <geometry>
+        <mesh>
+          <uri>model://casual_female/meshes/casual_female.dae</uri>
+        </mesh>
+      </geometry>
+    </visual>
+  </link>
+
+</actor>
+
+ <actor name='human_34908'>
+      <pose frame=''>4.01253 6.95477 0 0 0 0.758015</pose>
+      <link name='link'>
+        <collision name='box'>
+          <pose frame=''>0 0 0.9 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.76 0.33 1.77</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <pose frame=''>0 0 0.02 0.04 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://casual_male/meshes/casual_male.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+      </link>
+      <script/>
+    </actor>
+
+
+ <actor name='human_34909'>
+     <animation name="talking_a"><filename>walk.dae</filename><scale>1</scale><interpolate_x>true</interpolate_x></animation>
+      <pose frame=''>-2.01253 -7.85477 0 0 0 -1.158015</pose>
+      <link name='link'>
+        <collision name='box'>
+          <pose frame=''>0 0 0.9 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.76 0.33 1.77</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <pose frame=''>0 0 0.02 0.04 -0 0</pose>
+          <geometry>
+            <mesh>
+              <uri>model://elegant_male/meshes/elegant_male.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+      </link>
+      <script/>
+    </actor>
+
+
+<actor name="actor0"><skin><filename>moonwalk.dae</filename><scale>1</scale></skin>
+<animation name="walking"><filename>walk.dae</filename><scale>1</scale><interpolate_x>true</interpolate_x></animation>
+<pose>-9.5 9.05 1.02 0 0 0</pose>
+<plugin filename="/home/mk/workspaces/follow_ws/src/gym_ped_sim/actor_plugin/lib/libactorplugin_origin.so" name="None">
+    <trajectory id="0" type="walking">
+          <waypoint>
+            <time>0</time>
+            <pose>-9.5 9.05 1.02 0 0 -1.57</pose>
+          </waypoint>
+          <waypoint>
+            <time>3</time>
+            <pose>7.5 9.05 1.02 0 0 -1.57</pose>
+          </waypoint>
+          <waypoint>
+            <time>5</time>
+            <pose>-12.5 9.05 1.02 0 0 1.57</pose>
+          </waypoint>
+          <waypoint>
+            <time>9</time>
+            <pose>-12.5 -8.05 1.02 0 0 1.57</pose>
+          </waypoint>
+          <waypoint>
+            <time>13.5</time>
+            <pose>-12.5 8.2 1.02 0 0 -1.57</pose>
+          </waypoint>
+        </trajectory>
+    <speed>1.0</speed><ignore_obstacles><model>caffe</model><model>gplane</model></ignore_obstacles><scaling collision="LeftUpLeg_collision" scale="
+        0.01
+        0.001
+        0.001
+      "/>
+      <scaling collision="LeftLeg_collision" scale="
+        8.0
+        8.0
+        1.0
+      "/>
+      <scaling collision="LeftFoot_collision" scale="
+        8.0
+        8.0
+        1.0
+      "/>
+      <scaling collision="LeftToeBase_collision" scale="
+        4.0
+        4.0
+        1.5
+      "/>
+      <scaling collision="RightUpLeg_collision" scale="
+        0.01
+        0.001
+        0.001
+      "/>
+      <scaling collision="RightLeg_collision" scale="
+        8.0
+        8.0
+        1.0
+      "/>
+      <scaling collision="RightFoot_collision" scale="
+        8.0
+        8.0
+        1.0
+      "/>
+      <scaling collision="RightToeBase_collision" scale="
+        4.0
+        4.0
+        1.5
+      "/>
+      <scaling collision="Spine_collision" scale="
+        12.0
+        20.0
+        5.0
+      " pose="0.05 0 0 0 -0.2 0"/>
+      <scaling collision="Spine1_collision" scale="
+        0.01
+        0.001
+        0.001
+      "/>
+      <scaling collision="Neck1_collision" scale="
+        0.01
+        0.001
+        0.001
+      "/>
+      <scaling collision="Head_collision" scale="
+        5.0
+        5.0
+        3.0
+      "/>
+      <scaling collision="LeftArm_collision" scale="
+        0.01
+        0.001
+        0.001
+      "/>
+      <scaling collision="LeftArm_LeftForeArm_collision" scale="
+        5.0
+        5.0
+        1.0
+      "/>
+      <scaling collision="LeftHand_collision" scale="
+        5.0
+        5.0
+        1.0
+      "/>
+      <scaling collision="LeftHandIndex1_collision" scale="
+        4.0
+        4.0
+        3.0
+      "/>
+      <scaling collision="RightArm_collision" scale="
+        0.01
+        0.001
+        0.001
+      "/>
+      <scaling collision="RightForeArm_collision" scale="
+        5.0
+        5.0
+        1.0
+      "/>
+      <scaling collision="RightHand_collision" scale="
+        5.0
+        5.0
+        1.0
+      "/>
+      <scaling collision="RightHandIndex1_collision" scale="
+        4.0
+        4.0
+        3.0
+      "/>
+    </plugin>
+</actor>
+
+<actor name="actor1"><skin><filename>moonwalk.dae</filename><scale>1</scale></skin>
+<animation name="walking"><filename>walk.dae</filename><scale>1</scale><interpolate_x>true</interpolate_x></animation>
+<pose>-11.5 -9.75 1.02 0 0 0</pose>
+<plugin filename="/home/mk/workspaces/follow_ws/src/gym_ped_sim/actor_plugin/lib/libactorplugin_origin.so" name="None">
+    <trajectory id="0" type="walking">
+          <waypoint>
+            <time>0</time>
+            <pose>-11.5 -9.75 1.02 0 0 -1.57</pose>
+          </waypoint>
+          <waypoint>
+            <time>2</time>
+            <pose>4.5 -9.75 1.02 0 0 -1.57</pose>
+          </waypoint>
+          <waypoint>
+            <time>5.0</time>
+            <pose>-7.9 -9.75 1.02 0 0 1.57</pose>
+          </waypoint>
+          <waypoint>
+            <time>9.5</time>
+            <pose>-7.9 3.2 1.02 0 0 -1.57</pose>
+          </waypoint>
+          <waypoint>
+            <time>15.0</time>
+            <pose>-7.9 -10.75 1.02 0 0 1.57</pose>
+          </waypoint>
+          <waypoint>
+            <time>0</time>
+            <pose>9.5 -10.75 1.02 0 0 -1.57</pose>
+          </waypoint>
+
+        </trajectory>
+    <speed>1.0</speed><ignore_obstacles><model>caffe</model><model>gplane</model></ignore_obstacles><scaling collision="LeftUpLeg_collision" scale="
+        0.01
+        0.001
+        0.001
+      "/>
+      <scaling collision="LeftLeg_collision" scale="
+        8.0
+        8.0
+        1.0
+      "/>
+      <scaling collision="LeftFoot_collision" scale="
+        8.0
+        8.0
+        1.0
+      "/>
+      <scaling collision="LeftToeBase_collision" scale="
+        4.0
+        4.0
+        1.5
+      "/>
+      <scaling collision="RightUpLeg_collision" scale="
+        0.01
+        0.001
+        0.001
+      "/>
+      <scaling collision="RightLeg_collision" scale="
+        8.0
+        8.0
+        1.0
+      "/>
+      <scaling collision="RightFoot_collision" scale="
+        8.0
+        8.0
+        1.0
+      "/>
+      <scaling collision="RightToeBase_collision" scale="
+        4.0
+        4.0
+        1.5
+      "/>
+      <scaling collision="Spine_collision" scale="
+        12.0
+        20.0
+        5.0
+      " pose="0.05 0 0 0 -0.2 0"/>
+      <scaling collision="Spine1_collision" scale="
+        0.01
+        0.001
+        0.001
+      "/>
+      <scaling collision="Neck1_collision" scale="
+        0.01
+        0.001
+        0.001
+      "/>
+      <scaling collision="Head_collision" scale="
+        5.0
+        5.0
+        3.0
+      "/>
+      <scaling collision="LeftArm_collision" scale="
+        0.01
+        0.001
+        0.001
+      "/>
+      <scaling collision="LeftArm_LeftForeArm_collision" scale="
+        5.0
+        5.0
+        1.0
+      "/>
+      <scaling collision="LeftHand_collision" scale="
+        5.0
+        5.0
+        1.0
+      "/>
+      <scaling collision="LeftHandIndex1_collision" scale="
+        4.0
+        4.0
+        3.0
+      "/>
+      <scaling collision="RightArm_collision" scale="
+        0.01
+        0.001
+        0.001
+      "/>
+      <scaling collision="RightForeArm_collision" scale="
+        5.0
+        5.0
+        1.0
+      "/>
+      <scaling collision="RightHand_collision" scale="
+        5.0
+        5.0
+        1.0
+      "/>
+      <scaling collision="RightHandIndex1_collision" scale="
+        4.0
+        4.0
+        3.0
+      "/>
+    </plugin>
+</actor>
+
+
+
+  </world>
+</sdf>

@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Set to your sensor's range -->
+    <arg name="sensor_range" default="6.5"/>
+    <arg name="sensor_topic" default="hsrb/base_scan"/>
+
+    <!--<node pkg="frontier_exploration" type="explore_client" name="explore_client" output="screen"/>-->
+    <node pkg="frontier_exploration" type="explore_server" name="explore_server" output="screen" >
+
+        <param name="frequency" type="double" value="2.0"/>
+        <param name="goal_aliasing" type="double" value="$(arg sensor_range)"/>
+
+        <param name="potential_scale" value="3.0"/>
+        <param name="gain_scale" value="1.0"/>
+
+        #All standard costmap_2d parameters as in move_base, other than BoundedExploreLayer
+        <rosparam ns="explore_costmap" subst_value="true">
+            footprint: [[0.1, 0.0], [0.0, 0.1], [-0.1, 0.0], [0.0, -0.1]]
+            robot_radius: 0.20
+
+            transform_tolerance: 0.5
+            update_frequency: 5.0
+            publish_frequency: 5.0
+
+            #must match incoming static map
+            global_frame: map
+            robot_base_frame: base_link
+            resolution: 0.05
+
+            rolling_window: false
+            track_unknown_space: true
+
+            plugins:
+
+                - {name: static,           type: "costmap_2d::StaticLayer"}
+                - {name: dynamic,           type: "costmap_2d::StaticLayer"}
+                - {name: explore_boundary, type: "frontier_exploration::BoundedExploreLayer"}
+                #Can disable sensor layer if gmapping is fast enough to update scans
+                - {name: sensor,           type: "costmap_2d::ObstacleLayer"}
+                - {name: inflation,        type: "costmap_2d::InflationLayer"}
+                <!--- {name: voxel_layer,      type: "costmap_2d::VoxelLayer"}-->
+
+            static:
+                #Can pull data from gmapping, map_server or a non-rolling costmap
+                #map_topic: /map
+                map_topic: /static_obstacle_map_ref
+                #map_topic: move_base/global_costmap/costmap
+                subscribe_to_updates: true
+            dynamic:
+                #Can pull data from gmapping, map_server or a non-rolling costmap
+                #map_topic: /map
+                map_topic: /dynamic_obstacle_map
+                #map_topic: move_base/global_costmap/costmap
+                subscribe_to_updates: true
+
+            explore_boundary:
+                resize_to_boundary: true
+                frontier_travel_point: centroid
+                #set to false for gmapping, true if re-exploring a known area
+                explore_clear_space: true
+                #explore_clear_space: false
+
+            <!--voxel_layer:-->
+                <!--enabled: true-->
+                <!--origin_z: 0.0-->
+                <!--z_resolution: 0.05-->
+                <!--z_voxels: 10-->
+                <!--unknown_threshold: 0-->
+                <!--#mark_threshold: 2-->
+                <!--publish_voxel_map: true-->
+                <!--combination_method: 1-->
+                <!--observation_sources: output_points-->
+                <!--output_points:-->
+                <!--data_type: PointCloud2-->
+                <!--topic: /hsrb/head_rgbd_sensor/depth_registered/rectified_points-->
+                <!--marking: true-->
+                <!--clearing: true-->
+                <!--obstacle_range: 1.90-->
+                <!--raytrace_range: 2.00-->
+                <!--min_obstacle_height: 0.00-->
+                <!--max_obstacle_height: 3.00-->
+                <!--mark_threshold: 3-->
+                <!--observation_persistence: 2.0-->
+
+            sensor:
+                observation_sources: laser
+                laser: {data_type: LaserScan, clearing: true, marking: true, topic: $(arg sensor_topic), inf_is_valid: true, raytrace_range: $(arg sensor_range), obstacle_range: $(arg sensor_range)}
+                #laser: {data_type: LaserScan, clearing: true, marking: true, topic: scan, inf_is_valid: true, raytrace_range: $(arg sensor_range), obstacle_range: $(arg sensor_range)}
+
+            inflation:
+                inflation_radius: 0.1
+      </rosparam>
+    </node>
+
+</launch>

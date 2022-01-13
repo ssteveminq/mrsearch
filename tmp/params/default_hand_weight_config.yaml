@@ -1,0 +1,5 @@
+center_of_gravity: [0.0003466239981993763, 0.0007752182576497538, -0.03736211428930467]
+gravity_vector: [0.0, 0.0, -9.80665]
+origin_frame: hsrb/base_link
+target_frame: hsrb/wrist_ft_sensor_frame
+weight: 0.6153781054307378
