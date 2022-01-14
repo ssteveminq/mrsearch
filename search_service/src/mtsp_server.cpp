@@ -642,27 +642,7 @@ void Idx2Globalpose(int idx, std::vector<double>& global_coord, const nav_msgs::
           goal_sampling_frontiers(agent1_gpose, goals_agent1, idx);
        
        }
-
-       //nav_msgs::GetMultiPlan srv_;
-       //srv_.request.start = startpose_agent1;
-       //srv_.request.goals= goals_agent1;
-       //std::cout<<"startpose_agent1: "<<startpose_agent1<<std::endl;
-       //std::cout<<"startpose_agent1"<<std::endl;
-       //std::cout<<"x: "<< startpose_agent1.pose.position.x<<", y: "<<startpose_agent1.pose.position.y<<std::endl;
-       //std::cout<<"-------------------------"<<std::endl;
-       //std::cout<<"size of goals: "<<goals_agent1.size()<<std::endl;
-
-       //if(planner_srv_client_single.call(srv_))
-       //{
-          //ROS_INFO("get MultiPlan service finished!!");
-          //path_agent1= srv_.response.multiplan.poses;
-          //return true;
-       //}
-       //else
-       //{
-           //ROS_WARN("Failed to call service multiplan");
-           //return false;
-       //}
+     
     }
 
 

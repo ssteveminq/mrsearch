@@ -1330,8 +1330,6 @@ std::vector<frontier_exploration::Frontier> prediction_manager::Unknown_search(g
             if(isNewUnknown(nbr, visited_flag))
             {
                 frontier_exploration::Frontier new_frontier = buildNewUnknown(nbr, pos, visited_flag);
-                //new_frontier, visited, last_idx= buildnewUnknownfrontier(n_idx, pmap, visited, param_map )
-                //idx_set.push_back(nbr);
                 bfs.push(nbr);
                 unknowns_list.push_back(new_frontier);
             }
