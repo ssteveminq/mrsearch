@@ -17,13 +17,15 @@ sudo apt-get install ros-melodic-geometry2
 ### Parameters
  - Change some parameters in search_service/launch/mtsp_search.launch
  -- You have to manually set the repo for "dir_path". 
-```
+
 
 #Simulation
- - roslaunch tmp multi_spot_ahg.launch
- - roslaunch search_service mtsp_search.launch
- - rosrun search_service multisearch_action_client.py
+```
+roslaunch tmp multi_spot_ahg.launch
+roslaunch search_service mtsp_search.launch
+rosrun search_service multisearch_action_client.py
+```
  
-## Real Single Search Robot Experimeint
+
 
 
