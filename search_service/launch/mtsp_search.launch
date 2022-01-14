@@ -13,6 +13,7 @@
     <arg name="max_y" default="10.0"/>
     <arg name="min_y" default="-10"/>
     <arg name="num_agents" default="2"/>
+    <arg name="dir_path" default="/home/mk/data"/>
 
     <param name="MAX_X" value="$(arg max_x)"/>
     <param name="MAX_Y" value="$(arg max_y)"/>
@@ -25,9 +26,11 @@
     <param name="AGENT2_MAP_TOPIC" value="$(arg agent2_map_topic)"/>
     <param name="AGENT3_MAP_TOPIC" value="$(arg agent3_map_topic)"/>
     <param name="NUM_AGENT" value="$(arg num_agents)"/>
+    <param name="DIR_PATH" value="$(arg num_agents)"/>
 
     <node name="scaled_map_converter" pkg="search_service" type="scaled_map_converter" output="screen"/>
     <node name="multisearch_action" pkg="search_service" type="mtsp_server" output="screen"/>
     <node name="getunknowns" pkg="visual_perception" type="prediction_server" output="screen"/>
+    <node name="tsp_solve_action" pkg="search_service" type="tsp_server" output="screen"/>
 
 </launch>

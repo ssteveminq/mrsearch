@@ -28,10 +28,12 @@
   </group>
 
 
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
+
+  <!-- Frist Agent -->
   <arg name="spot_namespace"  default="spot"/>
   <group ns ="$(arg spot_namespace)">
       <param name="robot_description" command="$(find xacro)/xacro --inorder $(find spot_description)/urdf/spot.urdf.xacro"/>
-
 
   <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
@@ -46,8 +48,6 @@
       <arg name="tf_prefix" value="$(arg spot_namespace)"/>
   </include>
 
-  <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find spot_navigation)/maps/ahg_map.pgm 0.05"/>-->
-
 
  <include file="$(find tmp)/launch/amcl_diff.launch">
       </include>
@@ -61,12 +61,8 @@
  </node>
   </group>
 
- <!--<include file="$(find tmp)/launch/amcl_diff.launch">-->
-          <!--<arg name="namespace" value="$(arg spot_namespace)" />-->
 
-
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
-
+  <!-- Second Agent -->
   <arg name="spot2_namespace"  default="spot2"/>
   <group ns ="$(arg spot2_namespace)">
     <param name="robot_description" command="$(find xacro)/xacro --inorder $(find spot_description)/urdf/spot.urdf.xacro"/>
@@ -97,6 +93,6 @@
  <include file="$(find tmp)/launch/amcl_diff2.launch"/>
   </group>
 
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find tmp)/config/a1.rviz" if="$(arg rviz)"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find tmp)/config/spot.rviz" if="$(arg rviz)"/>
 
 </launch>
