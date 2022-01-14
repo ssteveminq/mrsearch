@@ -20,9 +20,16 @@ sudo apt-get install ros-melodic-geometry2
 
 
 #Simulation
+- Setup the Gazebo world with two spots 
 ```
 roslaunch tmp multi_spot_ahg.launch
+```
+- Run the nodes for multi robot search (Server)
+```
 roslaunch search_service mtsp_search.launch
+```
+- Run action client for multisearch (Client)
+``` 
 rosrun search_service multisearch_action_client.py
 ```
  
