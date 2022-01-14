@@ -18,7 +18,7 @@ class tspmanager(object):
         self._action_name=name
         self.pathpub1=rospy.Publisher('goal_agent1',Path,queue_size=10)
         self.pathpub2=rospy.Publisher('goal_agent2',Path,queue_size=10)
-        self.pathpub3=rospy.Publisher('goal_agent3',Path,queue_size=10)
+        # self.pathpub3=rospy.Publisher('goal_agent3',Path,queue_size=10)
 
         self.path_msg= Path()
         self.path_msg2= Path()
@@ -31,11 +31,10 @@ class tspmanager(object):
         self._as.start()
         rospy.loginfo("tsp_solve_action_server started")
         # rospy.spin()
-        self.num_agent=3
+        self.num_agent=2
         self.starter()
 
-        '''
-        dir_path="/home/amrl/data"
+        dir_path="/home/mk/data"
         file_name =dir_path+"/cluster_sol.csv"
         file_name2 =dir_path+"/cluster_con.csv"
         print("file_name", file_name)
@@ -78,7 +77,6 @@ class tspmanager(object):
             tsp_paths.append(best_tsppath)
         print("tsp_paths", tsp_paths)
         self.sendpath(tsp_paths)
-        '''
         # while not rospy.is_shutdown():
             # self.pathpub1.publish(self.path_msg)
             # self.pathpub2.publish(self.path_msg2)
@@ -91,7 +89,7 @@ class tspmanager(object):
         # dir_path = os.path.dirname(os.path.realpath(__file__))
         # print("dir_path", dir_path)
         # dir_path=dir_path[:-7]
-        dir_path="/home/amrl/data"
+        dir_path="/home/mk/data"
         file_name =dir_path+"/cluster_sol.csv"
         file_name2 =dir_path+"/cluster_con.csv"
         print("file_name", file_name)
@@ -167,22 +165,16 @@ class tspmanager(object):
             self.path_msg2.poses.append(tmp_pose)
         
         # path_msg3= Path()
-        self.path_msg3.header.stamp = rospy.Time.now()
-        self.path_msg3.header.frame_id = "map"
-        for i in range(len(tsp_paths[2][0])):
-            tmp_pose = PoseStamped()
-            tmp_pose.header.frame_id="map"
-            tmp_pose.pose.position.x=self.cluster_goals[2][agent3_path[i]][0]
-            tmp_pose.pose.position.y=self.cluster_goals[2][agent3_path[i]][1]
-            tmp_pose.pose.orientation.w=1.0
-            self.path_msg3.poses.append(tmp_pose)
+        # self.path_msg3.header.stamp = rospy.Time.now()
+        # self.path_msg3.header.frame_id = "map"
+        # for i in range(len(tsp_paths[2][0])):
+            # tmp_pose = PoseStamped()
+            # tmp_pose.header.frame_id="map"
+            # tmp_pose.pose.position.x=self.cluster_goals[2][agent3_path[i]][0]
+            # tmp_pose.pose.position.y=self.cluster_goals[2][agent3_path[i]][1]
+            # tmp_pose.pose.orientation.w=1.0
+            # self.path_msg3.poses.append(tmp_pose)
 
-        '''
-        # self.pathpub1.publish(self.path_msg)
-        #self.pathpub2.publish(self.path_msg2)
-        #self.pathpub3.publish(self.path_msg3)
-        # if action_state == GoalStatus.SUCCEEDED:
-            # rospy.loginfo("Navigation Succeeded")
     def starter(self,wait=0.0):
         # make sure the cont0roller is running
         while not rospy.is_shutdown():
@@ -190,6 +182,7 @@ class tspmanager(object):
             self.pathpub2.publish(self.path_msg2)
             # self.pathpub3.publish(self.path_msg3)
             rospy.sleep(4.0)
+
           
 if __name__ == '__main__':
     rospy.init_node('tsp_solve_action')

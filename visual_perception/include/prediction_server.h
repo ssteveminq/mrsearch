@@ -93,7 +93,7 @@ public:
   void publish_searchmap();
   void publish_human_candidates();
   void global_pose_a1_callback(const geometry_msgs::PoseStamped::ConstPtr& msg);
-  void global_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& msg);
+  void global_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
   void human_poses_callback(const geometry_msgs::PoseArray::ConstPtr& message);
   void target_poses_callback(const geometry_msgs::PoseArray::ConstPtr& message);
   void scaled_static_map_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg);

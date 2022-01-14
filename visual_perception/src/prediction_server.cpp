@@ -53,7 +53,7 @@ prediction_manager::prediction_manager(std::string name):as_(nh_, name, boost::b
   unknown_posearray_pub= nh_.advertise<geometry_msgs::PoseArray>("/unknown_poses", 10, true);
 
   searchmap_sub =nh_.subscribe<nav_msgs::OccupancyGrid>("/search_map", 10, &prediction_manager::searchmap_callback,this);
-  globalpose_sub=nh_.subscribe<geometry_msgs::PoseStamped>(agent1_pose_topic,10,&prediction_manager::global_pose_callback,this);
+  globalpose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent1_pose_topic,10,&prediction_manager::global_pose_callback,this);
 
 
   as_.start();
@@ -362,11 +362,11 @@ void prediction_manager::global_pose_a1_callback(const geometry_msgs::PoseStampe
 
 }
 //
-void prediction_manager::global_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
+void prediction_manager::global_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
 {
-   global_pose[0]=msg->pose.position.x;
-   global_pose[1]=msg->pose.position.y;
-   global_pose[2]=tf2::getYaw(msg->pose.orientation);
+   global_pose[0]=msg->pose.pose.position.x;
+   global_pose[1]=msg->pose.pose.position.y;
+   global_pose[2]=tf2::getYaw(msg->pose.pose.orientation);
 }
 
 void prediction_manager::target_poses_callback(const geometry_msgs::PoseArray::ConstPtr& msg)

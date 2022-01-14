@@ -22,8 +22,8 @@
 #include <boost/thread/thread.hpp>
 #include <std_msgs/Bool.h>
 #include <nav_msgs/GetPlan.h>
-#include <nav_msgs/GetMultiMultiPlan.h>
-#include <nav_msgs/GetMultiPlan.h>
+//#include <nav_msgs/GetMultiMultiPlan.h>
+//#include <nav_msgs/GetMultiPlan.h>
 #include <search_service/MultiSearchAction.h>
 #include <search_service/SearchAction.h>
 #include <actionlib/server/simple_action_server.h>
@@ -220,7 +220,7 @@ public:
     //search_goal2_pub=nh_.advertise<geometry_msgs::PoseStamped>("/search_goal2",50,true);
 
     visual_marker_pub= nh_.advertise<visualization_msgs::MarkerArray>("clusters", 5);
-    planner_srv_client= nh_.serviceClient<nav_msgs::GetMultiMultiPlan>("/planner/planner/make_multimultiplan");
+    //planner_srv_client= nh_.serviceClient<nav_msgs::GetMultiMultiPlan>("/planner/planner/make_multimultiplan");
     //planner_srv_client_single= nh_.serviceClient<nav_msgs::GetMultiPlan>("/planner/planner/make_multiplan");
     //
     
@@ -755,26 +755,26 @@ void Idx2Globalpose(int idx, std::vector<double>& global_coord, const nav_msgs::
        
        }
 
-       nav_msgs::GetMultiPlan srv_;
-       srv_.request.start = startpose_agent1;
-       srv_.request.goals= goals_agent1;
+       //nav_msgs::GetMultiPlan srv_;
+       //srv_.request.start = startpose_agent1;
+       //srv_.request.goals= goals_agent1;
        //std::cout<<"startpose_agent1: "<<startpose_agent1<<std::endl;
-       std::cout<<"startpose_agent1"<<std::endl;
-       std::cout<<"x: "<< startpose_agent1.pose.position.x<<", y: "<<startpose_agent1.pose.position.y<<std::endl;
-       std::cout<<"-------------------------"<<std::endl;
-       std::cout<<"size of goals: "<<goals_agent1.size()<<std::endl;
+       //std::cout<<"startpose_agent1"<<std::endl;
+       //std::cout<<"x: "<< startpose_agent1.pose.position.x<<", y: "<<startpose_agent1.pose.position.y<<std::endl;
+       //std::cout<<"-------------------------"<<std::endl;
+       //std::cout<<"size of goals: "<<goals_agent1.size()<<std::endl;
 
-       if(planner_srv_client_single.call(srv_))
-       {
-          ROS_INFO("get MultiPlan service finished!!");
-          path_agent1= srv_.response.multiplan.poses;
-          return true;
-       }
-       else
-       {
-           ROS_WARN("Failed to call service multiplan");
-           return false;
-       }
+       //if(planner_srv_client_single.call(srv_))
+       //{
+          //ROS_INFO("get MultiPlan service finished!!");
+          //path_agent1= srv_.response.multiplan.poses;
+          //return true;
+       //}
+       //else
+       //{
+           //ROS_WARN("Failed to call service multiplan");
+           //return false;
+       //}
     }
 
 
@@ -829,35 +829,35 @@ void Idx2Globalpose(int idx, std::vector<double>& global_coord, const nav_msgs::
             goal_sampling_frontiers(agent2_gpose, goals_agent2,minidx);
        }
 
-       nav_msgs::GetMultiMultiPlan srv_;
-       srv_.request.start = startpose_agent1;
-       srv_.request.start2 = startpose_agent2;
-       srv_.request.goals= goals_agent1;
-       srv_.request.goals2 = goals_agent2;
-       std::cout<<"startpose_agent1"<<std::endl;
-       std::cout<<"x: "<< startpose_agent1.pose.position.x<<", y: "<<startpose_agent1.pose.position.y<<std::endl;
-       std::cout<<"size of goals: "<<goals_agent1.size()<<std::endl;
-       std::cout<<"-------------------------"<<std::endl;
-       std::cout<<"startpose_agent2"<<std::endl;
-       std::cout<<"x: "<< startpose_agent2.pose.position.x<<", y: "<<startpose_agent2.pose.position.y<<std::endl;
-       std::cout<<"size of goals: "<<goals_agent2.size()<<std::endl;
-       std::cout<<"-------------------------"<<std::endl;
+       //nav_msgs::GetMultiMultiPlan srv_;
+       //srv_.request.start = startpose_agent1;
+       //srv_.request.start2 = startpose_agent2;
+       //srv_.request.goals= goals_agent1;
+       //srv_.request.goals2 = goals_agent2;
+       //std::cout<<"startpose_agent1"<<std::endl;
+       //std::cout<<"x: "<< startpose_agent1.pose.position.x<<", y: "<<startpose_agent1.pose.position.y<<std::endl;
+       //std::cout<<"size of goals: "<<goals_agent1.size()<<std::endl;
+       //std::cout<<"-------------------------"<<std::endl;
+       //std::cout<<"startpose_agent2"<<std::endl;
+       //std::cout<<"x: "<< startpose_agent2.pose.position.x<<", y: "<<startpose_agent2.pose.position.y<<std::endl;
+       //std::cout<<"size of goals: "<<goals_agent2.size()<<std::endl;
+       //std::cout<<"-------------------------"<<std::endl;
 
 
 
-       if(planner_srv_client.call(srv_))
-       {
-          ROS_INFO("get MultiMultiPlan service finished!!");
-          ROS_INFO("path1 size: %d , path2 size: %d", srv_.response.multiplan.poses.size(), srv_.response.multiplan2.poses.size());
-          path_agent1= srv_.response.multiplan.poses;
-          path_agent2= srv_.response.multiplan2.poses;
-          return true;
-       }
-       else
-       {
-           ROS_WARN("Failed to call service multiplan");
-           return false;
-       }
+       //if(planner_srv_client.call(srv_))
+       //{
+          //ROS_INFO("get MultiMultiPlan service finished!!");
+          //ROS_INFO("path1 size: %d , path2 size: %d", srv_.response.multiplan.poses.size(), srv_.response.multiplan2.poses.size());
+          //path_agent1= srv_.response.multiplan.poses;
+          //path_agent2= srv_.response.multiplan2.poses;
+          //return true;
+       //}
+       //else
+       //{
+           //ROS_WARN("Failed to call service multiplan");
+           //return false;
+       //}
     }
 
 

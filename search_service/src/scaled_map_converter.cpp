@@ -30,6 +30,11 @@ public:
         m_node.param("MIN_X", MIN_X, {-15.0});
         m_node.param("MAX_Y", MAX_Y, {20.0});
         m_node.param("MIN_Y", MIN_Y, {-30.0});
+        m_node.getParam("MAX_X", MAX_X);
+        m_node.getParam("MIN_X", MIN_X);
+        m_node.getParam("MAX_Y", MAX_Y);
+        m_node.getParam("MIN_Y", MIN_Y);
+
         m_node.param("XY_RES_SCALED", XY_RES_SCALED, {0.5});
 
         m_params= new Map_params(MAX_X, MAX_Y, MIN_X, MIN_Y, XY_RES_SCALED);

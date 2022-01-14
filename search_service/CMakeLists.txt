@@ -72,13 +72,9 @@ include_directories(
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 
-add_executable(tf_odom_switcher src/hsrb_odom_switcher.cpp ${SOURCES})
-target_link_libraries(tf_odom_switcher ${catkin_LIBRARIES} ${PCL_LIBRARIES})
-add_dependencies(tf_odom_switcher ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
-
-add_executable(a1_odom_switcher src/a1_odom_switcher.cpp ${SOURCES})
-target_link_libraries(a1_odom_switcher ${catkin_LIBRARIES})
-add_dependencies(a1_odom_switcher ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
+#add_executable(tf_odom_switcher src/hsrb_odom_switcher.cpp ${SOURCES})
+#target_link_libraries(tf_odom_switcher ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+#add_dependencies(tf_odom_switcher ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 
 add_executable(mtsp_server src/mtsp_server.cpp src/cluster.cpp
     src/map_util.cpp ${SOURCES})
@@ -94,26 +90,9 @@ add_executable(scaled_map_converter src/scaled_map_converter.cpp
 target_link_libraries(scaled_map_converter ${catkin_LIBRARIES})
 add_dependencies(scaled_map_converter ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 
-add_executable(tf_odom_publisher src/hsrb_odom_publisher.cpp ${SOURCES})
-target_link_libraries(tf_odom_publisher ${catkin_LIBRARIES} ${PCL_LIBRARIES})
-add_dependencies(tf_odom_publisher ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
-
-add_executable(multisearch_server src/multisearch_server.cpp ${SOURCES})
-target_link_libraries(multisearch_server ${catkin_LIBRARIES})
-add_dependencies(multisearch_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
-
-add_executable(singlesearch_server src/stsp_server.cpp src/cluster.cpp
-    src/map_util.cpp ${SOURCES})
-target_link_libraries(singlesearch_server ${catkin_LIBRARIES})
-add_dependencies(singlesearch_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
-
-add_executable(singlesearch_server_hsr src/singlesearch_server_hsr.cpp ${SOURCES})
-target_link_libraries(singlesearch_server_hsr ${catkin_LIBRARIES})
-add_dependencies(singlesearch_server_hsr ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
-
-add_executable(spline_test src/spline_test.cpp ${SOURCES})
-target_link_libraries(spline_test ${catkin_LIBRARIES} )
-add_dependencies(spline_test ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
+#add_executable(tf_odom_publisher src/hsrb_odom_publisher.cpp ${SOURCES})
+#target_link_libraries(tf_odom_publisher ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+#add_dependencies(tf_odom_publisher ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 
  #catkin_python_setup()
 install(DIRECTORY scripts/

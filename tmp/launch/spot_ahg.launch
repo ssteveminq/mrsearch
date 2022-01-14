@@ -80,22 +80,22 @@
   </group>
 
 
-<group ns ="mk">
-    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-    <rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
-    <rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
-    <rosparam file="$(find tmp)/config/local_costmap_params.yaml" command="load" />
-    <rosparam file="$(find tmp)/config/global_costmap_params.yaml" command="load" /> 
-    <rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />
-    <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
- </node>
- <include file="$(find tmp)/launch/amcl_diff.launch" />
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
+<!--<group ns ="mk">-->
+    <!--<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">-->
+    <!--<rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> -->
+    <!--<rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />-->
+    <!--<rosparam file="$(find tmp)/config/local_costmap_params.yaml" command="load" />-->
+    <!--<rosparam file="$(find tmp)/config/global_costmap_params.yaml" command="load" /> -->
+    <!--<rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />-->
+    <!--<param name="base_global_planner" value="global_planner/GlobalPlanner"/>-->
+ <!--</node>-->
+ <!--<include file="$(find tmp)/launch/amcl_diff.launch" />-->
+  <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>-->
 
-  </group>
+  <!--</group>-->
 
-  <node name="scaled_map_converter" pkg="navi_manager" type="global_planner" output="screen"/>
-  <node pkg="human_filter" type="srs_leg_detector" name="srs_leg_detector_front" args="scan:=spot/scan $(find human_filter)/config/trained_leg_detector.yaml front" output="screen" />
+  <!--<node name="scaled_map_converter" pkg="navi_manager" type="global_planner" output="screen"/>-->
+  <!--<node pkg="human_filter" type="srs_leg_detector" name="srs_leg_detector_front" args="scan:=spot/scan $(find human_filter)/config/trained_leg_detector.yaml front" output="screen" />-->
   <!--<node pkg="visual_perception" type="visible_manager" name="visible_region" output="screen" />-->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find tmp)/config/spot.rviz" if="$(arg rviz)"/>
 

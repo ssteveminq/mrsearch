@@ -6,7 +6,7 @@
   <arg name="rviz" default="true"/>
   <arg name="gazebo_visualization" default="false" />
   <arg name="paused" default="true" />
-  <arg name="spot_x" default="0.0"/>
+  <arg name="spot_x" default=".0"/>
   <arg name="spot_y" default ="-2.0"/> 
   <arg name="spot2_x" default="0.0"/>
   <arg name="spot2_y" default ="2.0"/> 
@@ -17,8 +17,6 @@
   <!--<arg name="map" default="$(find spot_navigation)/maps/ahg_map.yaml" />-->
   <param name="/use_sim_time" value="true"/>
   <arg name="param_file" default="$(optenv HOME ~)/.ros/params.yaml" />
-  <!--<arg name="world_name" default="worlds/empty.world" />-->
-  <!--<param name="/tmp" command="rosrun tmc_roslaunch_tools symboliclink $(arg param_file) $(find hsrb_common_launch)/params/empty_params.yaml" />-->
 
   <rosparam file="$(find search_service)/config/ahg.yaml"/>
 
@@ -85,12 +83,7 @@
       <arg name="tf_prefix" value="$(arg spot2_namespace)"/>
   </include>
 
-  <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find spot_navigation)/maps/ahg_map.pgm 0.05"/>-->
   <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
-
-  <!--<node name="costmap_node" pkg="costmap_2d" type="costmap_2d_node" output="screen">-->
-    <!--<rosparam file="$(find spot_navigation)/config/spot2_params.yaml" command="load" ns="costmap" />-->
-  <!--</node>-->
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
     <rosparam file="$(find tmp)/config/costmap_common_params_spot2.yaml" command="load" ns="global_costmap" /> 
@@ -104,12 +97,6 @@
  <include file="$(find tmp)/launch/amcl_diff2.launch"/>
   </group>
 
-  <!--<node name ="map_to_odom" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map spot/odom 10"/>-->
-  <!--<node name ="map_to_odom2" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map spot/odom2 10"/>-->
-
-  <!--<node name="scaled_map_converter" pkg="navi_manager" type="global_planner" output="screen"/>-->
-  <!--<node pkg="human_filter" type="srs_leg_detector" name="srs_leg_detector_front" args="scan:=hsrb/base_scan $(find human_filter)/config/trained_leg_detector.yaml front" output="screen" />-->
-  <!--<node pkg="visual_perception" type="visible_manager" name="visible_region" output="screen" />-->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find tmp)/config/a1.rviz" if="$(arg rviz)"/>
 
 </launch>
