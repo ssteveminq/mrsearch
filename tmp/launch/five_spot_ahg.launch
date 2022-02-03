@@ -12,6 +12,11 @@
   <arg name="spot2_y" default ="2.0"/> 
   <arg name="spot3_x" default="10.0"/>
   <arg name="spot3_y" default ="4.0"/> 
+  <arg name="spot4_x" default ="-12.0"/> 
+  <arg name="spot4_y" default ="5.0"/> 
+  <arg name="spot5_x" default="10.0"/>
+  <arg name="spot5_y" default ="-10.0"/> 
+
 
 
  <arg name="ahg_sim" default="true" />
@@ -133,6 +138,74 @@
 
  <include file="$(find tmp)/launch/amcl_diff3.launch"/>
   </group>
+
+
+
+  <arg name="spot_namespace4"  default="spot4"/>
+  <group ns ="$(arg spot_namespace4)">
+      <param name="robot_description" command="$(find xacro)/xacro --inorder $(find spot_description)/urdf/spot.urdf.xacro"/>
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <rosparam param="source_list">["/spot/joint_states"]</rosparam>
+  </node>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+      <param name="tf_prefix" type="string" value="$(arg spot_namespace)" />
+  </node>
+  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model spot -x $(arg spot4_x) -y $(arg spot4_y) -R 0 -P 0 -Y 0 " output="screen"/>
+
+  <include file="$(find spot_gazebo)/launch/velodyne_2d.launch">
+      <arg name="tf_prefix" value="$(arg spot_namespace)"/>
+  </include>
+
+  <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find spot_navigation)/maps/ahg_map.pgm 0.05"/>-->
+
+
+ <include file="$(find tmp)/launch/amcl_diff.launch">
+      </include>
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <!--<rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> -->
+    <!--<rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />-->
+    <rosparam file="$(find tmp)/config/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find tmp)/config/global_costmap_params.yaml" command="load" /> 
+    <rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />
+    <!--<param name="base_global_planner" value="global_planner/GlobalPlanner"/>-->
+ </node>
+  </group>
+
+  <arg name="spot_namespace5"  default="spot5"/>
+  <group ns ="$(arg spot_namespace5)">
+      <param name="robot_description" command="$(find xacro)/xacro --inorder $(find spot_description)/urdf/spot.urdf.xacro"/>
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <rosparam param="source_list">["/spot/joint_states"]</rosparam>
+  </node>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+      <param name="tf_prefix" type="string" value="$(arg spot_namespace)" />
+  </node>
+  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model spot -x $(arg spot5_x) -y $(arg spot5_y) -R 0 -P 0 -Y 0 " output="screen"/>
+
+  <include file="$(find spot_gazebo)/launch/velodyne_2d.launch">
+      <arg name="tf_prefix" value="$(arg spot_namespace)"/>
+  </include>
+
+  <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find spot_navigation)/maps/ahg_map.pgm 0.05"/>-->
+
+
+ <include file="$(find tmp)/launch/amcl_diff.launch">
+      </include>
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <!--<rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> -->
+    <!--<rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />-->
+    <rosparam file="$(find tmp)/config/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find tmp)/config/global_costmap_params.yaml" command="load" /> 
+    <rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />
+    <!--<param name="base_global_planner" value="global_planner/GlobalPlanner"/>-->
+ </node>
+  </group>
+
+
 
 
 

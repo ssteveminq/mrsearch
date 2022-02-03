@@ -39,12 +39,10 @@
 #include <fstream>
 
 #define MAP_RES 0.05
-//#define M_PI 3.141592
 #define NUM_SUBS 3
 #define Dist_History 2.0
 #define Max_Dist 30.0
 #define Dist_GOAL 4.0
-//#define RAND_MAX 1
 #define RAND_RANGE 1.0
 #define L_SOCC 4.595 // np.log(0.99/0.01)
 #define L_DOCC 2.19 // np.log(0.9/0.1)
@@ -81,7 +79,6 @@ public:
 
 
 public:
-    //precastDB():px_(0.0),py_(0.0),dist_(0,0),angle_(0.0),ix(0),iy(0){}
     precastDB()
     {
         px=0.0;
@@ -95,7 +92,6 @@ public:
 
     precastDB(double px_, double py_, double dist_, double angle_, int ix_, int iy_)
     {
-    
         px=px_;
         py=py_;
         dist=dist_;
@@ -103,7 +99,6 @@ public:
         ix=ix_;
         ix=iy_;
     }
-
 
 };
 
@@ -138,7 +133,6 @@ class Map_params
         double xw;
         double yw;
         double sensor_range;
-        
 
 };
 
@@ -176,8 +170,6 @@ public:
      //
      //initially the entropy can be computed as #of cells in serchmap * uncertainty
      total_entropy=search_map.data.size()*CELL_MAX_ENTROPY;
-     //self.srv_client=rospy.ServiceProxy('planner/planner/make_multimultiplan', GetMultiMultiPlan)
-     //self.tolerance=0.5
 
      //publishers
     search_map_pub=nh_.advertise<nav_msgs::OccupancyGrid>("/search_map",50,true);
@@ -185,11 +177,9 @@ public:
     agent1_move_cancel_pub=nh_.advertise<actionlib_msgs::GoalID>("/localnavi_server/cancel",50,true);
     search_entropy_pub=nh_.advertise<std_msgs::Float32>("/search_entropy",50,true);
     search_goal2_pub=nh_.advertise<geometry_msgs::PoseStamped>("/search_goal2",50,true);
-
     visual_marker_pub= nh_.advertise<visualization_msgs::MarkerArray>("clusters", 5);
 
-    planner_srv_client= nh_.serviceClient<nav_msgs::GetMultiMultiPlan>("/planner/planner/make_multimultiplan");
-    //planner_srv_client_single= nh_.serviceClient<nav_msgs::GetMultiPlan>("/planner/planner/make_multiplan");
+    //planner_srv_client= nh_.serviceClient<nav_msgs::GetMultiMultiPlan>("/planner/planner/make_multimultiplan");
     
     //subscribers
     global_map_sub = nh_.subscribe<nav_msgs::OccupancyGrid>("/scaled_static_map", 1, &MultiSearchManager::global_map_callback, this);
@@ -1577,42 +1567,6 @@ void LoadPositionfromConfig(ros::NodeHandle n, std::string input_locations)
 
 
 
-    //void replanning(int& goal_idx)
-    //{
-        //nav_msgs::GetPlan plan_srv;
-        //plan_srv.request.start=m_pose;
-        //plan_srv.request.goal=m_goalpose;
-        //plan_srv.request.tolerance=0.5;
-        //double total_distance_to_goal=sqrt(pow((m_pose.pose.position.x-m_goalpose.pose.position.x),2)+pow((m_pose.pose.position.y-m_goalpose.pose.position.y),2));
-        //int num_subgoals=NUM_SUBS;
-        //if(total_distance_to_goal>10.0)
-            //num_subgoals=NUM_SUBS+int((total_distance_to_goal-10.0)/2.0);
-        //else if(total_distance_to_goal<5.0)
-            //num_subgoals=1;
-
-        //if(planner_srv_client.call(plan_srv))
-        //{
-            //subgoals.poses.clear();
-            //int path_length =plan_srv.response.plan.poses.size();
-            //int path_const = floor(path_length/num_subgoals);
-            //subgoals.poses.clear();
-            //subgoals.poses.push_back(plan_srv.response.plan.poses[0].pose);
-            //for(int i(0);i<(num_subgoals-1);i++)
-            //{
-                //int pose_idx=(i+1)*path_const;
-                //subgoals.poses.push_back(plan_srv.response.plan.poses[pose_idx].pose);
-            //}
-            //subgoals.poses.push_back(plan_srv.response.plan.poses[path_length-1].pose);
-            //goal_idx=0;
-            //ROS_INFO("Replanning Succeeded! ---Subgoal--Size: %d", subgoals.poses.size());
-
-        //}
-        //else{
-            //ROS_INFO("replanning failed");
-        //}
-
-
-    //}
    void parseparameters(ros::NodeHandle n)
   {
       std::string target_frame;

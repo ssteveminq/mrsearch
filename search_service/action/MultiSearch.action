@@ -1,9 +1,6 @@
 #goal definition
-bool start
 ---
 #result definition
-bool is_done
-geometry_msgs/PoseStamped goal
-geometry_msgs/PoseStamped goal2
+nav_msgs/Path[] paths
 ---
 #feedback

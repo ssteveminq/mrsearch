@@ -16,9 +16,6 @@ def mains():
     goal.start=True
     print("call search action client")
 
-    # client.send_goal(goal)
-    # client.wait_for_result()
-    # while not rospy.is_shutdown():
     rospy.loginfo("start action")
     client.send_goal(goal)
     client.wait_for_result()
