@@ -232,8 +232,8 @@ public:
      ROS_INFO("TSP_solve Server is running....!!");
      bool success = true;
 
-    double sleep_rate= 2.0;
-    ros::Rate r(sleep_rate);
+    //double sleep_rate= 2.0;
+    //ros::Rate r(sleep_rate);
 
      //search_entropy = get_searchmap_entropy()/ total_entropy;
      //ROS_INFO("current_entropy: %.2lf", search_entropy)
@@ -246,6 +246,8 @@ public:
         return;
         // break;
       }
+
+
 
     while(ros::ok() && !as_.isPreemptRequested())
     {
@@ -268,19 +270,23 @@ public:
          {
             auto res_ = ac_.getResult();
             unknown_poses = res_->waypoints;
+            ROS_INFO("clustering");
             clustering(NUMAGENTS, dir_path);
             IsCalled=true;
-            sleep(2.0);
             search_service::TSPSolveGoal tspgoal;
+            //call TSP Solve Action
             ac_tsp.sendGoal(tspgoal);
-            bool finished_before_timeout_tsp = ac_tsp.waitForResult(ros::Duration(20.0));
+            bool finished_before_timeout_tsp = ac_tsp.waitForResult(ros::Duration(50.0));
             if(finished_before_timeout_tsp )
             {
                 ROS_INFO("Path will be published");
             }
+            else{
+            
+                ROS_INFO("get tsp solution");
+            }
          }
          else{
-         
              ROS_INFO("UnknwonSearch Ser is not responding");
          }
      }
@@ -490,9 +496,6 @@ void Idx2Globalpose(int idx, std::vector<double>& global_coord, const nav_msgs::
         //double reference_origin_x;
         //double reference_origin_y;
 
-        //reference_origin_x=inputmap_.info.origin.position.x;
-        //reference_origin_y=inputmap_.info.origin.position.y;
-
         double  temp_x  = _x-inputmap_.info.origin.position.x;
         double  temp_y = _y-inputmap_.info.origin.position.y;
 
@@ -581,7 +584,7 @@ void clustering(int n_agent, std::string file_path="/home/mk/data")
             weights.push_back(1.0);
         }
 
-        HCluster test_cluster(n_agent, xs,ys, Posevec, weights);
+       HCluster test_cluster(n_agent, xs,ys, Posevec, weights);
        for(size_t i(0);i<n_agent;i++)
         {
             test_cluster.get_labeled_x_y(i, agent_xs[i],agent_ys[i]);
@@ -604,7 +607,6 @@ void clustering(int n_agent, std::string file_path="/home/mk/data")
             outfile2<<i<<"\t"<< Posevec[i].position.x<<"\t"<<Posevec[i].position.y<<"\n";
         }
         outfile2.close();
-
         clustered=true;
 
     }
@@ -637,7 +639,6 @@ void clustering(int n_agent, std::string file_path="/home/mk/data")
         m.lifetime = ros::Duration(0);
         m.frame_locked = true;
 
-
     size_t id = 0;
     for(size_t i(0);i<n_agent;i++)
     {
@@ -668,7 +669,6 @@ void clustering(int n_agent, std::string file_path="/home/mk/data")
 
     }
     visual_marker_pub.publish(markers_msg);
-
     }
 }
 
