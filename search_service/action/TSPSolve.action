@@ -1,7 +1,11 @@
 #goal definition
 int32 num_agent
+geometry_msgs/PoseArray poses
+geometry_msgs/PoseArray[] clusters
 ---
 #result definition
+Header header
+nav_msgs/Path[] paths
 bool sucess
 ---
 #feedback

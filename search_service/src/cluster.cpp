@@ -18,7 +18,6 @@ HCluster::HCluster(int num_label_, vector<double>& xs, vector<double>& ys, vecto
             {
                 m_xs[i] = xs[i];
                 m_ys[i] = ys[i];
-            
             }
             m_labels.resize(num_data,0);
             m_centerx.resize(num_data,0.0);
@@ -42,29 +41,29 @@ HCluster::HCluster(int num_label_, vector<double>& xs, vector<double>& ys, vecto
         }
 
         //obstacles
-        //
-        
         //std::vector<double> w1;
         //w1.push_back(4);
         //w1.push_back(-4.5);
         //w1.push_back(4.5);
         //obstacle_map.insert({0,w1});
-        //std::vector<double> w2;
-        //w2.push_back(0.5);
-        //w2.push_back(-4.5);
-        //w2.push_back(4.5);
-        //obstacle_map.insert({0,w2});
-        //std::vector<double> w3;
-        //w3.push_back(-4.2);
-        //w3.push_back(-4.5);
-        //w3.push_back(4.5);
-        //obstacle_map.insert({0,w3});
+        //
+        std::vector<double> w2;
+        w2.push_back(9.5);
+        w2.push_back(-4.2);
+        w2.push_back(4.2);
+        obstacle_map.insert({1,w2});
+
+        std::vector<double> w3;
+        w3.push_back(-5.);
+        w3.push_back(-7.5);
+        w3.push_back(7.5);
+        obstacle_map.insert({0,w3});
 
         std::vector<double> w4;
-        w4.push_back(-10.0);
+        w4.push_back(4.0); //
         w4.push_back(-10.5);
-        w4.push_back(1.5);
-        obstacle_map.insert({1,w4});
+        w4.push_back(7.5);
+        obstacle_map.insert({0,w4});
 
         set_centers(states);
         run_clustering();
@@ -72,7 +71,6 @@ HCluster::HCluster(int num_label_, vector<double>& xs, vector<double>& ys, vecto
         {
             cout<<"(x,y) : "<<m_xs[i]<<", "<<m_ys[i]<<" , label: "<<m_labels[i]<<endl;
         }
-
 
 
 
@@ -176,8 +174,10 @@ bool HCluster::check_obstacles(double x1, double x2, double y1, double y2)
 {
     //check if there exist wall between two points
     ////wall extreme points 
-    //p0: min _wall from obstacle_map  0=> x(second[1], second[0])  1=> (second[0], second[1])
-    //p1: max _wall                    0=> x(second[2], second[0])  1=> (second[0], second[2])
+    //wall along x coordinate , [fix coordinate(y), x1, x2]
+    //wall along y coordinate , [fix coordinate(x), y1, y2]
+    //p0: min _wall from obstacle_map  0=> x(second[1], second[0])  1=> (second[2], second[0])
+    //p1: max _wall                    1=> x(second[0], second[1])  1=> (second[0], second[2])
     //p2: (x1,y1)
     //p3: (x2,y2)
 
@@ -185,23 +185,17 @@ bool HCluster::check_obstacles(double x1, double x2, double y1, double y2)
    bool collision=false;
    for(obiter; obiter!= obstacle_map.end(); obiter++)
    {
-   
        if(obiter->first==0)
        {
            if(get_line_intersection(obiter->second[1], obiter->second[0], obiter->second[2], obiter->second[0],
                    x1,y1,x2,y2))
                return true;
-       
        }
        else{
-       
            if(get_line_intersection(obiter->second[0], obiter->second[1], obiter->second[0], obiter->second[2],
                    x1,y1,x2,y2))
                return true;
-       
        }
-       
-   
    }
    return false;
 
@@ -244,7 +238,6 @@ double HCluster::update_weightedclusters()
 }
 void HCluster::run_clustering()
     {
-    
         double pre_cost = 10000.0;
         double cost=0.0;
         for(int i(0);i<MAX_LOOP;i++)

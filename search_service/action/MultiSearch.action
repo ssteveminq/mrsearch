@@ -2,5 +2,7 @@
 ---
 #result definition
 nav_msgs/Path[] paths
+float32 cur_entropy
 ---
 #feedback
+#float32 cur_entropy

@@ -1,15 +1,27 @@
 import sys
+# sys.path.remove('/usr/lib/python2.7/dist-packages')
+
+for path_ in sys.path:
+    sys.path.remove(path_)
+sys.path.append('/home/mk/anaconda3/envs/py27/lib/python2.7/dist-packages')
+sys.path.append('/home/mk/anaconda3/envs/py2/lib/python2.7/site-packages')
+sys.path.remove('/usr/lib/python2.7/dist-packages')
+
+# sys.path.append('/usr/lib/python2.7/dist-packages')
+print("sys.pth", sys.path)
 import numpy as np
+sys.path.append('/opt/ros/melodic/lib/python2.7/dist-packages')
+sys.path.append('/usr/lib/python2.7/dist-packages')
+# import matplotlib.pyplot as plt
 import random
 import math
-import matplotlib.pyplot as plt
 '''
 Genetical path finding
 Finds locally best ways from L service centers with [M0, M1, ..., ML] engineers
 through atms_number ATMs and back to their service center
 '''
 
-generations = 1500       # population's generations
+generations = 2000       # population's generations
 mut_1_prob = 0.4         # prob of replacing together two atms in combined path
 mut_2_prob = 0.6      # prob of reversing the sublist in combined path
 mut_3_prob = 0.8     # probability of changing the length of paths for engineers
@@ -36,7 +48,7 @@ ColorSet=['red', 'green', 'blue','yellow', 'black', 'cyan', 'green', 'blue','yel
 
 
 class tsp_manager:
-    def __init__(self, num_agents, points, starting_points, pop_size_=55):
+    def __init__(self, num_agents, points, starting_points, pop_size_=60):
     # def __init__(self):
         # self.atms_number = 20         # ATM quantity
         # self.service_centers = 2                # service centers quantity
@@ -264,15 +276,15 @@ class tsp_manager:
         else:
             # for v in range(self.service_centers):
                 # plt.scatter(self.points_locations[v, 0], self.points_locations[v, 1], c='r')
-            for v in range(self.atms_number):
-                plt.scatter(self.points_locations[v+self.service_centers, 0], self.points_locations[v+self.service_centers, 1], c=color_)
+            # for v in range(self.atms_number):
+                # plt.scatter(self.points_locations[v+self.service_centers, 0], self.points_locations[v+self.service_centers, 1], c=color_)
             for v in range(len(paths)):
                 if len(paths[v]) != 0:
                     path_locations = self.points_locations[self.service_centers:]
                     path_locations = path_locations[np.array(paths[v])]
                     path_locations = np.vstack((self.points_locations[self.engineers[v]], path_locations))
                     path_locations = np.vstack((path_locations, self.points_locations[self.engineers[v]]))
-                    plt.plot(path_locations[:, 0], path_locations[:, 1], color=color_)
+                    # plt.plot(path_locations[:, 0], path_locations[:, 1], color=color_)
 
             # plt.show()
             # plt.pause(0.0001)B
