@@ -13,11 +13,9 @@ sudo apt-get install ros-melodic-geometry2
 - https://github.com/ssteveminq/search_sim
 
 
-
 ### Parameters
  - Change some parameters in search_service/launch/mtsp_search.launch
- -- You have to manually set the repo for "dir_path". 
-
+ 
 
 #Simulation
 - Setup the Gazebo world with two spots 
@@ -33,6 +31,7 @@ roslaunch search_service mtsp_search.launch
 rosrun search_service multisearch_action_client.py
 ```
  
-
+## Documentation
+See [API wiki](https://github.com/ssteveminq/mrsearch/wiki/API)
 
 
