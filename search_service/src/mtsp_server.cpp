@@ -232,8 +232,8 @@ public:
      ROS_INFO("TSP_solve Server is running....!!");
      bool success = true;
 
-    //double sleep_rate= 2.0;
-    //ros::Rate r(sleep_rate);
+    double sleep_rate= 2.0;
+    ros::Rate r(sleep_rate);
 
      //search_entropy = get_searchmap_entropy()/ total_entropy;
      //ROS_INFO("current_entropy: %.2lf", search_entropy)
