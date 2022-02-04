@@ -14,11 +14,11 @@ sudo apt-get install ros-melodic-geometry2
 
 
 ### Parameters
- - Change some parameters in search_service/launch/mtsp_search.launch
+ - Configure launch parameters in search_service/launch/mtsp_search.launch
  
 
 #Simulation
-- Setup the Gazebo world with two spots 
+- Run the Gazebo world with two Spot quadrupeds
 ```
 roslaunch tmp multi_spot_ahg.launch
 ```
