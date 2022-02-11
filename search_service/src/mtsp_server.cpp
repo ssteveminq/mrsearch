@@ -13,6 +13,7 @@
 #include "geometry_msgs/PoseArray.h"
 #include "geometry_msgs/Point32.h"
 #include "geometry_msgs/Twist.h"
+#include "geometry_tools.h"
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Odometry.h>
@@ -215,7 +216,7 @@ public:
      shared_map= ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("/scaled_static_map",nh_);
      if(shared_map!= NULL){
          scaled_global_map= *shared_map;
-         crop_globalmap(*shared_map);
+         crop_globalmap(*shared_map, geometry_msgs::Polygon());
      }
      total_entropy-=occ_entropy;
      ROS_INFO("total_initial_entropy: %.2f",  total_entropy);
@@ -261,7 +262,7 @@ public:
      shared_map= ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("/scaled_static_map",nh_);
      if(shared_map!= NULL){
          scaled_global_map= *shared_map;
-         crop_globalmap(*shared_map);
+         crop_globalmap(*shared_map, goal->boundary.polygon);
      }
      total_entropy-=occ_entropy;
      ROS_INFO("total_initial_entropy: %.2f",  total_entropy);
@@ -539,7 +540,7 @@ double get_searchmap_entropy()
     return map_count*CELL_MAX_ENTROPY;
 }
 
-void crop_globalmap(const nav_msgs::OccupancyGrid global_map)
+void crop_globalmap(const nav_msgs::OccupancyGrid global_map, const geometry_msgs::Polygon _polygon)
 {
     //"Crop global_map-->fill search map with static obstacle "
     //searchmap info / globalmap_info
@@ -550,6 +551,7 @@ void crop_globalmap(const nav_msgs::OccupancyGrid global_map)
     int global_idx,search_idx =0;
 
     //iteration for search map to apply globalmap info 
+    geometry_msgs::Point tmp_pnt;
     for(int j(0); j< search_map.info.height;j++)
         for(int i(0); i< search_map.info.width;i++)
         {
@@ -565,10 +567,15 @@ void crop_globalmap(const nav_msgs::OccupancyGrid global_map)
                     count++;
             }
             else{
-            
                     search_map.data[search_idx]= 0.0;
-            
             }
+
+            tmp_pnt.x=px;
+            tmp_pnt.y=py;
+            if(!pointInPolygon(tmp_pnt, _polygon))
+                search_map.data[search_idx]=int(L_SOCC);
+
+
             //Update searchmap according to local measurement
             // if local_map is known (occ or free) and global_map is not occupied by static obstacle 
         }
