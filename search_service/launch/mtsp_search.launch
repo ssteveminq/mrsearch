@@ -32,5 +32,6 @@
     <node name="multisearch_action" pkg="search_service" type="mtsp_server" output="screen"/>
     <node name="getunknowns" pkg="visual_perception" type="prediction_server" output="screen"/>
     <node name="tsp_solve_action" pkg="search_service" type="tsp_server" output="screen"/>
+    <node name="polygon_client" pkg="search_service" type="plugin_client" output="screen"/>
 
 </launch>

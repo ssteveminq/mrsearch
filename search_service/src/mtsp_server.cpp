@@ -11,6 +11,7 @@
 #include "geometry_msgs/PointStamped.h"
 #include "geometry_msgs/PolygonStamped.h"
 #include "geometry_msgs/PoseArray.h"
+#include "geometry_msgs/Point32.h"
 #include "geometry_msgs/Twist.h"
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -189,6 +190,7 @@ public:
      agent1_move_cancel_pub=nh_.advertise<actionlib_msgs::GoalID>("/localnavi_server/cancel",50,true);
      search_entropy_pub=nh_.advertise<std_msgs::Float32>("/search_entropy",50,true);
      visual_marker_pub= nh_.advertise<visualization_msgs::MarkerArray>("clusters", 5);
+     polygon_pub = nh_.advertise<geometry_msgs::PolygonStamped>("current_polygon", 10, true);
 
      agent1_path_pub = nh_.advertise<nav_msgs::Path>("agent1_path", 50, true);
      agent2_path_pub = nh_.advertise<nav_msgs::Path>("agent2_path", 50, true);
@@ -263,6 +265,20 @@ public:
      }
      total_entropy-=occ_entropy;
      ROS_INFO("total_initial_entropy: %.2f",  total_entropy);
+     
+
+    polygon_.polygon.points.clear();
+    polygon_.header.frame_id="map";
+    geometry_msgs::Point32 tmp_pnt;
+    for (const auto & point : goal->boundary.polygon.points)
+      {
+         tmp_pnt.x = point.x;
+         tmp_pnt.y = point.y;
+         tmp_pnt.z = point.z;
+         polygon_.polygon.points.push_back(tmp_pnt);
+      }
+      
+    polygon_pub.publish(polygon_);
 
      search_map_pub.publish(search_map);
      result_region.success=true;
@@ -924,6 +940,7 @@ protected:
   ros::Publisher agent1_move_cancel_pub;
   ros::Publisher search_entropy_pub;
   ros::Publisher visual_marker_pub;
+  ros::Publisher polygon_pub;
   int direction_z;
 
   geometry_msgs::PoseStamped agent1_gpose;
@@ -948,6 +965,7 @@ protected:
   std::vector<double> agent3_pose;
 
   std::vector<nav_msgs::Path> agent_paths;
+  geometry_msgs::PolygonStamped polygon_;
 
   bool IsActive;
   bool IsCalled;
