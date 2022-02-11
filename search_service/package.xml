@@ -23,8 +23,8 @@
   <build_depend>nav_msgs</build_depend>  
   <build_depend>tf</build_depend>
   <build_depend>tf2_ros</build_depend>
-  <build_depend>visual_perception</build_depend>
   <build_depend>amrl_msgs</build_depend>
+  <build_depend>visual_perception</build_depend>
 
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>

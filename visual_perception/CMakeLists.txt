@@ -66,7 +66,7 @@ INCLUDE_DIRS include
     message_runtime
     frontier_exploration
     tf
-LIBRARIES visual_perception
+#LIBRARIES visual_perception
 )
 
 ## Specify additional locations of header files

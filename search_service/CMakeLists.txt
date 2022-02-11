@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(search_service)	
 
-
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -21,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   visual_perception
 )
 
+
 find_package(Eigen3 REQUIRED COMPONENTS system)
 find_package(Boost REQUIRED COMPONENTS system thread)
 
@@ -34,7 +34,12 @@ add_action_files(
    MultiSearch.action
    PathFollow.action
    TSPSolve.action
-    )
+)
+
+add_service_files(
+    FILES
+    SetPolygon.srv
+)
 
 generate_messages(
    DEPENDENCIES
@@ -52,7 +57,7 @@ include_directories(include
 include_directories(src)
 
 catkin_package(
-# INCLUDE_DIRS include
+ #INCLUDE_DIRS include
   CATKIN_DEPENDS roscpp rospy
   DEPENDS Boost
   geometry_msgs
@@ -89,6 +94,12 @@ add_executable(scaled_map_converter src/scaled_map_converter.cpp
     src/map_util.cpp ${SOURCES})
 target_link_libraries(scaled_map_converter ${catkin_LIBRARIES})
 add_dependencies(scaled_map_converter ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
+
+add_executable(plugin_client src/plugin_client.cpp)
+target_link_libraries(plugin_client
+  ${catkin_LIBRARIES}
+)
+
 
 #add_executable(tf_odom_publisher src/hsrb_odom_publisher.cpp ${SOURCES})
 #target_link_libraries(tf_odom_publisher ${catkin_LIBRARIES} ${PCL_LIBRARIES})

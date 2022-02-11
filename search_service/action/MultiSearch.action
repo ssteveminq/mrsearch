@@ -1,4 +1,8 @@
 #goal definition
+
+# Boundary for exploration task
+geometry_msgs/PolygonStamped boundary
+# Starting point for exploration task, inside the boundary
 ---
 #result definition
 nav_msgs/Path[] paths
