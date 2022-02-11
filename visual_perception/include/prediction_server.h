@@ -232,6 +232,7 @@ private:
   bool isTargetDetected;
   bool isActionActive;
   bool Is_Searchmap_received;
+  bool map_dimension_changed;
 
   frontier_exploration::Frontier left_frontiers;
   frontier_exploration::Frontier right_frontiers;

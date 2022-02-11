@@ -9,6 +9,7 @@
 #include "std_msgs/Float32.h"
 #include "geometry_msgs/Pose2D.h"
 #include "geometry_msgs/PointStamped.h"
+#include "geometry_msgs/PolygonStamped.h"
 #include "geometry_msgs/PoseArray.h"
 #include "geometry_msgs/Twist.h"
 #include <geometry_msgs/PoseStamped.h>
@@ -23,6 +24,10 @@
 #include <boost/thread/thread.hpp>
 #include <std_msgs/Bool.h>
 #include <search_service/MultiSearchAction.h>
+#include <search_service/MultiSearchResult.h>
+#include <search_service/SetSearchRegionAction.h>
+#include <search_service/SetSearchRegionGoal.h>
+#include <search_service/SetSearchRegionResult.h>
 #include <search_service/MultiSearchResult.h>
 #include <search_service/SearchAction.h>
 #include <visual_perception/UnknownSearchAction.h>
@@ -112,6 +117,7 @@ public:
     
   MultiSearchManager(std::string name): 
   as_(nh_, name, boost::bind(&MultiSearchManager::executeCB, this,_1), false),
+  as_region(nh_, "set_search_region", boost::bind(&MultiSearchManager::executeCB_SR, this,_1), false),
   ac_("getunknowns", true),
   ac_tsp("tsp_solve_action", true),
   action_name_(name),
@@ -199,7 +205,7 @@ public:
      agent2_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent2_pose_topic,10,&MultiSearchManager::agent2_pose_callback,this);
      agent3_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent3_pose_topic,10,&MultiSearchManager::agent3_pose_callback,this);
 
-    planner_srv_client= nh_.serviceClient<nav_msgs::GetPlan>("/spot/move_base/GlobalPlanner//make_plan");
+     planner_srv_client= nh_.serviceClient<nav_msgs::GetPlan>("/spot/move_base/GlobalPlanner//make_plan");
 
 
      //receive scaled_global_map
@@ -215,6 +221,8 @@ public:
      agent1_pose.resize(3,0.0);
      agent2_pose.resize(3,0.0);
      agent3_pose.resize(3,0.0);
+     as_region.start();
+     ROS_INFO("Set-search region_started");
      as_.registerPreemptCallback(boost::bind(&MultiSearchManager::preemptCB, this));
      as_.start();
      ROS_INFO("multi-search action_started");
@@ -233,9 +241,42 @@ public:
     as_.setPreempted();
   }
 
+  void executeCB_SR(const search_service::SetSearchRegionGoalConstPtr &goal)
+  {
+
+     updateBoundsFromPolygon(goal->boundary.polygon,MIN_X,MIN_Y,MAX_X, MAX_Y);
+     //calculate_ max,max_y, min_x, min_y
+     m_params= new Map_params(MAX_X, MAX_Y, MIN_X, MIN_Y);
+     search_map.info.resolution = m_params->xyreso;
+     search_map.info.width= m_params->xw;
+     search_map.info.height= m_params->yw;
+     search_map.info.origin.position.x= m_params->xmin;
+     search_map.info.origin.position.y= m_params->ymin;
+     search_map.data.resize((search_map.info.width * search_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
+     ROS_INFO("width: %.2lf, height: %.2lf ", m_params->xw, m_params->yw);
+
+     nav_msgs::OccupancyGrid::ConstPtr shared_map;
+     shared_map= ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("/scaled_static_map",nh_);
+     if(shared_map!= NULL){
+         scaled_global_map= *shared_map;
+         crop_globalmap(*shared_map);
+     }
+     total_entropy-=occ_entropy;
+     ROS_INFO("total_initial_entropy: %.2f",  total_entropy);
+
+     search_map_pub.publish(search_map);
+     result_region.success=true;
+     as_region.setSucceeded(result_region);
+
+  }
+
 
   void executeCB(const search_service::MultiSearchGoalConstPtr &goal)
   {
+      
+     ROS_INFO("Resizing Map with Search_Polygon");
+
+
      ROS_INFO("MultiSearchManager action is called!!");
      ac_.waitForServer(ros::Duration(5.0));
      ROS_INFO("WaypointGeneration Server is running....!!");
@@ -315,6 +356,29 @@ public:
     }
 
   }
+
+  void updateBoundsFromPolygon(const geometry_msgs::Polygon &polygon, double& min_x, double& min_y, 
+          double& max_x, double& max_y){
+
+      min_x = std::numeric_limits<double>::infinity();
+      min_y = std::numeric_limits<double>::infinity();
+      max_x = -std::numeric_limits<double>::infinity();
+      max_y = -std::numeric_limits<double>::infinity();
+
+      for (const auto & point : polygon.points)
+      {
+        min_x = std::min(min_x, static_cast<double>(point.x));
+        min_y = std::min(min_y, static_cast<double>(point.y));
+        max_x = std::max(max_x, static_cast<double>(point.x));
+        max_y = std::max(max_y, static_cast<double>(point.y));
+      }
+      min_x = floor(min_x);
+      min_y = floor(min_y);
+      max_x = floor(max_x);
+      max_y = floor(max_y);
+
+      ROS_INFO("min_x: %.2lf, max_x: %.2lf ,min_y: %.2lf, max_y: %.2lf", min_x, max_x, min_y,max_y);
+    }
 
   void unknown_poses_callback(const geometry_msgs::PoseArray::ConstPtr& msg)
   {
@@ -463,7 +527,7 @@ void crop_globalmap(const nav_msgs::OccupancyGrid global_map)
 {
     //"Crop global_map-->fill search map with static obstacle "
     //searchmap info / globalmap_info
-    ROS_INFO("Crop global_map");
+    ROS_INFO("Crop_global_map");
     int count=0;
 
     double px, py =0.0;
@@ -473,15 +537,21 @@ void crop_globalmap(const nav_msgs::OccupancyGrid global_map)
     for(int j(0); j< search_map.info.height;j++)
         for(int i(0); i< search_map.info.width;i++)
         {
-            px = search_map.info.origin.position.x+(i+0.5)*search_map.info.resolution;
-            py = search_map.info.origin.position.y+(j+0.5)*search_map.info.resolution;
+            px = search_map.info.origin.position.x+(i)*search_map.info.resolution;
+            py = search_map.info.origin.position.y+(j)*search_map.info.resolution;
             global_idx = Coord2CellNum(px,py, global_map);  
             search_idx = Coord2CellNum(px,py, search_map);         // get search cell idx 
             //if static_obstacle data in global_map
-            if(global_map.data[global_idx]>0)
+            if(global_map.data[global_idx]==100)
             {
+                    ROS_INFO("px:%.2lf ,py: %.2lf", px,py);
                     search_map.data[search_idx]= int(L_SOCC);
                     count++;
+            }
+            else{
+            
+                    search_map.data[search_idx]= 0.0;
+            
             }
             //Update searchmap according to local measurement
             // if local_map is known (occ or free) and global_map is not occupied by static obstacle 
@@ -806,6 +876,7 @@ protected:
     
   ros::NodeHandle nh_;
   actionlib::SimpleActionServer<search_service::MultiSearchAction> as_;
+  actionlib::SimpleActionServer<search_service::SetSearchRegionAction> as_region;
   actionlib::SimpleActionClient<visual_perception::UnknownSearchAction> ac_;
   actionlib::SimpleActionClient<search_service::TSPSolveAction> ac_tsp;
 
@@ -816,6 +887,7 @@ protected:
   float sum_, sum_sq_;
   search_service::MultiSearchFeedback feedback_;
   search_service::MultiSearchResult result_;
+  search_service::SetSearchRegionResult result_region;
 
 
   //Topic names

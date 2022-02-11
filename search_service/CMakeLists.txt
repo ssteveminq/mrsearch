@@ -34,6 +34,7 @@ add_action_files(
    MultiSearch.action
    PathFollow.action
    TSPSolve.action
+   SetSearchRegion.action
 )
 
 add_service_files(

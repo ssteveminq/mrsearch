@@ -1,5 +1,5 @@
-#ifndef EXPLORATION_SERVER_PLUGIN_CLIENT_H
-#define EXPLORATION_SERVER_PLUGIN_CLIENT_H
+#ifndef SERVER_PLUGIN_CLIENT_H
+#define SERVER_PLUGIN_CLIENT_H
 
 #include <geometry_msgs/PolygonStamped.h>
 #include <geometry_msgs/PointStamped.h>
@@ -7,8 +7,6 @@
 #include <ros/ros.h>
 #include <string>
 
-namespace exploration_server
-{
 
 /**
  * @brief Generic implementation of a plugin client to work with any planner plugin and send rviz messages
@@ -46,5 +44,4 @@ private:
   void pointCb(const geometry_msgs::PointStampedConstPtr& point);
 };
 
-}  // namespace exploration_server
 #endif  // EXPLORATION_SERVER_PLUGIN_CLIENT_H

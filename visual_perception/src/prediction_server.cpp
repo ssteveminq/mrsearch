@@ -262,7 +262,14 @@ void prediction_manager::searchmap_callback(const nav_msgs::OccupancyGrid::Const
    // ROS_INFO("searchmap_callback");
     Target_Search_map = *msg;
     //Initialize searchmap when this callback function was firstly called
-    if(!Is_Searchmap_received)
+    if(Is_Searchmap_received )
+    {
+        if(costmap_size_x!=msg->info.width)
+            map_dimension_changed=true;
+    
+    }
+
+    if(!Is_Searchmap_received || map_dimension_changed)
     {
         costmap_size_x=msg->info.width;
         costmap_size_y=msg->info.height;

@@ -45,13 +45,14 @@ public:
         Scaled_static_map.info.origin.position.x= m_params->xmin;
         Scaled_static_map.info.origin.position.y= m_params->ymin;
         Scaled_static_map.data.resize((Scaled_static_map.info.width * Scaled_static_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
-	int map_size_ =Scaled_static_map.info.width * Scaled_static_map.info.height;
+
+        int map_size_ =Scaled_static_map.info.width * Scaled_static_map.info.height;
         ROS_INFO("xw: % .2lf ", m_params->xw);
 
         ROS_INFO("yw: % .2lf ", m_params->yw);
-	ROS_INFO("map_size: %d",map_size_); 
+        ROS_INFO("map_size: %d",map_size_); 
         ROS_INFO("scaled_static_map initialized");
-	is_initialized=true;
+        is_initialized=true;
      
         Scaled_static_map_pub=m_node.advertise<nav_msgs::OccupancyGrid>("/scaled_static_map", 10, true);
     }
@@ -68,17 +69,22 @@ public:
         int	original_height= msg->info.height;
         double original_x=msg->info.origin.position.x;
         double original_y=msg->info.origin.position.y;
+        double original_maxx=msg->info.origin.position.x+original_width*msg->info.resolution;
+        double original_maxy=msg->info.origin.position.y+original_height*msg->info.resolution;
         //double original_y=-51.225;;
+        
+        m_params= new Map_params(original_maxx,original_maxy,original_x,original_y, XY_RES_SCALED);
+        Scaled_static_map.info.resolution = m_params->xyreso;
+        Scaled_static_map.info.width= m_params->xw;
+        Scaled_static_map.info.height= m_params->yw;
+        Scaled_static_map.info.origin.position.x= m_params->xmin;
+        Scaled_static_map.info.origin.position.y= m_params->ymin;
+        Scaled_static_map.data.resize((Scaled_static_map.info.width * Scaled_static_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
         double oroginal_res=0.05;
-	if(is_initialized){
+
+        if(is_initialized){
 
 		//for static space map
-		//Scaled_static_map.info.width=56;
-		//Scaled_static_map.info.height= 56;
-		//Scaled_static_map.info.resolution=0.5;
-		//Scaled_static_map.info.origin.position.x=-14;
-		//Scaled_static_map.info.origin.position.y=-14;
-		//Scaled_static_map.data.resize(Scaled_static_map.info.width*Scaled_static_map.info.height);
 		std::map<int,int> occupancyCountMap;
 		int scaled_res=10;
 		int map_idx=0;
@@ -142,8 +148,6 @@ int main(int argc, char **argv)
 
   ros::Subscriber staticmap_sub;
   ros::NodeHandle n;
-  //staticmap_sub = n.subscribe<nav_msgs::OccupancyGrid>("/searc", 30, &Listener::map_cb,&problemmanager); 
-
   staticmap_sub = n.subscribe<nav_msgs::OccupancyGrid>("/map", 30, &Listener::map_cb,&problemmanager); 
   ros::Rate loop_rate(10);
 

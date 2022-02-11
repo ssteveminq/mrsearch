@@ -1,10 +1,11 @@
-#include <exploration_server/plugin_client.h>
+#include "plugin_client.h"
 #include <actionlib/client/simple_action_client.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_2d/costmap_2d.h>
-#include <exploration_server/geometry_tools.h>
+#include "geometry_tools.h"
 
-#include <exploration_msgs/ExploreAction.h>
+#include <search_service/SetSearchRegionAction.h>
+#include <search_service/SetSearchRegionGoal.h>
 #include <visualization_msgs/Marker.h>
 #include <string>
 
@@ -51,7 +52,7 @@
       {
           points.action = line_strip.action = visualization_msgs::Marker::DELETE;
       }
-      ROS_WARN_ONCE("Change marker topic to exploration_polygon_marker before continuing.");
+      ROS_WARN_ONCE("Change marker topic to search_polygon_marker before continuing.");
       // publish points and lines to be viewable in rviz
       point_viz_pub_.publish(points);
       point_viz_pub_.publish(line_strip);
@@ -71,17 +72,24 @@
           }
           else
           {
-              ROS_INFO("center_points!!");
-              //actionlib::SimpleActionClient<exploration_msgs::ExploreAction>
-              //exploreClient("exploration_server_node", true);
-              //exploreClient.waitForServer();
+              ROS_INFO("Search Polygon Selected!!");
               //ROS_INFO("Sending goal");
-              //exploration_msgs::ExploreGoal goal;
-              goal.start_point = *point;
+              search_service::SetSearchRegionGoal goal;
+              actionlib::SimpleActionClient<search_service::SetSearchRegionAction> ac_("set_search_region", true);
+              ac_.waitForServer();
+              //goal.start_point = *point;
               goal.boundary = input_;
+              ac_.sendGoal(goal);
+              ROS_INFO("sending_goal");
+              bool finished_before_timeout = ac_.waitForResult(ros::Duration(50.0));
+              if(finished_before_timeout)
+              {
+                  actionlib::SimpleClientGoalState state = ac_.getState();
+                  ROS_INFO("action finished: %s ", state.toString().c_str());
+              
+              }
                //send the name of the plugin you want to use to get goals
               //goal.strategy_plugin = plugin_name_;
-              //exploreClient.sendGoal(goal);
           }
           waiting_for_center_ = false;
           input_.polygon.points.clear();
@@ -111,7 +119,8 @@
           else
           {
               waiting_for_center_ = true;
-              ROS_WARN("Please select an initial point for exploration inside the polygon");
+              ROS_WARN("If you are done, Please select any point inside the polygon");
+              ROS_WARN("Otherwise, you can select any point outside the polygon to clear points");
           }
       }
       else
@@ -127,10 +136,9 @@
       private_nh_("~"),
       waiting_for_center_(false)
   {
-      //nh_.param<std::string>("plugin_name", plugin_name_, "exploration_server::ExamplePlugin");
       input_.header.frame_id = "map";
       point_ = nh_.subscribe("/clicked_point", 10, &PluginClient::pointCb, this);
-      point_viz_pub_ = nh_.advertise<visualization_msgs::Marker>("exploration_polygon_marker", 10);
+      point_viz_pub_ = nh_.advertise<visualization_msgs::Marker>("search_polygon_marker", 10);
       point_viz_timer_ = nh_.createWallTimer(ros::WallDuration(0.1), boost::bind(&PluginClient::vizPubCb, this));
       ROS_INFO("Please use the 'Point' tool in Rviz to select an exporation boundary.");
   }
@@ -140,7 +148,7 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "plugin_client");
 
-    exploration_server::PluginClient client;
+    PluginClient client;
     ros::spin();
     return 0;
 }
