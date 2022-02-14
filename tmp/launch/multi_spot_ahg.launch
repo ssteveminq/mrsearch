@@ -10,6 +10,7 @@
   <arg name="spot_y" default ="-2.0"/> 
   <arg name="spot2_x" default="0.0"/>
   <arg name="spot2_y" default ="2.0"/> 
+  <!--<arg name="num_agent" default ="5"/> -->
 
  <arg name="ahg_sim" default="true" />
   <arg name="world_name" value="$(find tmp)/worlds/test_humantrajectory.world"/>

@@ -32,7 +32,10 @@
       </include>
   </group>
 
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
 
+
+  <!--first agent-->
   <arg name="spot_namespace"  default="spot"/>
   <group ns ="$(arg spot_namespace)">
       <param name="robot_description" command="$(find xacro)/xacro --inorder $(find spot_description)/urdf/spot.urdf.xacro"/>
@@ -51,9 +54,10 @@
   </include>
 
   <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find spot_navigation)/maps/ahg_map.pgm 0.05"/>-->
-
-
- <include file="$(find tmp)/launch/amcl_diff.launch">
+ <include file="$(find tmp)/launch/amcl_diff.xml">
+      <arg name="namespace" value="$(arg spot_namespace)"/>
+      <arg name="pos_x" value="$(arg spot_x)"/>
+      <arg name="pos_y" value="$(arg spot_y)"/>
       </include>
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
     <!--<rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> -->
@@ -61,16 +65,11 @@
     <rosparam file="$(find tmp)/config/local_costmap_params.yaml" command="load" />
     <rosparam file="$(find tmp)/config/global_costmap_params.yaml" command="load" /> 
     <rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />
-    <!--<param name="base_global_planner" value="global_planner/GlobalPlanner"/>-->
  </node>
   </group>
 
- <!--<include file="$(find tmp)/launch/amcl_diff.launch">-->
-          <!--<arg name="namespace" value="$(arg spot_namespace)" />-->
 
-
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
-
+  <!--Second agent-->
   <arg name="spot2_namespace"  default="spot2"/>
   <group ns ="$(arg spot2_namespace)">
     <param name="robot_description" command="$(find xacro)/xacro --inorder $(find spot_description)/urdf/spot.urdf.xacro"/>
@@ -98,11 +97,15 @@
     <rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />
     <!--<param name="base_global_planner" value="global_planner/GlobalPlanner"/>-->
  </node>
+ <include file="$(find tmp)/launch/amcl_diff.xml">
+      <arg name="namespace" value="$(arg spot2_namespace)"/>
+      <arg name="pos_x" value="$(arg spot2_x)"/>
+      <arg name="pos_y" value="$(arg spot2_y)"/>
+      </include>
 
- <include file="$(find tmp)/launch/amcl_diff2.launch"/>
   </group>
 
-
+  <!--Third agent-->
   <arg name="spot3_namespace"  default="spot3"/>
   <group ns ="$(arg spot3_namespace)">
     <param name="robot_description" command="$(find xacro)/xacro --inorder $(find spot_description)/urdf/spot.urdf.xacro"/>
@@ -129,10 +132,18 @@
     <rosparam file="$(find tmp)/config/global_costmap_params_spot3.yaml" command="load" /> 
     <rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />
     <!--<param name="base_global_planner" value="global_planner/GlobalPlanner"/>-->
- </node>
+     </node>
+     <include file="$(find tmp)/launch/amcl_diff.xml">
+          <arg name="namespace" value="$(arg spot3_namespace)"/>
+          <arg name="pos_x" value="$(arg spot3_x)"/>
+          <arg name="pos_y" value="$(arg spot3_y)"/>
+    </include>
 
- <include file="$(find tmp)/launch/amcl_diff3.launch"/>
   </group>
+
+
+ <!--<include file="$(find tmp)/launch/amcl_diff3.launch"/>-->
+
 
 
 
