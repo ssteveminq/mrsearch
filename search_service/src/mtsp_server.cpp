@@ -74,6 +74,16 @@ double atan_zero_to_twopi(double y, double x){
     return angle;
 }
 
+double calc_dist(geometry_msgs::Pose pos1, geometry_msgs::Pose pos2)
+{
+
+    double dist_=pow(pos1.position.x-pos2.position.x, 2);
+    dist_+=pow(pos1.position.y-pos2.position.y, 2);
+
+    return dist_;
+
+}
+
 class precastDB
 {
 
@@ -133,7 +143,6 @@ public:
   clustered(false),
   pathUpdated(false),
   called_once(false),
-  smoothpath(false),
   weight_entropy(0.25),
   weight_travel(1.5),
   m_params(NULL)
@@ -183,14 +192,15 @@ public:
      search_map.data.resize((search_map.info.width * search_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
 
      //initially the entropy can be computed as #of cells in serchmap * uncertainty
-     total_entropy=search_map.data.size()*CELL_MAX_ENTROPY;
+     //total_entropy=search_map.data.size()*CELL_MAX_ENTROPY;
 
      agent_poses.poses.resize(NUMAGENTS);
-     smoothpaths.resize(NUMAGENTS);
+     Issmoothpath.resize(NUMAGENTS);
+     smooth_paths.resize(NUMAGENTS);
      path_pubs.resize(NUMAGENTS);
 
      for(size_t i(0);i<NUMAGENTS;i++)
-         smoothpaths[i]=false;
+         Issmoothpath[i]=false;
      //self.tolerance=0.5
 
      //publishers
@@ -200,16 +210,11 @@ public:
      visual_marker_pub= nh_.advertise<visualization_msgs::MarkerArray>("clusters", 5);
      polygon_pub = nh_.advertise<geometry_msgs::PolygonStamped>("current_polygon", 10, true);
 
-     //agent1_path_pub = nh_.advertise<nav_msgs::Path>("agent1_path", 50, true);
-     //agent2_path_pub = nh_.advertise<nav_msgs::Path>("agent2_path", 50, true);
-     //agent3_path_pub = nh_.advertise<nav_msgs::Path>("agent3_path", 50, true);
      for(size_t i(0);i<NUMAGENTS;i++)
      {
          std::string topic_name_ = "agent_"+std::to_string(i)+"_path";
          path_pubs[i]=nh_.advertise<nav_msgs::Path>(topic_name_, 50, true);
      }
-
-
 
      //subscribers
      global_map_sub = nh_.subscribe<nav_msgs::OccupancyGrid>("/scaled_static_map", 1, &MultiSearchManager::global_map_callback, this);
@@ -231,8 +236,6 @@ public:
          scaled_global_map= *shared_map;
          crop_globalmap(*shared_map, geometry_msgs::Polygon());
      }
-     total_entropy-=occ_entropy;
-     ROS_INFO("total_initial_entropy: %.2f",  total_entropy);
 
      agent1_pose.resize(3,0.0);
      agent2_pose.resize(3,0.0);
@@ -277,8 +280,8 @@ public:
          scaled_global_map= *shared_map;
          crop_globalmap(*shared_map, goal->boundary.polygon);
      }
-     total_entropy-=occ_entropy;
-     ROS_INFO("total_initial_entropy: %.2f",  total_entropy);
+     //total_entropy-=occ_entropy;
+     //ROS_INFO("total_initial_entropy: %.2f",  total_entropy);
      
 
     polygon_.polygon.points.clear();
@@ -292,8 +295,8 @@ public:
          polygon_.polygon.points.push_back(tmp_pnt);
       }
       
-    polygon_pub.publish(polygon_);
-
+     polygon_pub.publish(polygon_);
+     total_entropy=get_searchmap_entropy();
      search_map_pub.publish(search_map);
      result_region.success=true;
      as_region.setSucceeded(result_region);
@@ -304,9 +307,15 @@ public:
   void executeCB(const search_service::MultiSearchGoalConstPtr &goal)
   {
       
+    //reset values
+    smooth_paths.clear();
+    smooth_paths.resize(NUMAGENTS);
+    for(int j(0);j<NUMAGENTS;j++)
+        Issmoothpath[j]=false;
+     pathUpdated=false;
+     clustered=false;
+
      ROS_INFO("Resizing Map with Search_Polygon");
-
-
      ROS_INFO("MultiSearchManager action is called!!");
      ac_.waitForServer(ros::Duration(5.0));
      ROS_INFO("WaypointGeneration Server is running....!!");
@@ -328,18 +337,16 @@ public:
         // break;
       }
 
-
-     //Call Search Service
+    //Call Search Service
     while(ros::ok() && !as_.isPreemptRequested())
     {
-     search_entropy = get_searchmap_entropy()/ total_entropy;
+     search_entropy = get_searchmap_entropy();
      ROS_INFO("current_entropy: %.2lf", search_entropy);
 
-     
      //Call Waypoint Generateion (UnknwonSearch action)
      visual_perception::UnknownSearchGoal unknwongoal;
      ac_.sendGoal(unknwongoal);
-     bool finished_before_timeout = ac_.waitForResult(ros::Duration(20.0)); //Wait for 20s
+     bool finished_before_timeout = ac_.waitForResult(ros::Duration(30.0)); //Wait for 20s
      if(finished_before_timeout)
      {
          ROS_INFO("waypoints are generated");
@@ -356,19 +363,20 @@ public:
          //call TSP Solve Action
          ac_tsp.sendGoal(tspgoal);
          ROS_INFO("TSP Solve started");
-         bool finished_before_timeout_tsp = ac_tsp.waitForResult(ros::Duration(30.0));
+         bool finished_before_timeout_tsp = ac_tsp.waitForResult(ros::Duration(50.0));
          if(finished_before_timeout_tsp )
          {
               ROS_INFO("TSP solution obtained. Path will be published");
               auto tsp_res=ac_tsp.getResult();
-              result_.paths= tsp_res->paths;
+              //result_.paths= tsp_res->paths;
               //save_paths for each agents
               agent_paths = tsp_res->paths;
               result_.cur_entropy = search_entropy;
+              if(get_smooth_paths(NUMAGENTS))
+                  result_.paths=smooth_paths;
               as_.setSucceeded(result_);
               pathUpdated=true;
-              publish_paths(NUMAGENTS);
-
+              publish_paths();
               return;
          }
          else{
@@ -442,7 +450,6 @@ public:
       agent_poses.poses[2]=msg->pose.pose;
   }
 
-
   void agent1_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
   {
       //* global_pose w.r.t "map" frame
@@ -455,11 +462,10 @@ public:
       agent_poses.poses[0]=msg->pose.pose;
       search_map_pub.publish(search_map);
 
-     if(pathUpdated)
-         publish_paths(NUMAGENTS);
+     //if(pathUpdated)
+         //publish_paths();
   }
   
-
   void agent1_localmap_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 {
     agent1_local_map=*msg;
@@ -471,8 +477,8 @@ public:
     entropy_msg.data=search_entropy;
     search_entropy_pub.publish(entropy_msg);
     //check_obstacle
-    if(pathUpdated)
-        publish_paths(NUMAGENTS);
+    //if(pathUpdated)
+        //publish_paths();
 }
 
   void agent2_localmap_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
@@ -555,9 +561,8 @@ void crop_globalmap(const nav_msgs::OccupancyGrid global_map, const geometry_msg
 {
     //"Crop global_map-->fill search map with static obstacle "
     //searchmap info / globalmap_info
-    ROS_INFO("Crop_global_map");
+    //ROS_INFO("Crop_global_map");
     int count=0;
-
     double px, py =0.0;
     int global_idx,search_idx =0;
 
@@ -573,7 +578,6 @@ void crop_globalmap(const nav_msgs::OccupancyGrid global_map, const geometry_msg
             //if static_obstacle data in global_map
             if(global_map.data[global_idx]==100)
             {
-                    ROS_INFO("px:%.2lf ,py: %.2lf", px,py);
                     search_map.data[search_idx]= int(L_SOCC);
                     count++;
             }
@@ -666,131 +670,162 @@ void precasting(const geometry_msgs::Point pose, std::map<int,std::vector<precas
     }
 
  }
-void publish_paths(int n_agent)
+void publish_paths()
 {
-    ROS_INFO("paths are being published");
-
-    boost::random::mt19937 gen;
-    boost::random::uniform_real_distribution<> distx(-1.5, 1.5);
-    boost::random::uniform_real_distribution<> disty(-1.5, 1.5);
-
     for(size_t i(0);i<NUMAGENTS;i++)
     {
-        if(smoothpaths[i])
-            path_pubs[i].publish(smooth_paths[i]);
-        else
-            path_pubs[i].publish(agent_paths[i]);
-    }
-       
-
-    nav_msgs::GetPlan srv_;
-    if(!smoothpath)
-    {
-        ROS_INFO("smooth_path!!:");
-        smooth_paths.clear();
-        
-        for(int n(0); n<NUMAGENTS;n++)
+        if(Issmoothpath[i])
         {
-            nav_msgs::Path smooth_path;
-            ROS_INFO("agent: %d!!", n);
-            srv_.request.start.pose = agent_poses.poses[n];
-            srv_.request.start.header.frame_id = "map";
-            srv_.request.start.header.stamp= ros::Time::now();
-            std::vector<int> real_dst;
-            int min_idx = 0;
-            //ROS_INFO("path size for agent: %d", agent_paths[n].poses.size());
-            for(size_t i(0);i<agent_paths[n].poses.size();i++)
+            path_pubs[i].publish(smooth_paths[i]);
+        }
+    }
+}
+
+bool get_smooth_paths(int n_agent)
+{
+    nav_msgs::GetPlan srv_;
+    
+    for(int n(0); n<NUMAGENTS;n++)
+    {
+        nav_msgs::Path smooth_path;
+        srv_.request.start.pose = agent_poses.poses[n]; //current agent_pose
+        srv_.request.start.header.frame_id = "map";
+        srv_.request.start.header.stamp= ros::Time::now();
+        std::vector<int> real_dst;
+        std::vector<int> idx_set;
+        int min_idx = 0;
+        nav_msgs::Path tmp_plan;
+
+        real_dst.resize(agent_paths[n].poses.size(),0.0);
+        double min_dist=1000.0;
+        for(size_t i(0);i<agent_paths[n].poses.size();i++)
+        {
+            idx_set.push_back(i);
+            srv_.request.goal= agent_paths[n].poses[i];
+            srv_.request.goal.header.frame_id= "map";
+            if(planner_srv_client.call(srv_))
             {
-                //srv_.request.start = agent1_gpose;
-                srv_.request.goal= agent_paths[n].poses[i];
-                srv_.request.goal.header.frame_id= "map";
-                if(planner_srv_client.call(srv_))
+                double tmp_dst=0.0;
+                if(srv_.response.plan.poses.size()>1)
                 {
-                    real_dst.push_back(srv_.response.plan.poses.size());
-                    //calculate the path length to the pose(for finding the nearest pose from the robot location)
+                    for(int m(0);m<srv_.response.plan.poses.size()-1;m++)
+                    {
+                        tmp_dst+=calc_dist(srv_.response.plan.poses[m].pose, srv_.response.plan.poses[m+1].pose);
+                    }
                 }
                 else{
-                    ROS_INFO("global planner make plan service failed");
+                    tmp_dst = calc_dist(srv_.request.start.pose, srv_.response.plan.poses[0].pose);
+                    double len_pose =srv_.response.plan.poses.size();
+                    ROS_INFO("len_pose: %d", len_pose);
                 }
-
-            }
-            if(real_dst.size()>0)
-            {
-                auto minIt = std::min_element(real_dst.begin(), real_dst.end());
-                double minElement = *minIt;
-                min_idx = minIt -real_dst.begin();
+                real_dst[i]=tmp_dst;
+                ROS_INFO("tmp_dst: %.2lf", tmp_dst);
+                if(real_dst[i]<min_dist)
+                {
+                    min_dist =real_dst[i];
+                    tmp_plan=srv_.response.plan;
+                }
+                //calculate the path length to the pose(for finding the nearest pose from the robot location)
             }
             else{
-                min_idx=0;
+                ROS_INFO("global planner make plan service failed");
+                real_dst[i]=500.0;
             }
+        }
 
-            srv_.request.start.pose = agent_poses.poses[n];
-            for(size_t i(min_idx);i<(agent_paths[n].poses.size()+min_idx-1);i++)
+        if(real_dst.size()>0)
+        {
+            auto minIt = std::min_element(real_dst.begin(), real_dst.end());
+            double minElement = *minIt;
+            min_idx = minIt -real_dst.begin();
+
+            srv_.request.start.pose= agent_paths[n].poses[min_idx].pose;
+            idx_set.erase(std::remove(idx_set.begin(),idx_set.end(),min_idx), idx_set.end());
+            for(size_t k(0);k<tmp_plan.poses.size();k++)
+                smooth_path.poses.push_back(tmp_plan.poses[k]);
+        }
+        else{
+            min_idx=0;
+            idx_set.erase(std::remove(idx_set.begin(),idx_set.end(),min_idx), idx_set.end());
+        }
+        //after first point, iterate with idx_set 
+        real_dst.clear();
+        //call service from current point
+        //check the pose length to the pose in idx_set
+        bool max_iter_reached=false;
+        int idx_iter=0;
+        int cur_idx = min_idx;
+        while(idx_set.size()>1){
+            //ROS_INFO("idx_set.size() : %d", idx_set.size());
+            min_dist=1000.0;
+            srv_.request.start.pose =agent_paths[n].poses[cur_idx].pose;
+            srv_.request.start.header.frame_id = "map";
+            srv_.request.start.header.stamp =ros::Time::now();
+            real_dst.resize(idx_set.size(),0.0);
+            for(size_t j(0);j<idx_set.size();j++)
             {
-                ROS_INFO("starting index: %d",min_idx);
-                int real_idx=i;
-                //loop => if index exceeds the size, index go to starting index 
-                if(real_idx>agent_paths[n].poses.size())
-                    real_idx-=agent_paths[n].poses.size();
-                //choose next point from the tsp path to get actual collision-free path
-                srv_.request.goal= agent_paths[n].poses[real_idx];
+                srv_.request.goal= agent_paths[n].poses[idx_set[j]];
                 srv_.request.goal.header.frame_id= "map";
                 srv_.request.goal.header.stamp = ros::Time::now();
-
-               bool no_path_return =true;
-               bool max_iter_reached =false;
-               int try_iter=0;
-
-               while(no_path_return)
-               {
-                   if(planner_srv_client.call(srv_))
+                if(planner_srv_client.call(srv_))
                    {
-                      ROS_INFO("get Makeplan service finished!!");
-                      nav_msgs::Path path_agent1= srv_.response.plan;
-                      for(size_t j(0);j<path_agent1.poses.size();j++)
-                          smooth_path.poses.push_back(path_agent1.poses[j]);
-                      srv_.request.start = agent_paths[n].poses[real_idx];
-                      no_path_return =false;
+                      double tmp_dst=0.0;
+                      if(srv_.response.plan.poses.size()>1){
+                          for(int m(0);m<srv_.response.plan.poses.size()-1;m++)
+                          {
+                              tmp_dst+=calc_dist(srv_.response.plan.poses[m].pose, srv_.response.plan.poses[m+1].pose);
+                          }
+                      }
+                      else{
+                          tmp_dst = calc_dist(srv_.request.start.pose, srv_.response.plan.poses[0].pose);
+                          int len_pose =srv_.response.plan.poses.size();
+                          //ROS_INFO("len_pose: %d", len_pose);
+                          //ROS_INFO("len_pose", len_pose);
+                      
+                      }
+                      //real_dst[j]=srv_.response.plan.poses.size();
+                      real_dst[j]=tmp_dst;
+                      if(real_dst[j]<min_dist)
+                      {
+                          min_dist=real_dst[j];
+                          tmp_plan=srv_.response.plan;
+                      }
                    }
                    else{
-                       srv_.request.start.pose.position.x+=distx(gen);
-                       srv_.request.start.pose.position.y+=disty(gen);
-                       agent_paths[n].poses[real_idx].pose.position.x+=distx(gen);
-                       agent_paths[n].poses[real_idx].pose.position.y+=disty(gen);
-                       srv_.request.goal = agent_paths[n].poses[real_idx];
-                       try_iter++;
-                       if(try_iter>6)
-                       {
-                           no_path_return=false;
-                           max_iter_reached = true;
-                       }
-                    }
-               }
-               if(max_iter_reached)
-               {
-                    ROS_INFO("failed");
-                    srv_.request.start = agent_paths[n].poses[real_idx];
-                    continue;
-               }
+                       real_dst[j]=500.0;
+                       ROS_INFO("failed to get plan");
+                       //failed_idx.push_back(idx_set[j]);
+                   }
             }
-            if(smooth_path.poses.size()>0)
-            {
-                smooth_path.header.frame_id="map";
-                smooth_path.header.stamp=ros::Time::now();
-                smooth_paths.push_back(smooth_path);
+            auto minIt = std::min_element(real_dst.begin(), real_dst.end());
+            double minElement = *minIt;
+            min_idx = minIt -real_dst.begin();
+            cur_idx=idx_set[min_idx];
+            idx_set.erase(std::remove(idx_set.begin(),idx_set.end(),cur_idx), idx_set.end());
+            for(size_t k(0);k<tmp_plan.poses.size();k++)
+                smooth_path.poses.push_back(tmp_plan.poses[k]);
+            idx_iter++;
+            if(idx_iter>20)
+                break;
 
-                smoothpaths[n]=true;
+        }//while
+        //ROS_INFO("outside_loop: smooth_path size: %d", smooth_path.poses.size());
+        if(smooth_path.poses.size()>0)
+        {
+            smooth_path.header.frame_id="map";
+            smooth_path.header.stamp=ros::Time::now();
+            smooth_paths[n]=smooth_path;
+            Issmoothpath[n]=true;
+            ROS_INFO("smooth_path Updated");
+        }
+        else{
+            ROS_INFO("pathsize is none!");
+        }
+    }//for
 
-                if(n==(NUMAGENTS-1))
-                    smoothpath=true;
-            }
-            else{
-                ROS_INFO("pathsize is none!");
-            }
-        }//for
-    }//if
+    ROS_INFO("get_smooth_path done!");
 
-    return;
+    return true;
 }
 
 /*This function assigns waypoints to each agents
@@ -798,12 +833,20 @@ void publish_paths(int n_agent)
 //Output:
 */
 
-
 void clustering(int n_agent )
 {
     ROS_INFO("Clustering for %d agents!!", n_agent);
     agent_xs.resize(n_agent);
     agent_ys.resize(n_agent);
+
+    std::vector<geometry_msgs::Pose> Posevec;
+    std::vector<double> weights;
+    for(size_t i(0);i<n_agent; i++)
+    {
+        Posevec.push_back(agent_poses.poses[i]);
+        weights.push_back(1.0);
+    }
+
     if(!clustered)
     {
         int data_size = waypoints.poses.size();
@@ -818,25 +861,6 @@ void clustering(int n_agent )
             ys.push_back(ty);
         }
 
-        std::vector<double> weights;
-        weights.push_back(1.0);
-        
-        std::vector<geometry_msgs::Pose> Posevec;
-        Posevec.push_back(agent1_gpose.pose);
-        if(n_agent>2)
-        {
-            //two agents
-            //geometry_msgs::Pose tmp;
-            Posevec.push_back(agent2_gpose.pose);
-            weights.push_back(1.0);
-            Posevec.push_back(agent3_gpose.pose);
-            weights.push_back(1.0);
-        }
-        else if(n_agent>1)
-        {
-            Posevec.push_back(agent2_gpose.pose);
-            weights.push_back(1.0);
-        }
 
        HCluster test_cluster(n_agent, xs,ys, Posevec, weights);
        for(size_t i(0);i<n_agent;i++)
@@ -922,6 +946,73 @@ void clustering(int n_agent )
     }
     visual_marker_pub.publish(markers_msg);
     }
+}
+
+
+void publish_clusters()
+{
+    if(clustered)
+    {
+        std_msgs::ColorRGBA blue;
+        blue.r = 0; blue.g = 0; blue.b = 1.0; blue.a = 1.0;
+        std_msgs::ColorRGBA red;
+        red.r = 1.0; red.g = 0; red.b = 0; red.a = 1.0;
+        std_msgs::ColorRGBA green;
+        green.r = 0; green.g = 1.0; green.b = 0; green.a = 1.0;
+
+        //ROS_DEBUG("visualising %lu frontiers", frontiers.size());
+        visualization_msgs::MarkerArray markers_msg;
+        std::vector<visualization_msgs::Marker>& markers = markers_msg.markers;
+        //visualization_msgs::Marker m;
+
+        visualization_msgs::Marker m;
+        m.header.frame_id ="map";
+        m.header.stamp = ros::Time::now();
+        m.ns = "unknowns";
+        m.scale.x = 1.0;
+        m.scale.y = 1.0;
+        m.scale.z = 1.0;
+        m.color.r = 0;
+        m.color.g = 0;
+        m.color.b = 255;
+        m.color.a = 255;
+        // lives forever
+        m.lifetime = ros::Duration(0);
+        m.frame_locked = true;
+
+        size_t id = 0;
+        for(size_t i(0);i<NUMAGENTS;i++)
+        {
+            m.action = visualization_msgs::Marker::ADD;
+            //size_t id = 0;
+            for (int j(0);j<agent_xs[i].size();j++) {
+                m.type = visualization_msgs::Marker::SPHERE;
+                m.id = int(id);
+                m.pose.position.x = agent_xs[i][j];
+                m.pose.position.y = agent_ys[i][j];
+                m.pose.position.z = 0.5;
+                m.pose.orientation.w = 1.0;
+                m.scale.x = 1.1;
+                m.scale.y = 1.1;
+                m.scale.z = 1.1;
+                //m.points = frontier.points;
+                
+                if(i==0)
+                    m.color=red;
+                else if(i==1)
+                    m.color=green;
+                else
+                    m.color=blue;
+                    
+                markers.push_back(m);
+                ++id;
+            }
+
+        }
+        visual_marker_pub.publish(markers_msg);
+    }
+
+
 }
 
 
@@ -1018,8 +1109,8 @@ protected:
   bool IsActive;
   bool IsCalled;
   bool pathUpdated;
-  bool smoothpath;
-  std::vector<bool> smoothpaths;
+  //bool smoothpath;
+  std::vector<bool> Issmoothpath;
 
   double srv_time; 
   double tolerance;
@@ -1068,6 +1159,9 @@ int main(int argc, char** argv)
   {
 	 ros::spinOnce();
      r.sleep();
+     manager.publish_clusters();
+     manager.publish_paths();
+
   }
   ros::spin();
 

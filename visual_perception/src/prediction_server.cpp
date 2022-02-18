@@ -273,6 +273,10 @@ void prediction_manager::searchmap_callback(const nav_msgs::OccupancyGrid::Const
     {
         costmap_size_x=msg->info.width;
         costmap_size_y=msg->info.height;
+        MIN_X = msg->info.origin.position.x;
+        MIN_Y = msg->info.origin.position.x;
+        MAX_X = MIN_X+costmap_size_x*msg->info.resolution;
+        MAX_Y = MIN_Y+costmap_size_y*msg->info.resolution;
         unsigned int search_size =costmap_size_x*costmap_size_y;
         costmap_ = new unsigned char[search_size];
         memset(costmap_,NO_INFORMATION, search_size * sizeof(unsigned char));
@@ -1303,7 +1307,6 @@ std::vector<frontier_exploration::Frontier> prediction_manager::Unknown_search(g
 {
 
     //int default_size = 25;
-
     unsigned int target_mapidx=(unsigned int) CoordinateTransform_Global2_beliefMap(position.x, position.y);
     unsigned int search_size =Target_Search_map.info.width*Target_Search_map.info.height;
 
@@ -1312,10 +1315,8 @@ std::vector<frontier_exploration::Frontier> prediction_manager::Unknown_search(g
     //
     std::vector<frontier_exploration::Frontier> unknowns_list;
 
-    //unknown_poses.poses.clear();  //pose_array_clear
     std::queue<unsigned int> bfs;
     //cell_idx
-    //
      unsigned int clear, pos = target_mapidx;
     //put current cell to the dataset
     if(nearestCell(clear, pos, NO_INFORMATION)){
@@ -1326,7 +1327,6 @@ std::vector<frontier_exploration::Frontier> prediction_manager::Unknown_search(g
         //return unknowns_list;
     }
 
-    ROS_INFO("here-0");
     while(!bfs.empty()){
         unsigned int idx = bfs.front();
         bfs.pop();
@@ -1377,7 +1377,7 @@ void prediction_manager::FindUnknowns()
     boost::random::uniform_real_distribution<> distx(MIN_X, MAX_X);
     boost::random::uniform_real_distribution<> disty(MIN_Y, MAX_Y);
 
-    while((true_ratio<0.9) && (iter_<max_iter))
+    while((true_ratio<0.975) && (iter_<max_iter))
     {
         geometry_msgs::Point init_pose;
 

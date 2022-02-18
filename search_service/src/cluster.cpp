@@ -47,23 +47,23 @@ HCluster::HCluster(int num_label_, vector<double>& xs, vector<double>& ys, vecto
         //w1.push_back(4.5);
         //obstacle_map.insert({0,w1});
         //
-        std::vector<double> w2;
-        w2.push_back(9.5);
-        w2.push_back(-4.2);
-        w2.push_back(4.2);
-        obstacle_map.insert({1,w2});
+        //std::vector<double> w2;
+        //w2.push_back(9.5);
+        //w2.push_back(-4.2);
+        //w2.push_back(4.2);
+        //obstacle_map.insert({1,w2});
 
-        std::vector<double> w3;
-        w3.push_back(-5.);
-        w3.push_back(-7.5);
-        w3.push_back(7.5);
-        obstacle_map.insert({0,w3});
+        //std::vector<double> w3;
+        //w3.push_back(-5.);
+        //w3.push_back(-7.5);
+        //w3.push_back(7.5);
+        //obstacle_map.insert({0,w3});
 
-        std::vector<double> w4;
-        w4.push_back(4.0); //
-        w4.push_back(-10.5);
-        w4.push_back(7.5);
-        obstacle_map.insert({0,w4});
+        //std::vector<double> w4;
+        //w4.push_back(4.0); //
+        //w4.push_back(-10.5);
+        //w4.push_back(7.5);
+        //obstacle_map.insert({0,w4});
 
         set_centers(states);
         run_clustering();
@@ -219,17 +219,17 @@ double HCluster::update_weightedclusters()
             if(check_obstacles(m_centerx[j], px, m_centery[j],py))
                 distance_set[j]=4.0*distance_set[j];
             distance_set[j]=m_weights[j]*distance_set[j];
-            cout<<"distance_set[ "<<j<<"] : "<<distance_set[j]<<endl;
+            //cout<<"distance_set[ "<<j<<"] : "<<distance_set[j]<<endl;
         }
     
         auto minIt = std::min_element(distance_set.begin(), distance_set.end());
         double minElement = *minIt;
         int min_idx = minIt -distance_set.begin();
-        cout<<"min_idx: "<<min_idx<<endl;
+        //cout<<"min_idx: "<<min_idx<<endl;
         m_labels[i]=min_idx;
         cost += minElement ;
     
-        cout<<"-------------------"<<endl;
+        //cout<<"-------------------"<<endl;
     }
     return cost;
 
