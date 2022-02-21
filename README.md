@@ -31,7 +31,7 @@ roslaunch tmp multi_spot_disaster.launch
 ```
 roslaunch search_service mtsp_search.launch
 ```
-- Set search region (polygon) using rviz tools ( clicked point. Refer this [wiki](https://github.com/ssteveminq/mrsearch/wiki/API#5-demo-with-gazebo-simulation)
+- Set search region (polygon) using rviz tools ( clicked point. Refer this [wiki](https://github.com/ssteveminq/mrsearch/wiki/API#5-demo-with-gazebo-simulation))
 - Run action client for multisearch (Client)
 ``` 
 rosrun search_service multisearch_action_client.py
