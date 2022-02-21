@@ -116,7 +116,7 @@
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
       <param name="tf_prefix" type="string" value="$(arg spot3_namespace)" />
   </node>
-  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model spot3 -x $(arg spot3_x) -y $(arg spot3_y) " output="screen"/>
+  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model spot3 -x $(arg spot3_x) -y $(arg spot3_y) -R 0 -P 0 -Y 0" output="screen"/>
 
   <include file="$(find spot_gazebo)/launch/velodyne_2d.launch">
       <arg name="tf_prefix" value="$(arg spot3_namespace)"/>

@@ -94,13 +94,7 @@ void prediction_manager::executeCB(const visual_perception::UnknownSearchGoalCon
 
       lock.unlock();
       return;
-
-     //while(ros::ok() && isActionActive&& !as_.isPreemptRequested())
 }
-
-
-
-
 
 
 
@@ -143,116 +137,9 @@ void prediction_manager::publish_target_belief()
 
    Human_Belief_Scan_map.header.stamp =  ros::Time::now();
    Human_Belief_Scan_map.header.frame_id = "map"; 
-   //belief_pub.publish(Human_Belief_Scan_map);
-   
-   /*
-   human_candidates_poses.poses.clear();
-
-   for(size_t idx=0;idx<Human_Belief_Scan_map.data.size();idx++)
-   {
-         if(Human_Belief_Scan_map.data[idx]>10)
-         {
-             std::vector<double> temp_pose(2,0.0);
-             Mapidx2GlobalCoord(idx,temp_pose);
-
-             geometry_msgs::Pose human_pose;
-             human_pose.position.x=temp_pose[0];
-             human_pose.position.y=temp_pose[1];
-             human_pose.position.z=0.5;
-             human_pose.orientation.x=0.0;
-             human_pose.orientation.y=0.0;
-             human_pose.orientation.z=0.0;
-             human_pose.orientation.w=1.0;
-         
-             human_candidates_poses.poses.push_back(human_pose);
-
-         }
-   }
- std::vector<std::pair<double,int> > human_pairs;
-   std::vector<double> human_candidates_distances;
-
-   size_t candidate_size = human_candidates_poses.poses.size();
-   human_candidates_distances.resize(candidate_size,0.0);
-   for(size_t i(0);i<candidate_size;i++)
-   {
-       human_candidates_distances[i]=getDistance_from_Vec(global_pose,
-                                                          human_candidates_poses.poses[i].position.x,
-                                                          human_candidates_poses.poses[i].position.y);
-   
-       std::pair<double, int> temp_pair(human_candidates_distances[i],i);
-       human_pairs.push_back(temp_pair);
-       //human_pairs.push_back(std::pair<double, int>(human_candidates_distances[i],i));
-   }
-
-   //print functions
-   //ROS_INFO("---------------------before sorting------------------------------");
-   for(size_t j(0);j<human_pairs.size();j++)
-       ROS_INFO("human pair index: distance = idx: %d, dist:  %.3lf", human_pairs[j].first, human_pairs[j].second);
-   //ROS_INFO("------------------------------------------after sorting -------------");
-   //This sorting function saves the distance frome nearest one!!
-   std::sort(human_pairs.begin(),human_pairs.end(),comparator);
-
-
-   std::vector<std::pair<double,int> > human_pairs;
-   std::vector<double> human_candidates_distances;
-
-   size_t candidate_size = human_candidates_poses.poses.size();
-   human_candidates_distances.resize(candidate_size,0.0);
-   for(size_t i(0);i<candidate_size;i++)
-   {
-       human_candidates_distances[i]=getDistance_from_Vec(global_pose,
-                                                          human_candidates_poses.poses[i].position.x,
-                                                          human_candidates_poses.poses[i].position.y);
-   
-       std::pair<double, int> temp_pair(human_candidates_distances[i],i);
-       human_pairs.push_back(temp_pair);
-       //human_pairs.push_back(std::pair<double, int>(human_candidates_distances[i],i));
-   }
-
-   //print functions
-   //ROS_INFO("---------------------before sorting------------------------------");
-   for(size_t j(0);j<human_pairs.size();j++)
-       ROS_INFO("human pair index: distance = idx: %d, dist:  %.3lf", human_pairs[j].first, human_pairs[j].second);
-   //ROS_INFO("------------------------------------------after sorting -------------");
-   //This sorting function saves the distance frome nearest one!!
-   std::sort(human_pairs.begin(),human_pairs.end(),comparator);
-
-   //for(size_t j(0);j<human_pairs.size();j++)
-   //{
-       //ROS_INFO("human pair index: distance = idx: %d, dist:  %.3lf", human_pairs[j].first, human_pairs[j].second);
-   //}
-
-   geometry_msgs::PoseArray sorted_human_belief;
-   for(size_t idx(0);idx<candidate_size;idx++)
-   {
-        if(human_pairs[idx].second<6.0)
-            sorted_human_belief.poses.push_back(human_candidates_poses.poses[human_pairs[idx].first]);
-   }
-
-   sorted_human_belief.header.frame_id ="map";
-   sorted_human_belief.header.stamp = ros::Time::now();
-   human_candidates_pub.publish(sorted_human_belief);
-   
-   //human_candidates_poses.header.frame_id ="map";
-   //human_candidates_poses.header.stamp = ros::Time::now();
-   //human_candidates_pub.publish(human_candidates_poses);
-   */
-
 }
 
 
-void prediction_manager::publish_human_candidates(){
-    
-        //geometry_msgs::PoseArray poses_array_msg;
-
-        //poses_array_msg.header.frame_id =target_frame;
-        //poses_array_msg.header.stamp = ros::Time::now();
-
-        //for(int i(0);i<input_poses.size();i++)
-            //poses_array_msg.poses.push_back(input_poses[i]);
-
-        //human_candidates_pub.publish(poses_array_msg);
-}
 
 
 void prediction_manager::searchmap_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
@@ -795,11 +682,8 @@ void prediction_manager::SplitFrontiers(const frontier_exploration::Frontier& fr
 
 frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int initial_cell, unsigned int reference_, std::vector<bool>& visited_flag){
 
-//<<<<<<< HEAD
     int max_size = 95;
-//=======
     //int max_size = 100;
-//>>>>>>> 53add5c5ee296f36fe859ec3ae2471781ff23b80
     //initialize frontier structure
     frontier_exploration::Frontier output;
     //geometry_msgs::Point centroid, middle;
@@ -836,15 +720,15 @@ frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int 
             //check if neighbour is a potential frontier cell
             if(output.size>max_size)
             {
-            
-                output.centroid.x /= (output.size-1);
-                output.centroid.y /= (output.size-1);
-                
-                output.centroid.x+=0.05;
-                output.centroid.y+=0.05;
+                //output.centroid.x /= (output.size-1);
+                //output.centroid.y /= (output.size-1);
+                //output.centroid.x+=0.05;
+                //output.centroid.y+=0.05;
+                output.centroid.x = output.points[static_cast<int>(max_size/2*3)].x;
+                output.centroid.y = output.points[static_cast<int>(max_size/2*3)].y;
                 output.travel_point = output.centroid;
                 return output;
-            
+
             }
 
 
@@ -1305,16 +1189,10 @@ void prediction_manager::find_avg_pose(const std::vector<int> idx_set, geometry_
 //output: unknwon_poses
 std::vector<frontier_exploration::Frontier> prediction_manager::Unknown_search(geometry_msgs::Point position, std::vector<bool>& visited_flag, int target_value_=0 )
 {
-
-    //int default_size = 25;
     unsigned int target_mapidx=(unsigned int) CoordinateTransform_Global2_beliefMap(position.x, position.y);
     unsigned int search_size =Target_Search_map.info.width*Target_Search_map.info.height;
 
-    //std::vector<bool> visited_flag(search_size, false); // initialize with static obstacle
-    //std::vector<bool> visited_flag(search_size, false);
-    //
     std::vector<frontier_exploration::Frontier> unknowns_list;
-
     std::queue<unsigned int> bfs;
     //cell_idx
      unsigned int clear, pos = target_mapidx;
@@ -1333,7 +1211,6 @@ std::vector<frontier_exploration::Frontier> prediction_manager::Unknown_search(g
 
         BOOST_FOREACH(unsigned int nbr,nhood4(idx))
         {
-            //if(isNewUnknown(nbr, visited_flag) && !visited_flag[nbr])
             if(isNewUnknown(nbr, visited_flag))
             {
                 frontier_exploration::Frontier new_frontier = buildNewUnknown(nbr, pos, visited_flag);
@@ -1361,13 +1238,6 @@ void prediction_manager::FindUnknowns()
     //unknown ==search-map -- update static obstacles
     std::vector<bool> visited_flag(search_size, false); // initialize with static obstacle
     double true_ratio=0.0;
-    /*
-    for(int k(0);k<search_size;k++)
-    {
-	    if(Target_Search_map.data[k]>0)
-		    visited_flag[k]=falsetrue;
-    }
-    */
 
     //auto map_iter=goal_maps.begin();
     //for(map_iter; map_iter!=goal_maps.end();map_iter++)
@@ -1387,9 +1257,6 @@ void prediction_manager::FindUnknowns()
 
         init_pose.x=distx(gen);
         init_pose.y=disty(gen);
-        //init_pose.x=xrange* (static_cast<float>(rand())/static_cast <float>(RAND_MAX))+MIN_X;
-        //init_pose.y=yrange* (static_cast<float>(rand())/static_cast <float>(RAND_MAX))+MIN_Y;
-        //init_pose.y=(static_cast<float>(rand())/static_cast <float>(RAND_MAX)-0.5)*2*RAND_RANGE;
         //init_pose.y=map_iter->second[1];
         ROS_INFO("init_pos x: %.2lf, init_pos_y : %.2lf", init_pose.x, init_pose.y);
         auto frontier_list = Unknown_search(init_pose, visited_flag);
@@ -1409,11 +1276,6 @@ void prediction_manager::FindUnknowns()
         unknown_poses.header.stamp = ros::Time::now();
         unknown_posearray_pub.publish(unknown_poses);
         iter_++;
-        //std::vector<int> idx_list = FindCellFrom(init_pose, NO_INFORMATION);
-        //insert_unknownmap(idx_list);
-        //geometry_msgs::Pose avg_pose;
-        //find_avg_pose(idx_list,avg_pose );
-        //unknown_poses.poses.push_back(avg_pose);
     }
 
     unknown_map_pub.publish(unknown_map);
@@ -1443,177 +1305,12 @@ double prediction_manager::get_visited_ratio(std::vector<bool>& visited_flag)
     return ratio_;
 }
 
-/*
-
-    //unknown_poses.poses.clear();  //pose_array_clear
-    std::queue<unsigned int> bfs;
-    //cell_idx
-     unsigned int clear, pos = target_mapidx;
-    //put current cell to the dataset
-    if(nearestCell(clear, pos, NO_INFORMATION)){
-        bfs.push(clear);
-    }else{
-        bfs.push(pos);
-        ROS_WARN("Could not find nearby clear cell to start search");
-    }
-    visited_flag[bfs.front()] = true;
-
-    ROS_INFO("here-0");
-    while(!bfs.empty()){
-        unsigned int idx = bfs.front();
-        //ROS_INFO("idx: %d", idx);
-        bfs.pop();
-
-        BOOST_FOREACH(unsigned int nbr,nhood4(idx))
-        {
-            //ROS_INFO("here");
-            if(isNewUnknown(nbr, visited_flag) && !visited_flag[nbr])
-            {
-                frontier_exploration::Frontier new_frontier = buildNewUnknown(nbr, pos, visited_flag);
-                //new_frontier, visited, last_idx= buildnewUnknownfrontier(n_idx, pmap, visited, param_map )
-                //idx_set.push_back(nbr);
-                bfs.push(nbr);
-                unknowns_list.push_back(new_frontier);
-            }
-
-            visited_flag[nbr] = true;
-        }
-        
-    }
-
-
-
-    return unknowns_list;
-
-}
-*/
-/*
-
-void prediction_manager::FindUnknowns()
-{
-    int search_size =Target_Search_map.data.size() ;
-    unknown_poses.poses.clear();
-    unknown_map.data.clear();
-    unknown_map.data.resize(search_size,0);
-
-    //unknown ==search-map -- update static obstacles
-    std::vector<bool> visited_flag(search_size, false); // initialize with static obstacle
-    double true_ratio=0.0;
-
-    //auto map_iter=goal_maps.begin();
-    //for(map_iter; map_iter!=goal_maps.end();map_iter++)
-    while(true_ratio<0.9)
-    {
-    
-        geometry_msgs::Point init_pose;
-        init_pose.x=(static_cast<float>(rand())/static_cast <float>(RAND_MAX)-0.5)*2*RAND_RANGE;
-        init_pose.y=(static_cast<float>(rand())/static_cast <float>(RAND_MAX)-0.5)*2*RAND_RANGE;
-        //init_pose.y=map_iter->second[1];
-        ROS_INFO("init_pos x: %.2lf, init_pos_y : %.2lf", init_pose.x, init_pose.y);
-        auto frontier_list = Unknown_search(init_pose, visited_flag);
-        for(auto frontier :frontier_list)  
-        {
-            geometry_msgs::Pose avg_pose;
-            avg_pose.position.x=frontier.centroid.x;
-            avg_pose.position.y=frontier.centroid.y;
-            avg_pose.orientation.w=1.0;
-            unknown_poses.poses.push_back(avg_pose);
-        
-        }
-
-        true_ratio = get_visited_ratio(visited_flag);
-        ROS_INFO("true_ratio: %.2lf", true_ratio);
-        
-        unknown_poses.header.stamp = ros::Time::now();
-        unknown_posearray_pub.publish(unknown_poses);
-        //std::vector<int> idx_list = FindCellFrom(init_pose, NO_INFORMATION);
-        //insert_unknownmap(idx_list);
-        //geometry_msgs::Pose avg_pose;
-        //find_avg_pose(idx_list,avg_pose );
-        //unknown_poses.poses.push_back(avg_pose);
-    }
-
-    unknown_map_pub.publish(unknown_map);
-
-    unknown_poses.header.stamp = ros::Time::now();
-    unknown_posearray_pub.publish(unknown_poses);
-    //ROS_INFO("publish_unknown");
-
-}
-*/
-
-/*
-
-double prediction_manager::get_visited_ratio(std::vector<bool>& visited_flag)
-{
-    int total = visited_flag.size();
-    
-    int count_=0;
-    for(auto flag: visited_flag)
-    {
-        if(flag==true)
-            count_++;
-    }
-    ROS_INFO("total: % d, count!! : %d",total,  count_);
-    double ratio_=(double)count_/(double)total;
-
-    return ratio_;
-
-}
-*/
-
-/*
-void prediction_manager::FindUnknowns()
-{
-    unknown_poses.poses.clear();
-    unknown_map.data.clear();
-    unknown_map.data.resize(Target_Search_map.data.size(),0);
-
-    //unknown ==search-map -- update static obstacles
-
-    auto map_iter=goal_maps.begin();
-    for(map_iter; map_iter!=goal_maps.end();map_iter++)
-    {
-        geometry_msgs::Point init_pose;
-        init_pose.x=map_iter->second[0];
-        init_pose.y=map_iter->second[1];
-        //ROS_INFO("init_pos x: %.2lf, init_pos_y : %.2lf", init_pose.x, init_pose.y);
-        std::vector<int> idx_list = FindCellFrom(init_pose, NO_INFORMATION);
-        insert_unknownmap(idx_list);
-        geometry_msgs::Pose avg_pose;
-        find_avg_pose(idx_list,avg_pose );
-        unknown_poses.poses.push_back(avg_pose);
-    }
-
-    unknown_map_pub.publish(unknown_map);
-
-    unknown_poses.header.stamp = ros::Time::now();
-    unknown_posearray_pub.publish(unknown_poses);
-    //ROS_INFO("publish_unknown");
-
-}
-*/
-
-
 
 // filter loop
 void prediction_manager::spin()
 {
   while (ros::ok())
   {
-    // ------ LOCKED ------
-    
-    //boost::mutex::scoped_lock lock(filter_mutex_);
-    /*
-    geometry_msgs::Point start_pose;
-    start_pose.x=global_pose_a1[0];
-    start_pose.y=global_pose_a1[1];
-
-    geometry_msgs::Point start_pose2;
-    start_pose2.x=global_pose[0];
-    start_pose2.y=global_pose[1];
-    */
-
     //ROS_INFO("Search started.");
     if(Is_Searchmap_received){
         //FindUnknowns();
@@ -1628,7 +1325,6 @@ void prediction_manager::spin()
     ros::spinOnce();
   }
 };
-
 // ----------
 // -- MAIN --
 // ----------
