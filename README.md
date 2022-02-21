@@ -18,11 +18,11 @@ sudo apt-get install ros-melodic-geometry2
  
 
 #Simulation
-- Run the Gazebo world with two Spot quadrupeds (AHG world)
+- Run the Gazebo world with two Spot quadrupeds (AHG world - 3 agents)
 ```
-roslaunch tmp multi_spot_ahg.launch
+roslaunch tmp three_spot_ahg.launch
 ```
-or (Disaster world)
+or (Disaster world - 2 agents)
 ```
 roslaunch tmp multi_spot_disaster.launch
 ```
