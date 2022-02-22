@@ -711,7 +711,7 @@ bool get_smooth_paths(int n_agent)
                 else{
                     tmp_dst = calc_dist(srv_.request.start.pose, srv_.response.plan.poses[0].pose);
                     double len_pose =srv_.response.plan.poses.size();
-                    ROS_INFO("len_pose: %d", len_pose);
+                    ROS_INFO("len_pose: %f", len_pose);
                 }
                 real_dst[i]=tmp_dst;
                 ROS_INFO("tmp_dst: %.2lf", tmp_dst);
