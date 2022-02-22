@@ -85,18 +85,19 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_executable(mtsp_server src/mtsp_server.cpp src/cluster.cpp
     src/map_util.cpp ${SOURCES})
 target_link_libraries(mtsp_server ${catkin_LIBRARIES})
-add_dependencies(mtsp_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
+add_dependencies(mtsp_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
 add_executable(cluster_test src/cluster_test.cpp src/cluster.cpp ${SOURCES})
 target_link_libraries(cluster_test ${catkin_LIBRARIES} )
-add_dependencies(cluster_test ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
+add_dependencies(cluster_test ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
 add_executable(scaled_map_converter src/scaled_map_converter.cpp
     src/map_util.cpp ${SOURCES})
 target_link_libraries(scaled_map_converter ${catkin_LIBRARIES})
-add_dependencies(scaled_map_converter ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
+add_dependencies(scaled_map_converter ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
 add_executable(plugin_client src/plugin_client.cpp)
+add_dependencies(plugin_client ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(plugin_client
   ${catkin_LIBRARIES}
 )
