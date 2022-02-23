@@ -646,7 +646,7 @@ void prediction_manager::SplitFrontiers(const frontier_exploration::Frontier& fr
         output.min_distance = std::numeric_limits<double>::infinity();
         newfrontiers.push_back(output);
     }
-    ROS_INFO("size of newfrontiers: %d", newfrontiers.size());
+    ROS_INFO("size of newfrontiers: %lu", newfrontiers.size());
 
     for(size_t j(0); j<(frontier.size-1); j++)
     {

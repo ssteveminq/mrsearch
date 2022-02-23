@@ -71,6 +71,7 @@ public:
         double original_y=msg->info.origin.position.y;
         double original_maxx=msg->info.origin.position.x+original_width*msg->info.resolution;
         double original_maxy=msg->info.origin.position.y+original_height*msg->info.resolution;
+        double original_res=msg->info.resolution;
         //double original_y=-51.225;;
         
         m_params= new Map_params(original_maxx,original_maxy,original_x,original_y, XY_RES_SCALED);
@@ -80,13 +81,13 @@ public:
         Scaled_static_map.info.origin.position.x= m_params->xmin;
         Scaled_static_map.info.origin.position.y= m_params->ymin;
         Scaled_static_map.data.resize((Scaled_static_map.info.width * Scaled_static_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
-        double oroginal_res=0.05;
+        //double original_res=0.05;
 
         if(is_initialized){
 
 		//for static space map
 		std::map<int,int> occupancyCountMap;
-		int scaled_res=10;
+		int scaled_res=(int)(XY_RES_SCALED/original_res);
 		int map_idx=0;
 		int scaled_result=0;
 
@@ -102,12 +103,12 @@ public:
 			for(int k(0);k<scaled_res;k++)
 			    for(int j(0);j<scaled_res;j++)
 			    {
-				small_pos_x=pos_x+j*oroginal_res;
-				small_pos_y=pos_y+k*oroginal_res;
+				small_pos_x=pos_x+j*original_res;
+				small_pos_y=pos_y+k*original_res;
 				dist_x= small_pos_x-original_x;
 				dist_y= small_pos_y-original_y;
-				map_coord_i=floor(dist_x/oroginal_res);
-				map_coord_j=floor(dist_y/oroginal_res);
+				map_coord_i=floor(dist_x/original_res);
+				map_coord_j=floor(dist_y/original_res);
 				
 				int map_data_index=original_width*map_coord_j+map_coord_i;
 				float temp_occupancy= msg->data[map_data_index];
