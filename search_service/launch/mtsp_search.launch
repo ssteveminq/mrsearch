@@ -3,10 +3,10 @@
 
     <rosparam file="$(find search_service)/config/ahg.yaml"/>
     <arg name="agent1_pose_topic" default="spot/amcl_pose"/>
-    <arg name="agent2_pose_topic" default="spot2/amcl_pose"/>
+    <arg name="agent2_pose_topic" default="turtlebot/amcl_pose"/>
     <arg name="agent3_pose_topic" default="spot3/amcl_pose"/>
     <arg name="agent1_map_topic" default="spot/move_base/local_costmap/costmap"/>
-    <arg name="agent2_map_topic" default="spot2/move_base/local_costmap/costmap"/>
+    <arg name="agent2_map_topic" default="turtlebot/move_base/local_costmap/costmap"/>
     <arg name="agent3_map_topic" default="spot3/move_base/local_costmap/costmap"/>
     <arg name="planner_topic" default="spot/move_base/make_plan"/>
     <arg name="max_x" default="12.0"/>

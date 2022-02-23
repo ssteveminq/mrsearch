@@ -15,7 +15,7 @@
 
  <arg name="ahg_sim" default="true" />
   <arg name="world_name" value="$(find tmp)/worlds/test_humantrajectory.world"/>
-  <arg name="map" default="$(find tmp)/maps/ahg_map_rev.yaml" />
+  <arg name="map" default="$(find tmp)/maps/full_demo_map.yaml" />
   <param name="/use_sim_time" value="true"/>
   <arg name="param_file" default="$(optenv HOME ~)/.ros/params.yaml" />
 
@@ -27,14 +27,15 @@
   </group>
 
 
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/disaster.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map)"/>
 
   <!-- Frist Agent -->
   <arg name="spot_namespace"  default="spot"/>
   <group ns ="$(arg spot_namespace)">
       <param name="robot_description" command="$(find xacro)/xacro --inorder $(find spot_description)/urdf/spot.urdf.xacro"/>
 
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/disaster.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map)"/>
+  <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/disaster.yaml"/>-->
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
         <rosparam param="source_list">["/spot/joint_states"]</rosparam>
   </node>
@@ -82,7 +83,8 @@
       <arg name="tf_prefix" value="$(arg spot2_namespace)"/>
   </include>
 
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/disaster.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map)"/>
+  <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/disaster.yaml"/>-->
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
     <rosparam file="$(find tmp)/config/costmap_common_params_spot2.yaml" command="load" ns="global_costmap" /> 

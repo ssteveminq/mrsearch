@@ -34,12 +34,12 @@ class waypoint_manager(object):
         self.feedback_ = PathFollowFeedback()
         self.result_= PathFollowResult()
 
-        self.cli = actionlib.SimpleActionClient('spot/move_base', MoveBaseAction)
+        self.cli = actionlib.SimpleActionClient('turtlebot/move_base', MoveBaseAction)
         print("move_base-before")
-        # self.cli.wait_for_server()
+        self.cli.wait_for_server()
         print("move_base-after")
 
-        path_topic='agent_0_path'
+        path_topic='agent_1_path'
         rospy.Subscriber(path_topic, Path, self.path_Cb)
         self.desired_path = Path()
 
