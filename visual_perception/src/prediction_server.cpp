@@ -720,12 +720,12 @@ frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int 
             //check if neighbour is a potential frontier cell
             if(output.size>max_size)
             {
-                //output.centroid.x /= (output.size-1);
-                //output.centroid.y /= (output.size-1);
-                //output.centroid.x+=0.05;
-                //output.centroid.y+=0.05;
-                output.centroid.x = output.points[static_cast<int>(max_size/2*3)].x;
-                output.centroid.y = output.points[static_cast<int>(max_size/2*3)].y;
+                output.centroid.x /= (output.size-1);
+                output.centroid.y /= (output.size-1);
+                output.centroid.x+=0.05;
+                output.centroid.y+=0.05;
+                //output.centroid.x = output.points[static_cast<int>(max_size/2*3)].x;
+                //output.centroid.y = output.points[static_cast<int>(max_size/2*3)].y;
                 output.travel_point = output.centroid;
                 return output;
 
