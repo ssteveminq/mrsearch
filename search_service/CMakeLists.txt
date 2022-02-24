@@ -35,6 +35,7 @@ add_action_files(
    PathFollow.action
    TSPSolve.action
    SetSearchRegion.action
+   SingleTSPSolve.action
 )
 
 add_service_files(

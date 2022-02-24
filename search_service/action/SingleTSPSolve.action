@@ -1,0 +1,10 @@
+#goal definition
+geometry_msgs/Pose pose
+geometry_msgs/PoseArray waypoints
+---
+#result definition
+Header header
+nav_msgs/Path path
+bool sucess
+---
+#feedback

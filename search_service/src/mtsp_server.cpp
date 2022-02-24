@@ -37,6 +37,8 @@
 #include <visual_perception/UnknownSearchAction.h>
 #include <search_service/TSPSolveAction.h>
 #include <search_service/TSPSolveResult.h>
+#include <search_service/SingleTSPSolveAction.h>
+#include <search_service/SingleTSPSolveResult.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib_msgs/GoalID.h>
@@ -62,6 +64,9 @@
 #define L_FREE -4.595// np.log(0.01/0.99)
 #define CELL_MAX_ENTROPY 0.693147
 #define GOAL_THRESHOLD 2.0
+
+
+typedef actionlib::SimpleActionClient<search_service::SingleTSPSolveAction>  al_stsp;
 
 using namespace std;
 
@@ -133,7 +138,7 @@ public:
   as_(nh_, name, boost::bind(&MultiSearchManager::executeCB, this,_1), false),
   as_region(nh_, "set_search_region", boost::bind(&MultiSearchManager::executeCB_SR, this,_1), false),
   ac_("getunknowns", true),
-  ac_tsp("tsp_solve_action", true),
+  //ac_tsp("tsp_solve_action", true),
   action_name_(name),
   IsActive(false),
   IsCalled(false),
@@ -221,6 +226,12 @@ public:
          std::string topic_name_ = "agent_"+std::to_string(i)+"_path";
          path_pubs[i]=nh_.advertise<nav_msgs::Path>(topic_name_, 50, true);
      }
+
+     //tsp_solver(single agent)
+     stsp_vec.resize(NUMAGENTS);
+     for(size_t i(0); i<NUMAGENTS;i++)
+         stsp_vec[i]= new al_stsp("agent_"+std::to_string(i)+"_tspsolve", true);
+
 
      //subscribers
      global_map_sub = nh_.subscribe<nav_msgs::OccupancyGrid>("/scaled_static_map", 1, &MultiSearchManager::global_map_callback, this);
@@ -311,7 +322,6 @@ public:
   /* MultiSearch action callback function */
   void executeCB(const search_service::MultiSearchGoalConstPtr &goal)
   {
-      
     //reset values
     smooth_paths.clear();
     smooth_paths.resize(NUMAGENTS);
@@ -326,12 +336,11 @@ public:
      ROS_INFO("MultiSearchManager action is called!!");
      ac_.waitForServer(ros::Duration(5.0));
      ROS_INFO("WaypointGeneration Server is running....!!");
-     ac_tsp.waitForServer(ros::Duration(5.0));
+     //ac_stsp.waitForServer(ros::Duration(5.0));
      ROS_INFO("TSP_solve Server is running....!!");
 
      double sleep_rate= 2.0;
      ros::Rate r(sleep_rate);
-
      //search_entropy = get_searchmap_entropy()/ total_entropy;
      if (as_.isPreemptRequested() || !ros::ok())
       {
@@ -353,6 +362,7 @@ public:
      visual_perception::UnknownSearchGoal unknwongoal;
      ac_.sendGoal(unknwongoal);
      bool finished_before_timeout = ac_.waitForResult(ros::Duration(30.0)); //Wait for 20s
+     bool finished_before_timeout_stsp;
      if(finished_before_timeout)
      {
          ROS_INFO("waypoints are generated");
@@ -360,6 +370,49 @@ public:
          waypoints= res_->waypoints;
          ROS_INFO("clustering started");
          //Waypoints = > clustering 
+         if(clustering(NUMAGENTS)){
+             //Call TSP Solver
+             agent_paths.resize(NUMAGENTS);
+             for(size_t j(0);j<NUMAGENTS;j++)
+             {
+                 search_service::SingleTSPSolveGoal tspgoal;
+                 tspgoal.waypoints= clustered_poses[j];
+                 tspgoal.pose = agent_poses.poses[j];
+                 //call TSP Solve Action
+                 stsp_vec[j]->sendGoal(tspgoal);
+                 //ac_stsp.sendGoal(tspgoal);
+                 ROS_INFO("Single TSP Solve for agent %d started", j);
+             }
+
+             for(size_t j(0);j<NUMAGENTS;j++)
+             {
+                 finished_before_timeout_stsp= stsp_vec[j]->waitForResult(ros::Duration(30.0));
+             //bool finished_before_timeout_tsp = ac_tsp.waitForResult(ros::Duration(50.0));
+                 if(finished_before_timeout_stsp )
+                 {
+                      ROS_INFO("STSP solution obtained for agent %d",j);
+                      auto stsp_res=stsp_vec[j]->getResult();
+                      //save_paths for each agents
+                      agent_paths[j] = stsp_res->path;
+                 }
+                 else{
+                    ROS_WARN("can't obtain tsp path for agent %d",j);
+                    as_.setAborted(result_);
+                    return;
+
+                 }
+             }
+
+                 result_.cur_entropy = search_entropy;
+                 if(get_smooth_paths(NUMAGENTS))
+                     result_.paths=smooth_paths;
+                 as_.setSucceeded(result_);
+                 pathUpdated=true;
+                 publish_paths();
+                 return;
+
+         }
+         /*
          if(clustering(NUMAGENTS)){
              //Call TSP Solver
              search_service::TSPSolveGoal tspgoal;
@@ -388,6 +441,7 @@ public:
                     ROS_INFO("can't obtain tsp path");
              }
          }
+         */
          else{
              ROS_WARN("At least one agent doesn't have assigned waypoints");
              ROS_WARN("Search Action will be aborted");
@@ -1034,7 +1088,9 @@ protected:
   actionlib::SimpleActionServer<search_service::MultiSearchAction> as_;
   actionlib::SimpleActionServer<search_service::SetSearchRegionAction> as_region;
   actionlib::SimpleActionClient<visual_perception::UnknownSearchAction> ac_;
-  actionlib::SimpleActionClient<search_service::TSPSolveAction> ac_tsp;
+  //actionlib::SimpleActionClient<search_service::TSPSolveAction> ac_tsp;
+  std::vector<al_stsp*> stsp_vec;
+  //actionlib::SimpleActionClient<search_service::SingleTSPSolveAction> ac_stsp;
 
   ros::ServiceClient planner_srv_client;
   //ros::ServiceClient planner_srv_client_single;
