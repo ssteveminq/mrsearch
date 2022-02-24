@@ -49,7 +49,7 @@
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
       <param name="tf_prefix" type="string" value="$(arg spot_namespace)" />
   </node>
-  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model spot -x $(arg spot_x) -y $(arg spot_y) -R 0 -P 0 -Y 0 " output="screen"/>
+  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model spot -x $(arg spot_x) -y $(arg spot_y) -z 0.25 -R 0 -P 0 -Y 0 " output="screen"/>
 
   <include file="$(find spot_gazebo)/launch/velodyne_2d.launch">
       <arg name="tf_prefix" value="$(arg spot_namespace)"/>
@@ -63,8 +63,8 @@
       </include>
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-    <rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
-    <rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+      <rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+      <rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find tmp)/config/local_costmap_params.yaml" command="load" />
     <rosparam file="$(find tmp)/config/global_costmap_params.yaml" command="load" /> 
     <rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />

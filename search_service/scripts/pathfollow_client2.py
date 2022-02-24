@@ -24,5 +24,5 @@ def mains():
     client.wait_for_result()
         
 if __name__ == '__main__':
-    rospy.init_node('pathfollow_action_client')
+    rospy.init_node('pathfollow_action_client1')
     mains()

@@ -9,7 +9,7 @@ laser_scan_sensor: {sensor_frame: spot/velodyne, data_type: LaserScan, topic: sc
 
 point_cloud_sensor: {sensor_frame: spot/velodyne, data_type: PointCloud2, topic: lidar_points, marking: true, clearing: true}
 
-map_type: costmap
-observation_sources: scan
-scan: {sensor_frame: spot/velodyne, data_type: LaserScan, topic: spot/scan, marking: true, clearing: true}
+#map_type: costmap
+#observation_sources: scan
+#scan: {sensor_frame: spot/velodyne, data_type: LaserScan, topic: spot/scan, marking: true, clearing: true}
 

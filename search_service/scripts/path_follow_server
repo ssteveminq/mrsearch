@@ -64,7 +64,7 @@ class waypoint_manager(object):
         current_path =self.desired_path
         current_path_size = len(current_path.poses)
         print("current_path_size: ",len(current_path.poses))
-        path_skip_const=50
+        path_skip_const=70
 
         for pos_idx in range(0, current_path_size,path_skip_const):
             pose = current_path.poses[pos_idx]
