@@ -360,32 +360,40 @@ public:
          waypoints= res_->waypoints;
          ROS_INFO("clustering started");
          //Waypoints = > clustering 
-         clustering(NUMAGENTS);
-         //Call TSP Solver
-         search_service::TSPSolveGoal tspgoal;
-         tspgoal.num_agent = NUMAGENTS;
-         tspgoal.clusters = clustered_poses;
-         tspgoal.poses = agent_poses;
-         //call TSP Solve Action
-         ac_tsp.sendGoal(tspgoal);
-         ROS_INFO("TSP Solve started");
-         bool finished_before_timeout_tsp = ac_tsp.waitForResult(ros::Duration(50.0));
-         if(finished_before_timeout_tsp )
-         {
-              ROS_INFO("TSP solution obtained. Path will be published");
-              auto tsp_res=ac_tsp.getResult();
-              //save_paths for each agents
-              agent_paths = tsp_res->paths;
-              result_.cur_entropy = search_entropy;
-              if(get_smooth_paths(NUMAGENTS))
-                  result_.paths=smooth_paths;
-              as_.setSucceeded(result_);
-              pathUpdated=true;
-              publish_paths();
-              return;
+         if(clustering(NUMAGENTS)){
+             //Call TSP Solver
+             search_service::TSPSolveGoal tspgoal;
+             tspgoal.num_agent = NUMAGENTS;
+             tspgoal.clusters = clustered_poses;
+             tspgoal.poses = agent_poses;
+             //call TSP Solve Action
+             ac_tsp.sendGoal(tspgoal);
+             ROS_INFO("TSP Solve started");
+             bool finished_before_timeout_tsp = ac_tsp.waitForResult(ros::Duration(50.0));
+             if(finished_before_timeout_tsp )
+             {
+                  ROS_INFO("TSP solution obtained. Path will be published");
+                  auto tsp_res=ac_tsp.getResult();
+                  //save_paths for each agents
+                  agent_paths = tsp_res->paths;
+                  result_.cur_entropy = search_entropy;
+                  if(get_smooth_paths(NUMAGENTS))
+                      result_.paths=smooth_paths;
+                  as_.setSucceeded(result_);
+                  pathUpdated=true;
+                  publish_paths();
+                  return;
+             }
+             else{
+                    ROS_INFO("can't obtain tsp path");
+             }
          }
          else{
-                ROS_INFO("can't obtain tsp path");
+             ROS_WARN("At least one agent doesn't have assigned waypoints");
+             ROS_WARN("Search Action will be aborted");
+             as_.setAborted(result_);
+             return;
+         
          }
      }
      else{
@@ -824,7 +832,7 @@ bool get_smooth_paths(int n_agent)
 //Output:
 */
 
-void clustering(int n_agent )
+bool clustering(int n_agent )
 {
     ROS_INFO("Clustering for %d agents!!", n_agent);
     agent_xs.resize(n_agent);
@@ -852,12 +860,23 @@ void clustering(int n_agent )
             ys.push_back(ty);
         }
 
-
        HCluster test_cluster(n_agent, xs,ys, Posevec, weights);
        for(size_t i(0);i<n_agent;i++)
         {
             test_cluster.get_labeled_x_y(i, agent_xs[i],agent_ys[i]);
         }
+
+       for(size_t i(0);i<n_agent;i++)
+       {
+           ROS_INFO("Clustered_points for agent %d: %d", i,agent_xs[i].size());
+           if(agent_xs[i].size()==0)
+           {
+               ROS_WARN("NO waypoints are assigned to the agent %d", i);
+               clustered=false;
+               return false;
+           }
+
+       }
 
        //Save clustered_poses to geometry_msgs/PoseArray
        clustered_poses.clear();
@@ -875,8 +894,11 @@ void clustering(int n_agent )
        }
 
         clustered=true;
+        return true;
 
     }
+
+    /*
     else{
 
     std_msgs::ColorRGBA blue;
@@ -936,6 +958,7 @@ void clustering(int n_agent )
     }
     visual_marker_pub.publish(markers_msg);
     }
+    */
 }
 
 void publish_clusters()
