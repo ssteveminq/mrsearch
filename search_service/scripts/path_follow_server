@@ -26,7 +26,7 @@ from search_service.msg import PathFollowAction, PathFollowFeedback, PathFollowR
 # import tf.transformations
 
 class waypoint_manager(object):
-    def __init__(self, name, wait=0.0):
+    def __init__(self, name, target_nav_action, target_path_topic, wait=0.0):
 
         self._action_name = name
 
@@ -34,15 +34,15 @@ class waypoint_manager(object):
         self.feedback_ = PathFollowFeedback()
         self.result_= PathFollowResult()
 
-        self.cli = actionlib.SimpleActionClient('turtlebot/move_base', MoveBaseAction)
-        print("move_base-before")
+
+        print("target_nav_action: ", target_nav_action)
+        print("target_path_topic: ", target_path_topic)
+        self.cli = actionlib.SimpleActionClient(target_nav_action, MoveBaseAction)
         self.cli.wait_for_server()
-        print("move_base-after")
+        print("move_base-action-connected")
 
-        test_topic = rospy.get_param('path_topic')
-
-        path_topic='agent_1_path'
-        rospy.Subscriber(path_topic, Path, self.path_Cb)
+        # path_topic='agent_1_path'
+        rospy.Subscriber(target_path_topic, Path, self.path_Cb)
         self.desired_path = Path()
 
  
@@ -85,15 +85,17 @@ class waypoint_manager(object):
         self._as.set_succeeded(self.result_)
 
 
-
 if __name__ == '__main__':
     rospy.init_node('path_follow_action')
-    print(len())
-    if len(sys.argv)<2:
-        print("usate: path_follow_server arg1(path_topic)")
+    if len(sys.argv)<3:
+        print("usate: path_follow_server arg1(target_movebase_action_topic) arg2(path_topic)")
     else:
         print("arg1: ", sys.argv[1])
-        path_manager = waypoint_manager(rospy.get_name())
+        print("arg2: ", sys.argv[2])
+        path_manager = waypoint_manager(rospy.get_name(), sys.argv[1], sys.argv[2])
+
+
+    # path_manager = waypoint_manager(rospy.get_name())
 
 
 
