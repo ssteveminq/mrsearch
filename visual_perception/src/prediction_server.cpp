@@ -711,6 +711,8 @@ frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int 
                 output.centroid.y /= (output.size-1);
                 //output.centroid.x+=0.05;
                 //output.centroid.y+=0.05;
+                output.centroid.x+=0.05;
+                output.centroid.y+=0.05;
                 //output.centroid.x = output.points[static_cast<int>(max_size/2*3)].x;
                 //output.centroid.y = output.points[static_cast<int>(max_size/2*3)].y;
                 output.travel_point = output.centroid;
