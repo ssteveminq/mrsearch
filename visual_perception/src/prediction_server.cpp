@@ -194,16 +194,14 @@ void prediction_manager::searchmap_callback(const nav_msgs::OccupancyGrid::Const
 }
 
 
-
 bool prediction_manager::check_staticObs(float x_pos,float y_pos)
 {
-  
   //return true if it is occupied with obstacles
-  if (Scaled_map.data.size()>0)
+  if (Target_Search_map.data.size()>0)
   {   
-      int obs_idx=globalcoord_To_SScaled_map_index(x_pos,y_pos);
+      int obs_idx=Coord2CellNum(x_pos,y_pos, Target_Search_map);
 
-    if(Scaled_map.data[obs_idx]>0)
+    if(Target_Search_map.data[obs_idx]>0)
         return true;
     else
       return false;
@@ -211,33 +209,22 @@ bool prediction_manager::check_staticObs(float x_pos,float y_pos)
 
 }
 
+int prediction_manager::Coord2CellNum(double _x, double _y, const nav_msgs::OccupancyGrid& inputmap_)
+{	
+    std::vector<int> target_Coord;
+    target_Coord.resize(2,0);
 
-int prediction_manager::globalcoord_To_SScaled_map_index(float x_pos,float y_pos)
-{
-   std::vector<float> cur_coord(2,0.0);
-  
-   //for case of using static map
-  float reference_origin_x =-4;
-  float reference_origin_y =-4;
-  float Grid_STEP=0.5;
-  int num_grid=24;
+    double  temp_x  = _x-inputmap_.info.origin.position.x;
+    double  temp_y = _y-inputmap_.info.origin.position.y;
 
-  //for case of using static map
-  // double reference_origin_x =-3.5;
-  // double reference_origin_y =-3.5;
-  float  temp_x  = x_pos-reference_origin_x;
-  float  temp_y = y_pos-reference_origin_y;
+    target_Coord[0]= (int) floor(temp_x/inputmap_.info.resolution);
+    target_Coord[1]= (int) floor(temp_y/inputmap_.info.resolution);
 
-  cur_coord[0]= (int) (temp_x/Grid_STEP);
-  cur_coord[1]= (int)(temp_y/Grid_STEP);
-
-
-  int robot_pos_id=num_grid*cur_coord[1]+cur_coord[0];
-  //ROS_INFO("Robot pos ID : %d \n", robot_pos_id);
-
-  return robot_pos_id;
-
+    int index= target_Coord[0]+inputmap_.info.width*target_Coord[1];
+    return index;
 }
+
+
 
 
 double prediction_manager::getDistance_from_Vec(std::vector<double> origin, double _x, double _y)
@@ -682,7 +669,7 @@ void prediction_manager::SplitFrontiers(const frontier_exploration::Frontier& fr
 
 frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int initial_cell, unsigned int reference_, std::vector<bool>& visited_flag){
 
-    int max_size = 95;
+    int max_size = 110;
     //int max_size = 100;
     //initialize frontier structure
     frontier_exploration::Frontier output;
@@ -720,12 +707,12 @@ frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int 
             //check if neighbour is a potential frontier cell
             if(output.size>max_size)
             {
-                //output.centroid.x /= (output.size-1);
-                //output.centroid.y /= (output.size-1);
+                output.centroid.x /= (output.size-1);
+                output.centroid.y /= (output.size-1);
                 //output.centroid.x+=0.05;
                 //output.centroid.y+=0.05;
-                output.centroid.x = output.points[static_cast<int>(max_size/2*3)].x;
-                output.centroid.y = output.points[static_cast<int>(max_size/2*3)].y;
+                //output.centroid.x = output.points[static_cast<int>(max_size/2*3)].x;
+                //output.centroid.y = output.points[static_cast<int>(max_size/2*3)].y;
                 output.travel_point = output.centroid;
                 return output;
 
@@ -1223,6 +1210,17 @@ std::vector<frontier_exploration::Frontier> prediction_manager::Unknown_search(g
         
     }
 
+    //check if clusters is in occupied
+    for(auto it=unknowns_list.begin(); it!=unknowns_list.end();)
+    {
+        if(check_staticObs(it->centroid.x, it->centroid.y)){
+            it=unknowns_list.erase(it);
+        }
+        else{
+            ++it;
+        }
+    
+    }
 
     return unknowns_list;
 

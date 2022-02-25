@@ -1,0 +1,135 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="namespace" default="/hsrb"/>
+  <arg name="debug" default="false"/>
+  <arg name="gui" default="true" />
+  <arg name="rviz" default="true"/>
+  <arg name="gazebo_visualization" default="false" />
+  <arg name="paused" default="true" />
+  <arg name="spot_x" default=".0"/>
+  <arg name="spot_y" default ="-2.0"/> 
+  <arg name="spot2_x" default="0.0"/>
+  <arg name="spot2_y" default ="2.0"/> 
+  <arg name="world" default="gazebo"/>
+  <!--turtlebot3-->
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+  <arg name="x_pos" default="-2.0"/>
+  <arg name="y_pos" default="-0.5"/>
+  <arg name="z_pos" default="0.0"/>
+  <arg name="map_file" default="$(find tmp)/maps/disaster.yaml"/>
+
+
+  <arg name="use_sim_time" default="true"/>
+
+ <arg name="ahg_sim" default="true" />
+  <arg name="world_name" value="$(find tmp)/worlds/test_humantrajectory.world"/>
+  <!--<arg name="map" default="$(find tmp)/maps/ahg_map_rev.yaml" />-->
+  <param name="/use_sim_time" value="true"/>
+  <arg name="param_file" default="$(optenv HOME ~)/.ros/params.yaml" />
+
+  <rosparam file="$(find search_service)/config/ahg.yaml"/>
+
+  <node name="$(arg world)" pkg="gazebo_ros" type="gzserver" args="$(find tmp)/worlds/disaster.world" respawn="false" output="screen" launch-prefix="$(optenv OPTIRUN_LAUNCH_PREFIX)"/>
+  <group if="$(arg gui)">
+    <node name="gazebo_gui" pkg="gazebo_ros" type="gzclient" respawn="false" output="screen" launch-prefix="$(optenv OPTIRUN_LAUNCH_PREFIX)"/>
+  </group>
+
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/disaster.yaml"/>
+
+  <!-- Frist Agent -->
+  <arg name="spot_namespace"  default="spot"/>
+  <group ns ="$(arg spot_namespace)">
+      <param name="robot_description" command="$(find xacro)/xacro --inorder $(find spot_description)/urdf/spot.urdf.xacro"/>
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/disaster.yaml"/>
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <rosparam param="source_list">["/spot/joint_states"]</rosparam>
+  </node>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+      <param name="tf_prefix" type="string" value="$(arg spot_namespace)" />
+  </node>
+  <node name="spawn_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model spot -x $(arg spot_x) -y $(arg spot_y) -z 0.25 -R 0 -P 0 -Y 0 " output="screen"/>
+
+  <include file="$(find spot_gazebo)/launch/velodyne_2d.launch">
+      <arg name="tf_prefix" value="$(arg spot_namespace)"/>
+  </include>
+
+
+ <include file="$(find tmp)/launch/amcl_diff.xml">
+      <arg name="namespace" value="$(arg spot_namespace)"/>
+      <arg name="pos_x" value="$(arg spot_x)"/>
+      <arg name="pos_y" value="$(arg spot_y)"/>
+      </include>
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+      <rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+      <rosparam file="$(find tmp)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find tmp)/config/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find tmp)/config/global_costmap_params.yaml" command="load" /> 
+    <rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />
+    <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
+ </node>
+  </group>
+
+
+  <!-- Second Agent -->
+  <arg name="turtlebot_namespace"  default="turtlebot"/>
+  <group ns ="$(arg turtlebot_namespace)">
+
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model turtlebot3_$(arg model) -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)"/>
+
+  <include file="$(find turtlebot3_bringup)/launch/turtlebot3_remote.launch">
+    <arg name="model" value="$(arg model)"/>
+    <arg name="multi_robot_name" value="$(arg turtlebot_namespace)"/>
+  </include>
+
+  <!-- Localization -->
+  <arg name="initial_pose_x" default="-1.990"/>
+  <arg name="initial_pose_y" default="-0.508"/>
+  <arg name="initial_pose_a" default="0.0"/>
+
+  <include file="$(find tmp)/launch/turtle_amcl.launch">
+    <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+    <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+    <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
+    <arg name="robot_namespace" value="$(arg turtlebot_namespace)"/>
+  </include>
+
+ <!--<node name="move_base_flex" pkg="mbf_costmap_nav" type="mbf_costmap_nav" required="true" output="screen" clear_params="true">-->
+    <!--<rosparam file="$(find turtlebot3_navigation)/param/tb_costmap_common_params_$(arg model).yaml" command="load" ns="global_costmap" />-->
+    <!--<rosparam file="$(find turtlebot3_navigation)/param/tb_costmap_common_params_$(arg model).yaml" command="load" ns="local_costmap" />-->
+    <!--<rosparam file="$(find turtlebot3_navigation)/param/tb_local_costmap_params.yaml" command="load" />-->
+    <!--<rosparam file="$(find turtlebot3_navigation)/param/tb_global_costmap_params.yaml" command="load" />-->
+    <!--<rosparam file="$(find mbf_beginner)/param/move_base_flex.yaml" command="load"/>-->
+    <!--<param name="base_global_planner" value="global_planner/GlobalPlanner"/>-->
+  <!--</node>-->
+
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+      <rosparam file="$(find tmp)/config/turtlebot/local_costmap_params.yaml" command="load"/> 
+      <rosparam file="$(find tmp)/config/turtlebot/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find tmp)/config/turtlebot/move_base_params.yaml" command="load" />
+      <rosparam file="$(find tmp)/config/turtlebot/dwa_local_planner_params_burger.yaml" command="load" /> 
+    <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+    <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
+    <!--<remap from="cmd_vel" to="$(arg cmd_vel_topic)"/>-->
+    <!--<remap from="odom" to="$(arg odom_topic)"/>-->
+    <!--<param name="DWAPlannerROS/min_vel_x" value="0.0" if="$(arg move_forward_only)"/>-->
+ </node>
+
+ <!--<include file="$(find tmp)/launch/amcl_diff.xml">-->
+      <!--<arg name="namespace" value="$(arg spot2_namespace)"/>-->
+      <!--<arg name="pos_x" value="$(arg spot2_x)"/>-->
+      <!--<arg name="pos_y" value="$(arg spot2_y)"/>-->
+      <!--</include>-->
+
+
+  </group>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find tmp)/config/spot_turtlebot.rviz" if="$(arg rviz)"/>
+
+</launch>

@@ -157,7 +157,7 @@ public:
      nh_.param("AGENT1_MAP_TOPIC", agent1_map_topic, {"costmap_node/costmap/costmap"});
      nh_.param("AGENT2_MAP_TOPIC", agent2_map_topic, {"spot2/costmap"});
      nh_.param("AGENT3_MAP_TOPIC", agent3_map_topic, {"spot3/costmap"});
-     nh_.param("PLANNER_TOPIC", planner_topic,{"/spot/move_base/make_plan"});
+     nh_.param("PLANNER_TOPIC", planner_topic,{"/tb2/move_base/make_plan"});
      nh_.param("NUM_AGETNT", NUMAGENTS, {3});
 
      nh_.getParam("AGENT1_POSE_TOPIC", agent1_pose_topic);

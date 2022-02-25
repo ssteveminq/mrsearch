@@ -34,12 +34,14 @@ class waypoint_manager(object):
         self.feedback_ = PathFollowFeedback()
         self.result_= PathFollowResult()
 
-        self.cli = actionlib.SimpleActionClient('spot/move_base', MoveBaseAction)
+        self.cli = actionlib.SimpleActionClient('turtlebot/move_base', MoveBaseAction)
         print("move_base-before")
-        # self.cli.wait_for_server()
+        self.cli.wait_for_server()
         print("move_base-after")
 
-        path_topic='agent_0_path'
+        test_topic = rospy.get_param('path_topic')
+
+        path_topic='agent_1_path'
         rospy.Subscriber(path_topic, Path, self.path_Cb)
         self.desired_path = Path()
 
@@ -60,14 +62,18 @@ class waypoint_manager(object):
 
         movegoal =MoveBaseGoal()
         current_path =self.desired_path
-        for pose in current_path.poses:
-            print("pose", pose)
+        current_path_size = len(current_path.poses)
+        print("current_path_size: ",len(current_path.poses))
+        path_skip_const=50
 
+        for pos_idx in range(0, current_path_size,path_skip_const):
+            pose = current_path.poses[pos_idx]
+            print("pose", pose)
             # movegoal.target_pose.header= goal.header
             movegoal.target_pose= pose
             # rospy.loginfo("sending goal", self.goal)
             self.cli.send_goal(movegoal)
-            self.cli.wait_for_result(rospy.Duration(5.0))
+            self.cli.wait_for_result(rospy.Duration(15.0))
             rospy.loginfo("moving to the goal")
             action_state=self.cli.get_state()
             rospy.loginfo(action_state)
@@ -77,22 +83,17 @@ class waypoint_manager(object):
         rospy.loginfo("Done?")
         self.result_.is_done=True
         self._as.set_succeeded(self.result_)
-        # rospy.loginfo("sending new goal to move/base")
 
 
-    # def starter(self,wait=0.0):
-        # make sure the cont0roller is running
-        
-        # r=rospy.Rate(1)
-        # rospy.spin()            
-        # for waypoint in self.waypoints:
-            # self.sendactiongoal(waypoint)
-        # fill ROS message
 
 if __name__ == '__main__':
-    rospy.init_node('path_follow_mk')
-    path_manager = waypoint_manager('path_follow_mk')
-    # path_manager.starter()
+    rospy.init_node('path_follow_action')
+    print(len())
+    if len(sys.argv)<2:
+        print("usate: path_follow_server arg1(path_topic)")
+    else:
+        print("arg1: ", sys.argv[1])
+        path_manager = waypoint_manager(rospy.get_name())
 
 
 
