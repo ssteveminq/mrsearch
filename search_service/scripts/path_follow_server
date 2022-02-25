@@ -51,7 +51,6 @@ class waypoint_manager(object):
         rospy.spin()
 
     def path_Cb(self, msg):
-        print("path_callback")
         self.desired_path = msg
 
     def execute_cb(self, goal):

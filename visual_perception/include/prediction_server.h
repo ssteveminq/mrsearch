@@ -96,8 +96,6 @@ public:
   void global_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
   void human_poses_callback(const geometry_msgs::PoseArray::ConstPtr& message);
   void target_poses_callback(const geometry_msgs::PoseArray::ConstPtr& message);
-  void scaled_static_map_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg);
-  void scaled_dynamic_map_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg);
   void searchmap_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg);
   
   bool Comparetwopoistions(std::vector<double> pos,std::vector<double> pos2,double criterion);
@@ -106,10 +104,10 @@ public:
   double getDistance_from_Vec(std::vector<double> origin, double _x, double _y);
   //bool check_cameraregion(float x_pos,float y_pos);
 
-  int  globalcoord_To_SScaled_map_index(float x_pos,float y_pos);
   int  CoordinateTransform_Global2_staticMap(float global_x, float global_y);
   int  CoordinateTransform_Global2_beliefMap(double global_x, double global_y);
   void Mapidx2GlobalCoord(int map_idx, std::vector<double>& global_coords);
+  int Coord2CellNum(double _x, double _y, const nav_msgs::OccupancyGrid& inputmap_);
     
   void update_human_occ_belief(int update_type);
   void spin();
@@ -204,7 +202,6 @@ private:
 
   int num_of_detected_human;
   int num_of_detected_target;
-  nav_msgs::OccupancyGrid Scaled_map;
   nav_msgs::OccupancyGrid camera_visible_region;
   nav_msgs::OccupancyGrid dynamic_belief_map;
   nav_msgs::OccupancyGrid Human_Belief_Scan_map;
