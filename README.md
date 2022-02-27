@@ -48,6 +48,7 @@ rosrun search_service multisearch_action_client.py
 # Five Turtlbebot
 Gazebo world
 ```
+export TURTLEBOT3_MODEL=burger
 roslaunch tmp five_turtles_disaster.launch
 ```
 Search Server
