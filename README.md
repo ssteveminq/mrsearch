@@ -36,6 +36,29 @@ roslaunch search_service mtsp_search.launch
 ``` 
 rosrun search_service multisearch_action_client.py
 ```
+
+#Five Turtlbebot
+Gazebo world
+```
+roslaunch tmp five_turtles_disaster.launch
+```
+Search Server
+```
+roslaunch search_service mtsp_search.launch
+```
+
+Set_polygon
+```
+rosrun search_service multisearch_action_client.py
+```
+
+Once all paths are obtained
+
+```
+roslaunch search_service pathfollow.launch
+```
+
+
  
 ## Documentation
 See [API wiki](https://github.com/ssteveminq/mrsearch/wiki/API)
