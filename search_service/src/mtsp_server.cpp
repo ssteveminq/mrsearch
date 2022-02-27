@@ -27,6 +27,8 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
 #include <std_msgs/Bool.h>
+#include <search_service/GetSmoothPathAction.h>
+#include <search_service/GetSmoothPathResult.h>
 #include <search_service/MultiSearchAction.h>
 #include <search_service/MultiSearchResult.h>
 #include <search_service/SetSearchRegionAction.h>
@@ -67,6 +69,7 @@
 
 
 typedef actionlib::SimpleActionClient<search_service::SingleTSPSolveAction>  al_stsp;
+typedef actionlib::SimpleActionClient<search_service::GetSmoothPathAction>  al_gsp;
 
 using namespace std;
 
@@ -138,7 +141,6 @@ public:
   as_(nh_, name, boost::bind(&MultiSearchManager::executeCB, this,_1), false),
   as_region(nh_, "set_search_region", boost::bind(&MultiSearchManager::executeCB_SR, this,_1), false),
   ac_("getunknowns", true),
-  //ac_tsp("tsp_solve_action", true),
   action_name_(name),
   IsActive(false),
   IsCalled(false),
@@ -159,19 +161,27 @@ public:
      nh_.param("AGENT1_POSE_TOPIC", agent1_pose_topic, {"global_pose_a1_121"});
      nh_.param("AGENT2_POSE_TOPIC", agent2_pose_topic, {"spot2/odom"});
      nh_.param("AGENT3_POSE_TOPIC", agent3_pose_topic, {"spot3/odom"});
+     nh_.param("AGENT4_POSE_TOPIC", agent4_pose_topic, {"spot4/odom"});
+     nh_.param("AGENT5_POSE_TOPIC", agent5_pose_topic, {"spot5/odom"});
      nh_.param("AGENT1_MAP_TOPIC", agent1_map_topic, {"costmap_node/costmap/costmap"});
      nh_.param("AGENT2_MAP_TOPIC", agent2_map_topic, {"spot2/costmap"});
      nh_.param("AGENT3_MAP_TOPIC", agent3_map_topic, {"spot3/costmap"});
-     nh_.param("PLANNER_TOPIC", planner_topic,{"/tb2/move_base/make_plan"});
-     nh_.param("NUM_AGETNT", NUMAGENTS, {3});
+     nh_.param("AGENT4_MAP_TOPIC", agent4_map_topic, {"spot4/costmap"});
+     nh_.param("AGENT5_MAP_TOPIC", agent5_map_topic, {"spot5/costmap"});
+     nh_.param("PLANNER_TOPIC", planner_topic,{"/tb1/move_base/make_plan"});
+     nh_.param("NUM_AGENT", NUMAGENTS, {5});
 
      nh_.getParam("AGENT1_POSE_TOPIC", agent1_pose_topic);
      nh_.getParam("AGENT2_POSE_TOPIC", agent2_pose_topic);
      nh_.getParam("AGENT3_POSE_TOPIC", agent3_pose_topic);
+     nh_.getParam("AGENT4_POSE_TOPIC", agent4_pose_topic);
+     nh_.getParam("AGENT5_POSE_TOPIC", agent5_pose_topic);
      nh_.getParam("NUM_AGENT", NUMAGENTS);
      nh_.getParam("AGENT1_MAP_TOPIC", agent1_map_topic);
      nh_.getParam("AGENT2_MAP_TOPIC", agent2_map_topic);
      nh_.getParam("AGENT3_MAP_TOPIC", agent3_map_topic);
+     nh_.getParam("AGENT4_MAP_TOPIC", agent4_map_topic);
+     nh_.getParam("AGENT5_MAP_TOPIC", agent5_map_topic);
      nh_.getParam("PLANNER_TOPIC", planner_topic);
      nh_.getParam("MAX_X", MAX_X);
      nh_.getParam("MIN_X", MIN_X);
@@ -181,9 +191,13 @@ public:
      ROS_INFO("agent1_pose_topic: %s",agent1_pose_topic.c_str());
      ROS_INFO("agent2_pose_topic: %s",agent2_pose_topic.c_str());
      ROS_INFO("agent3_pose_topic: %s",agent3_pose_topic.c_str());
+     ROS_INFO("agent4_pose_topic: %s",agent4_pose_topic.c_str());
+     ROS_INFO("agent5_pose_topic: %s",agent5_pose_topic.c_str());
      ROS_INFO("agent1_map_topic: %s",agent1_map_topic.c_str());
      ROS_INFO("agent2_map_topic: %s",agent2_map_topic.c_str());
      ROS_INFO("agent3_map_topic: %s",agent3_map_topic.c_str());
+     ROS_INFO("agent4_map_topic: %s",agent4_map_topic.c_str());
+     ROS_INFO("agent5_map_topic: %s",agent5_map_topic.c_str());
      ROS_INFO("planner_topic: %s",  planner_topic.c_str());
      ROS_INFO("num_agent: %d",NUMAGENTS);
      ROS_INFO("max_x: %.2lf",MAX_X);
@@ -205,9 +219,10 @@ public:
      Issmoothpath.resize(NUMAGENTS);
      smooth_paths.resize(NUMAGENTS);
      path_pubs.resize(NUMAGENTS);
-     agent1_pose.resize(3,0.0);
-     agent2_pose.resize(3,0.0);
-     agent3_pose.resize(3,0.0);
+
+     //agent1_pose.resize(3,0.0);
+     //agent2_pose.resize(3,0.0);
+     //agent3_pose.resize(3,0.0);
 
 
      for(size_t i(0);i<NUMAGENTS;i++)
@@ -229,8 +244,12 @@ public:
 
      //tsp_solver(single agent)
      stsp_vec.resize(NUMAGENTS);
+     gsp_vec.resize(NUMAGENTS);
      for(size_t i(0); i<NUMAGENTS;i++)
+     {
          stsp_vec[i]= new al_stsp("agent_"+std::to_string(i)+"_tspsolve", true);
+         gsp_vec[i]= new al_gsp("agent_"+std::to_string(i)+"_getpath", true);
+     }
 
 
      //subscribers
@@ -238,9 +257,13 @@ public:
      agent1_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent1_map_topic,10,&MultiSearchManager::agent1_localmap_callback,this);
      agent2_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent2_map_topic, 10,&MultiSearchManager::agent2_localmap_callback,this);
      agent3_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent3_map_topic, 10,&MultiSearchManager::agent3_localmap_callback,this);
+     agent4_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent4_map_topic, 10,&MultiSearchManager::agent4_localmap_callback,this);
+     agent5_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent5_map_topic, 10,&MultiSearchManager::agent5_localmap_callback,this);
      agent1_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent1_pose_topic,10,&MultiSearchManager::agent1_pose_callback,this);
      agent2_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent2_pose_topic,10,&MultiSearchManager::agent2_pose_callback,this);
      agent3_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent3_pose_topic,10,&MultiSearchManager::agent3_pose_callback,this);
+     agent4_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent4_pose_topic,10,&MultiSearchManager::agent4_pose_callback,this);
+     agent5_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent5_pose_topic,10,&MultiSearchManager::agent5_pose_callback,this);
 
      //service client for glboal path planner (A*)
      planner_srv_client= nh_.serviceClient<nav_msgs::GetPlan>(planner_topic);
@@ -363,6 +386,7 @@ public:
      ac_.sendGoal(unknwongoal);
      bool finished_before_timeout = ac_.waitForResult(ros::Duration(30.0)); //Wait for 20s
      bool finished_before_timeout_stsp;
+     bool finished_before_timeout_gsp;
      if(finished_before_timeout)
      {
          ROS_INFO("waypoints are generated");
@@ -380,14 +404,13 @@ public:
                  tspgoal.pose = agent_poses.poses[j];
                  //call TSP Solve Action
                  stsp_vec[j]->sendGoal(tspgoal);
-                 //ac_stsp.sendGoal(tspgoal);
                  ROS_INFO("Single TSP Solve for agent %d started", j);
              }
 
+             //call single_tsp_solve_action_server (parallel)
              for(size_t j(0);j<NUMAGENTS;j++)
              {
                  finished_before_timeout_stsp= stsp_vec[j]->waitForResult(ros::Duration(30.0));
-             //bool finished_before_timeout_tsp = ac_tsp.waitForResult(ros::Duration(50.0));
                  if(finished_before_timeout_stsp )
                  {
                       ROS_INFO("STSP solution obtained for agent %d",j);
@@ -399,49 +422,50 @@ public:
                     ROS_WARN("can't obtain tsp path for agent %d",j);
                     as_.setAborted(result_);
                     return;
+                 }
+             }
+             //call get_smooth_action_server (parallel)
+             for(size_t j(0);j<NUMAGENTS;j++)
+             {
+                 search_service::GetSmoothPathGoal pathgoal;
+                 pathgoal.agent_idx=j;
+                 pathgoal.start_pos= agent_poses.poses[j];
+                 pathgoal.input_path=agent_paths[j];
+                 //call GetSmoothPath Action
+                 gsp_vec[j]->sendGoal(pathgoal);
+                 ROS_INFO("Get Smooth Path for agent %d started", j);
+             }
 
+             for(size_t j(0);j<NUMAGENTS;j++)
+             {
+                finished_before_timeout_gsp= gsp_vec[j]->waitForResult(ros::Duration(20.0));
+                 if(finished_before_timeout_gsp)
+                 {
+                      ROS_INFO("GSP solution obtained for agent %d",j);
+                      auto gsp_res=gsp_vec[j]->getResult();
+                      //save_paths for each agents
+                      //agent_paths[j] = gsp_res->output_path;
+                      smooth_paths[j]=gsp_res->output_path;
+                      Issmoothpath[j]=true;
+                 }
+                 else{
+                    ROS_WARN("can't obtain smooth path for agent %d",j);
+                    //as_.setAborted(result_);
+                    //return;
+                    //
+                    smooth_paths[j]=agent_paths[j];
+                    Issmoothpath[j]=true;
                  }
              }
 
                  result_.cur_entropy = search_entropy;
-                 if(get_smooth_paths(NUMAGENTS))
-                     result_.paths=smooth_paths;
+                 result_.paths=smooth_paths;
                  as_.setSucceeded(result_);
+                 ROS_INFO("succedded");
                  pathUpdated=true;
                  publish_paths();
                  return;
-
          }
-         /*
-         if(clustering(NUMAGENTS)){
-             //Call TSP Solver
-             search_service::TSPSolveGoal tspgoal;
-             tspgoal.num_agent = NUMAGENTS;
-             tspgoal.clusters = clustered_poses;
-             tspgoal.poses = agent_poses;
-             //call TSP Solve Action
-             ac_tsp.sendGoal(tspgoal);
-             ROS_INFO("TSP Solve started");
-             bool finished_before_timeout_tsp = ac_tsp.waitForResult(ros::Duration(50.0));
-             if(finished_before_timeout_tsp )
-             {
-                  ROS_INFO("TSP solution obtained. Path will be published");
-                  auto tsp_res=ac_tsp.getResult();
-                  //save_paths for each agents
-                  agent_paths = tsp_res->paths;
-                  result_.cur_entropy = search_entropy;
-                  if(get_smooth_paths(NUMAGENTS))
-                      result_.paths=smooth_paths;
-                  as_.setSucceeded(result_);
-                  pathUpdated=true;
-                  publish_paths();
-                  return;
-             }
-             else{
-                    ROS_INFO("can't obtain tsp path");
-             }
-         }
-         */
          else{
              ROS_WARN("At least one agent doesn't have assigned waypoints");
              ROS_WARN("Search Action will be aborted");
@@ -491,11 +515,8 @@ public:
 
   void agent2_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
   {
-      ROS_INFO("agent2_callback");
+      //ROS_INFO("agent2_callback");
       agent2_gpose.pose=msg->pose.pose;
-      agent2_pose[0]=msg->pose.pose.position.x;
-      agent2_pose[1]=msg->pose.pose.position.y;
-      agent2_pose[2]=tf2::getYaw(msg->pose.pose.orientation);
       agent2_pose_updated=true;
       agent_poses.poses[1]=msg->pose.pose;
 
@@ -506,20 +527,33 @@ public:
       //* global_pose w.r.t "map" frame
       //ROS_INFO("agent3_callback");
       agent3_gpose.pose=msg->pose.pose;
-      agent3_pose[0]=msg->pose.pose.position.x;
-      agent3_pose[1]=msg->pose.pose.position.y;
-      agent3_pose[2]=tf2::getYaw(msg->pose.pose.orientation);
       agent3_pose_updated=true;
       agent_poses.poses[2]=msg->pose.pose;
   }
+
+  void agent4_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
+  {
+      //* global_pose w.r.t "map" frame
+      //ROS_INFO("agent3_callback");
+      agent4_gpose.pose=msg->pose.pose;
+      agent4_pose_updated=true;
+      agent_poses.poses[3]=msg->pose.pose;
+  }
+
+  void agent5_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
+  {
+      //* global_pose w.r.t "map" frame
+      //ROS_INFO("agent3_callback");
+      agent5_gpose.pose=msg->pose.pose;
+      agent5_pose_updated=true;
+      agent_poses.poses[4]=msg->pose.pose;
+  }
+
 
   void agent1_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
   {
       //* global_pose w.r.t "map" frame
       agent1_gpose.pose=msg->pose.pose;
-      agent1_pose[0]=msg->pose.pose.position.x;
-      agent1_pose[1]=msg->pose.pose.position.y;
-      agent1_pose[2]=tf2::getYaw(msg->pose.pose.orientation);
       global_pose_a1_updated=true;
 
       agent_poses.poses[0]=msg->pose.pose;
@@ -556,6 +590,26 @@ public:
     update_occ_grid_map(msg);
     //check_obstacle
 }
+
+  void agent4_localmap_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
+{
+    agent4_local_map=*msg;
+    agent4_local_map_updated = true;
+
+    update_occ_grid_map(msg);
+    //check_obstacle
+}
+
+  void agent5_localmap_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
+{
+    agent5_local_map=*msg;
+    agent5_local_map_updated = true;
+
+    update_occ_grid_map(msg);
+    //check_obstacle
+}
+
+
 
 
 void global_map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
@@ -737,11 +791,14 @@ void publish_paths()
     }
 }
 
-/* function: Obtaining Smooth Paths from her  ublisher function to publish smooth paths*/
+/* function: Obtaining Smooth Paths from her publisher function to publish smooth paths*/
 bool get_smooth_paths(int n_agent)
 {
+
+
+
+
     nav_msgs::GetPlan srv_;
-    
     for(int n(0); n<NUMAGENTS;n++)
     {
         nav_msgs::Path smooth_path;
@@ -869,6 +926,7 @@ bool get_smooth_paths(int n_agent)
             smooth_path.header.stamp=ros::Time::now();
             smooth_paths[n]=smooth_path;
             Issmoothpath[n]=true;
+
             ROS_INFO("smooth_path Updated");
         }
         else{
@@ -1026,6 +1084,12 @@ void publish_clusters()
         std_msgs::ColorRGBA green;
         green.r = 0; green.g = 1.0; green.b = 0; green.a = 1.0;
 
+        std_msgs::ColorRGBA black;
+        black.r = 1; black.g = 1.0; black.b = 1; black.a = 1.0;
+
+        std_msgs::ColorRGBA orange;
+        orange.r = 0.5; orange.g = 0.1; orange.b = 0.21; orange.a = 1.0;
+
         //ROS_DEBUG("visualising %lu frontiers", frontiers.size());
         visualization_msgs::MarkerArray markers_msg;
         std::vector<visualization_msgs::Marker>& markers = markers_msg.markers;
@@ -1067,8 +1131,12 @@ void publish_clusters()
                     m.color=red;
                 else if(i==1)
                     m.color=green;
-                else
+                else if(i==2)
                     m.color=blue;
+                else if(i==3)
+                    m.color=orange;
+                else
+                    m.color=black;
                     
                 markers.push_back(m);
                 ++id;
@@ -1088,8 +1156,8 @@ protected:
   actionlib::SimpleActionServer<search_service::MultiSearchAction> as_;
   actionlib::SimpleActionServer<search_service::SetSearchRegionAction> as_region;
   actionlib::SimpleActionClient<visual_perception::UnknownSearchAction> ac_;
-  //actionlib::SimpleActionClient<search_service::TSPSolveAction> ac_tsp;
   std::vector<al_stsp*> stsp_vec;
+  std::vector<al_gsp*> gsp_vec;
   //actionlib::SimpleActionClient<search_service::SingleTSPSolveAction> ac_stsp;
 
   ros::ServiceClient planner_srv_client;
@@ -1105,12 +1173,18 @@ protected:
   //Topic names
   std::string map_frame;
   std::string base_frame;
+
   std::string agent1_pose_topic;
   std::string agent2_pose_topic;
   std::string agent3_pose_topic;
+  std::string agent4_pose_topic;
+  std::string agent5_pose_topic;
+
   std::string agent1_map_topic;
   std::string agent2_map_topic;
   std::string agent3_map_topic;
+  std::string agent4_map_topic;
+  std::string agent5_map_topic;
   std::string planner_topic;
 
   double MAX_X;
@@ -1123,27 +1197,36 @@ protected:
   ros::Subscriber agent1_pose_sub;
   ros::Subscriber agent2_pose_sub;
   ros::Subscriber agent3_pose_sub;
+  ros::Subscriber agent4_pose_sub;
+  ros::Subscriber agent5_pose_sub;
+
   ros::Subscriber agent1_localmap_sub;
   ros::Subscriber agent2_localmap_sub;
   ros::Subscriber agent3_localmap_sub;
+  ros::Subscriber agent4_localmap_sub;
+  ros::Subscriber agent5_localmap_sub;
+
   ros::Subscriber unknown_poses_sub;
   ros::Subscriber global_map_sub;
 
   //Publishers
-  ros::Publisher agent1_path_pub;
-  ros::Publisher agent2_path_pub;
-  ros::Publisher agent3_path_pub;
   ros::Publisher search_map_pub;
-  std::vector<ros::Publisher> path_pubs;
   ros::Publisher agent1_move_cancel_pub;
   ros::Publisher search_entropy_pub;
   ros::Publisher visual_marker_pub;
   ros::Publisher polygon_pub;
   int direction_z;
 
+  std::vector<ros::Publisher> path_pubs;
+  std::vector<geometry_msgs::PoseStamped> agents_gpose;
+  std::vector<nav_msgs::OccupancyGrid> agents_maps;
+
   geometry_msgs::PoseStamped agent1_gpose;
   geometry_msgs::PoseStamped agent2_gpose;
   geometry_msgs::PoseStamped agent3_gpose;
+  geometry_msgs::PoseStamped agent4_gpose;
+  geometry_msgs::PoseStamped agent5_gpose;
+
   geometry_msgs::PoseArray waypoints;
   geometry_msgs::PoseArray agent_poses;
   std::vector<geometry_msgs::PoseArray> clustered_poses;
@@ -1153,14 +1236,16 @@ protected:
   nav_msgs::OccupancyGrid agent1_local_map;
   nav_msgs::OccupancyGrid agent2_local_map;
   nav_msgs::OccupancyGrid agent3_local_map;
+  nav_msgs::OccupancyGrid agent4_local_map;
+  nav_msgs::OccupancyGrid agent5_local_map;
   nav_msgs::OccupancyGrid scaled_global_map;
   nav_msgs::OccupancyGrid global_map;
   nav_msgs::OccupancyGrid search_map;
   tf::TransformListener   listener;
 
-  std::vector<double> agent1_pose;
-  std::vector<double> agent2_pose;
-  std::vector<double> agent3_pose;
+  //std::vector<double> agent1_pose;
+  //std::vector<double> agent2_pose;
+  //std::vector<double> agent3_pose;
 
   std::vector<nav_msgs::Path> agent_paths;
   geometry_msgs::PolygonStamped polygon_;
@@ -1176,11 +1261,15 @@ protected:
   bool agent1_local_map_updated;
   bool agent2_local_map_updated;
   bool agent3_local_map_updated;
+  bool agent4_local_map_updated;
+  bool agent5_local_map_updated;
   bool global_map_updated;
   bool global_pose_a1_updated;
   bool agent1_pose_updated;
   bool agent2_pose_updated;
   bool agent3_pose_updated;
+  bool agent4_pose_updated;
+  bool agent5_pose_updated;
   bool called_once;
   double search_entropy;
   double total_entropy;

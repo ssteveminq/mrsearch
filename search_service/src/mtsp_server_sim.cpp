@@ -1807,10 +1807,9 @@ protected:
   nav_msgs::OccupancyGrid info_map;
   tf::TransformListener   listener;
 
-
-  std::vector<double> agent1_pose;
-  std::vector<double> agent2_pose;
-  std::vector<double> agent3_pose;
+  //std::vector<double> agent1_pose;
+  //std::vector<double> agent2_pose;
+  //std::vector<double> agent3_pose;
 
   bool IsGoal;
   bool IsActive;

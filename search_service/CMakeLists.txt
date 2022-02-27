@@ -36,6 +36,7 @@ add_action_files(
    TSPSolve.action
    SetSearchRegion.action
    SingleTSPSolve.action
+   GetSmoothPath.action
 )
 
 add_service_files(
@@ -87,6 +88,11 @@ add_executable(mtsp_server src/mtsp_server.cpp src/cluster.cpp
     src/map_util.cpp ${SOURCES})
 target_link_libraries(mtsp_server ${catkin_LIBRARIES})
 add_dependencies(mtsp_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+
+add_executable(get_smooth_server src/getsmooth_server.cpp ${SOURCES})
+target_link_libraries(get_smooth_server ${catkin_LIBRARIES})
+add_dependencies(get_smooth_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+
 
 add_executable(cluster_test src/cluster_test.cpp src/cluster.cpp ${SOURCES})
 target_link_libraries(cluster_test ${catkin_LIBRARIES} )

@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="pf_agent0" default="path_follow_agent_0"/>
+    <arg name="pf_agent1" default="path_follow_agent_1"/>
+    <arg name="pf_agent2" default="path_follow_agent_2"/>
+    <arg name="pf_agent3" default="path_follow_agent_3"/>
+    <arg name="pf_agent4" default="path_follow_agent_4"/>
+
+    <node name="pathfollow_client_0" pkg="search_service" type="pathfollow_client" output="screen" args="$(arg pf_agent0)"/>
+    <node name="pathfollow_client_1" pkg="search_service" type="pathfollow_client" output="screen" args="$(arg pf_agent1)"/>
+    <node name="pathfollow_client_2" pkg="search_service" type="pathfollow_client" output="screen" args="$(arg pf_agent2)"/>
+    <node name="pathfollow_client_3" pkg="search_service" type="pathfollow_client" output="screen" args="$(arg pf_agent3)"/>
+    <node name="pathfollow_client_4" pkg="search_service" type="pathfollow_client" output="screen" args="$(arg pf_agent4)"/>
+
+    <!--<arg name="target_nav_action_0" default="tb1/move_base"/>-->
+    <!--<arg name="target_nav_action_1" default="tb2/move_base"/>-->
+    <!--<arg name="target_nav_action_2" default="tb3/move_base"/>-->
+    <!--<arg name="target_nav_action_3" default="tb4/move_base"/>-->
+    <!--<arg name="target_nav_action_4" default="tb5/move_base"/>-->
+
+    <!--<arg name="target_path_0" default="agent_0_path"/>-->
+    <!--<arg name="target_path_1" default="agent_1_path"/>-->
+    <!--<arg name="target_path_2" default="agent_2_path"/>-->
+    <!--<arg name="target_path_3" default="agent_3_path"/>-->
+    <!--<arg name="target_path_4" default="agent_4_path"/>-->
+
+    <!--<node name="path_follow_agent_0" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_0) $(arg target_path_0)"/>-->
+    <!--<node name="path_follow_agent_1" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_1) $(arg target_path_1)"/>-->
+    <!--<node name="path_follow_agent_2" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_2) $(arg target_path_2)"/>-->
+    <!--<node name="path_follow_agent_3" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_3) $(arg target_path_3)"/>-->
+    <!--<node name="path_follow_agent_4" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_4) $(arg target_path_4)"/>-->
+
+
+
+</launch>
