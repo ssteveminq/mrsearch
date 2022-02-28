@@ -73,13 +73,13 @@
   <arg name="initial_pose_y" default="$(arg y_pos)"/>
   <arg name="initial_pose_a" default="0.0"/>
 
-  <include file="$(find tmp)/launch/turtle_amcl.launch">
+  <!-- <include file="$(find tmp)/launch/turtle_amcl.launch">
     <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
     <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
     <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
     <arg name="robot_namespace" value="$(arg tb1_namespace)"/>
   </include>
-
+ -->
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
       <rosparam file="$(find tmp)/config/turtlebot/local_costmap_params.yaml" command="load"/> 
       <rosparam file="$(find tmp)/config/turtlebot/global_costmap_params.yaml" command="load"/>
@@ -111,12 +111,12 @@
   <arg name="initial_pose_y2" default="$(arg y_pos2)"/>
   <arg name="initial_pose_a2" default="0.0"/>
 
-  <include file="$(find tmp)/launch/turtle_amcl.launch">
+  <!-- <include file="$(find tmp)/launch/turtle_amcl.launch">
     <arg name="initial_pose_x" value="$(arg initial_pose_x2)"/>
     <arg name="initial_pose_y" value="$(arg initial_pose_y2)"/>
     <arg name="initial_pose_a" value="$(arg initial_pose_a2)"/>
     <arg name="robot_namespace" value="$(arg turtlebot_namespace2)"/>
-  </include>
+  </include> -->
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
       <rosparam file="$(find tmp)/config/turtlebot/local_costmap_params2.yaml" command="load"/> 
@@ -146,12 +146,12 @@
   <arg name="initial_pose_y3" default="$(arg y_pos3)"/>
   <arg name="initial_pose_a3" default="0.0"/>
 
-  <include file="$(find tmp)/launch/turtle_amcl.launch">
+  <!-- <include file="$(find tmp)/launch/turtle_amcl.launch">
     <arg name="initial_pose_x" value="$(arg initial_pose_x3)"/>
     <arg name="initial_pose_y" value="$(arg initial_pose_y3)"/>
     <arg name="initial_pose_a" value="$(arg initial_pose_a3)"/>
     <arg name="robot_namespace" value="$(arg turtlebot_namespace3)"/>
-  </include>
+  </include> -->
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
       <rosparam file="$(find tmp)/config/turtlebot/local_costmap_params3.yaml" command="load"/> 
@@ -183,12 +183,12 @@
   <arg name="initial_pose_y4" default="$(arg y_pos4)"/>
   <arg name="initial_pose_a4" default="0.0"/>
 
-  <include file="$(find tmp)/launch/turtle_amcl.launch">
+  <!-- <include file="$(find tmp)/launch/turtle_amcl.launch">
     <arg name="initial_pose_x" value="$(arg initial_pose_x4)"/>
     <arg name="initial_pose_y" value="$(arg initial_pose_y4)"/>
     <arg name="initial_pose_a" value="$(arg initial_pose_a4)"/>
     <arg name="robot_namespace" value="$(arg turtlebot_namespace4)"/>
-  </include>
+  </include> -->
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
       <rosparam file="$(find tmp)/config/turtlebot/local_costmap_params4.yaml" command="load"/> 
@@ -221,12 +221,12 @@
   <arg name="initial_pose_y5" default="$(arg y_pos5)"/>
   <arg name="initial_pose_a5" default="0.0"/>
 
-  <include file="$(find tmp)/launch/turtle_amcl.launch">
+  <!-- <include file="$(find tmp)/launch/turtle_amcl.launch">
     <arg name="initial_pose_x" value="$(arg initial_pose_x5)"/>
     <arg name="initial_pose_y" value="$(arg initial_pose_y5)"/>
     <arg name="initial_pose_a" value="$(arg initial_pose_a5)"/>
     <arg name="robot_namespace" value="$(arg turtlebot_namespace5)"/>
-  </include>
+  </include> -->
 
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
       <rosparam file="$(find tmp)/config/turtlebot/local_costmap_params5.yaml" command="load"/> 

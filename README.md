@@ -50,6 +50,8 @@ Gazebo world
 ```
 export TURTLEBOT3_MODEL=burger
 roslaunch tmp five_turtles_disaster.launch
+roslaunch search_service pose_pub.launch
+
 ```
 Search Server
 ```
