@@ -3,11 +3,11 @@
 
     <rosparam file="$(find search_service)/config/ahg.yaml"/>
 
-    <arg name="agent1_pose_topic" default="tb1/amcl_pose"/>
-    <arg name="agent2_pose_topic" default="tb2/amcl_pose"/>
-    <arg name="agent3_pose_topic" default="tb3/amcl_pose"/>
-    <arg name="agent4_pose_topic" default="tb4/amcl_pose"/>
-    <arg name="agent5_pose_topic" default="tb5/amcl_pose"/>
+    <arg name="agent1_pose_topic" default="tb1/amcl_pose"/> <!-- "tb1/amcl_pose"/> -->
+    <arg name="agent2_pose_topic" default="tb2/pose"/> <!-- "tb2/amcl_pose"/> -->
+    <arg name="agent3_pose_topic" default="tb3/pose"/> <!-- "tb3/amcl_pose"/> -->
+    <arg name="agent4_pose_topic" default="tb4/pose"/> <!-- "tb4/amcl_pose"/> -->
+    <arg name="agent5_pose_topic" default="tb5/pose"/> <!-- "tb5/amcl_pose"/> -->
 
     <arg name="agent1_map_topic" default="tb1/move_base/local_costmap/costmap"/>
     <arg name="agent2_map_topic" default="tb2/move_base/local_costmap/costmap"/>

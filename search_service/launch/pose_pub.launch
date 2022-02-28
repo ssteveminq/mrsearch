@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+
+<node name="tb1_pose_publisher" pkg="search_service" type="tb1_pose_publisher" output="screen" />
+<node name="tb2_pose_publisher" pkg="search_service" type="tb2_pose_publisher" output="screen" />
+<node name="tb3_pose_publisher" pkg="search_service" type="tb3_pose_publisher" output="screen" />
+<node name="tb4_pose_publisher" pkg="search_service" type="tb4_pose_publisher" output="screen" />
+<node name="tb5_pose_publisher" pkg="search_service" type="tb5_pose_publisher" output="screen" />
+
+
+</launch>
