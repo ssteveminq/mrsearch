@@ -13,7 +13,7 @@
   <!--<arg name="num_agent" default ="5"/> -->
 
  <arg name="ahg_sim" default="true" />
-  <arg name="world_name" value="$(find tmp)/worlds/test_humantrajectory.world"/>
+  <arg name="world_name" value="$(find tmp)/worlds/disaster.world"/>
   <arg name="map" default="$(find tmp)/maps/ahg_map_rev.yaml" />
   <!--<arg name="map" default="$(find spot_navigation)/maps/ahg_map.yaml" />-->
   <param name="/use_sim_time" value="true"/>
