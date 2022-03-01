@@ -13,8 +13,8 @@ local_costmap:
 
   static_map: false  
   rolling_window: true
-  width: 10
-  height: 10
+  width: 7
+  height: 7
   resolution: 0.05
 
   plugins:

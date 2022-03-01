@@ -13,12 +13,32 @@
   <arg name="world" default="gazebo"/>
   <!--turtlebot3-->
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
-  <arg name="x_pos" default="9.0"/>
+  <arg name="x_pos" default="6.0"/>
+  <arg name="y_pos" default="6.0"/>
+  <arg name="z_pos" default="0.0"/>
+
+  <arg name="x_pos2" default="6.0"/>
+  <arg name="y_pos2" default="-6.0"/>
+  <arg name="z_pos2" default="0.0"/>
+
+  <arg name="x_pos3" default="-5.0"/>
+  <arg name="y_pos3" default="-6.0"/>
+  <arg name="z_pos3" default="0.0"/>
+
+  <arg name="x_pos4" default="-6.0"/>
+  <arg name="y_pos4" default="6.0"/>
+  <arg name="z_pos4" default="0.0"/>
+
+  <arg name="x_pos5" default="0.0"/>
+  <arg name="y_pos5" default="10."/>
+  <arg name="z_pos5" default="0.0"/>
+
+  <!-- <arg name="x_pos" default="9.0"/>
   <arg name="y_pos" default="-9.5"/>
   <arg name="z_pos" default="0.0"/>
 
   <arg name="x_pos2" default="5.0"/>
-  <arg name="y_pos2" default="0.0"/>
+  <arg name="y_pos2" default="7.0"/>
   <arg name="z_pos2" default="0.0"/>
 
   <arg name="x_pos3" default="-5.0"/>
@@ -31,7 +51,7 @@
 
   <arg name="x_pos5" default="-16.0"/>
   <arg name="y_pos5" default="5.0"/>
-  <arg name="z_pos5" default="0.0"/>
+  <arg name="z_pos5" default="0.0"/> -->
 
   <arg name="map_file" default="$(find tmp)/maps/disaster.yaml"/>
 

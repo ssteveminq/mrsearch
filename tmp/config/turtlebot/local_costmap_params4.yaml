@@ -7,8 +7,8 @@ local_costmap:
   static_map: false
   rolling_window: true
 
-  update_frequency: 10.0
-  publish_frequency: 10.0
+  update_frequency: 15.0
+  publish_frequency: 15.0
   transform_tolerance: 0.5  
 
   static_map: false  
