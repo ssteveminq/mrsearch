@@ -13,8 +13,8 @@
   <arg name="world" default="gazebo"/>
   <!--turtlebot3-->
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
-  <arg name="x_pos" default="-4.58455"/>
-  <arg name="y_pos" default="16.9797"/>
+  <arg name="x_pos" default="1.1"/>
+  <arg name="y_pos" default="10.3"/>
   <arg name="z_pos" default="0.0"/>
 
     <!-- -4.58455 16.9797 -->
