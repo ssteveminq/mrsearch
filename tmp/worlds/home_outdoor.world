@@ -8071,35 +8071,35 @@
         <trajectory id='0' type='walking'>
           <waypoint>
             <time>0</time>
-            <pose>-3.619 -17.9467 1.02 0 0 -1.57</pose>
+            <pose>30 -6.42 1.02 0 0 -1.57</pose>
           </waypoint>
           <waypoint>
             <time>20</time>
-            <pose>6.468 -18.3535 1.02 0 0 -1.57</pose>
+            <pose>30 3.8 1.02 0 0 -1.57</pose>
           </waypoint>
           <waypoint>
             <time>40</time>
-            <pose>-3.619 -17.9467 1.02 0 0 -1.57</pose>
+            <pose>30 -6.42 1.02 0 0 -1.57</pose>
           </waypoint>
           <waypoint>
             <time>70</time>
-            <pose>6.468 -18.3535 1.02 0 0 -1.57</pose>
+            <pose>30 3.8 1.02 0 0 -1.57</pose>
           </waypoint>
           <waypoint>
             <time>95.5</time>
-            <pose>-3.619 -17.9467 1.02 0 0 -1.57</pose>
+            <pose>30 -6.42 1.02 0 0 -1.57</pose>
           </waypoint>
           <waypoint>
             <time>120.5</time>
-            <pose>6.468 -18.3535 1.02 0 0 -1.57</pose>
+            <pose>30 3.8 1.02 0 0 -1.57</pose>
           </waypoint>
           <waypoint>
             <time>160.5</time>
-            <pose>-3.619 -17.9467 1.02 0 0 -1.57</pose>
+            <pose>30 -6.42 1.02 0 0 -1.57</pose>
           </waypoint>
           <waypoint>
             <time>190.5</time>
-            <pose>6.468 -18.3535 1.02 0 0 -1.57</pose>
+            <pose>30 3.8 1.02 0 0 -1.57</pose>
           </waypoint>
 
         </trajectory>
