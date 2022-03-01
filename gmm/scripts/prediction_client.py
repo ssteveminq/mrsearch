@@ -25,11 +25,11 @@ def mains():
     # goal.mean_xs.append(-13)
     # goal.mean_ys.append(10)
 
-    goal.mean_xs.append(18)
-    goal.mean_ys.append(45)
+    goal.mean_xs.append(40)
+    goal.mean_ys.append(22)
 
     goal.mean_xs.append(-25)
-    goal.mean_ys.append(-47)
+    goal.mean_ys.append(-29)
 
     # goal.mean_xs.append(-23)
     # goal.mean_ys.append(10)

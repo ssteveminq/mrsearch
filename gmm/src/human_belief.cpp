@@ -124,7 +124,8 @@ belief_manager::~belief_manager()
 void belief_manager::executeCB(const gmm::PredictionGoalConstPtr &goal)
   {
 
-    //clusters.clear();
+    clusters.clear();
+
 
    const std::size_t nClusters = goal->mean_xs.size();
    mean_poses.poses.resize(nClusters);
@@ -230,13 +231,15 @@ void belief_manager::publish_clusters()
     // lives forever
     m.lifetime = ros::Duration(5);
     m.frame_locked = true;
-
+    markers.push_back(m);
+    visual_marker_pub.publish(markers_msg);
 
     size_t id = 0;
+
     for(size_t i(0);i<sample_poses.poses.size();i++)
     {
 
-        //m.action = visualization_msgs::Marker::DELETEALL;
+        //m.action = visualization_msgs::Marker::DELETE;
         m.action = visualization_msgs::Marker::ADD;
         //size_t id = 0;
         //for (int j(0);j<agent_xs[i].size();j++) {
@@ -502,8 +505,8 @@ void belief_manager::global_pose_callback(const geometry_msgs::PoseWithCovarianc
 void belief_manager::update_particles()
 {
     boost::random::mt19937 gen;
-    boost::random::uniform_real_distribution<> distx(-0.01, 0.01);
-    boost::random::uniform_real_distribution<> disty(-0.01, 0.01);
+    boost::random::uniform_real_distribution<> distx(-0.002, 0.002);
+    boost::random::uniform_real_distribution<> disty(-0.002, 0.002);
 
 
     for(int j(0);j<sample_poses.poses.size();j++)
