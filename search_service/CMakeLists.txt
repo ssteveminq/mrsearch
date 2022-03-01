@@ -110,13 +110,13 @@ target_link_libraries(plugin_client
   ${catkin_LIBRARIES}
 )
 
-add_executable(fastapproach_server src/fastapproach_action_server.cpp ${SOURCES})
-target_link_libraries(fastapproach_server ${catkin_LIBRARIES})
-add_dependencies(fastapproach_server  ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+# add_executable(fastapproach_server src/fastapproach_action_server.cpp ${SOURCES})
+# target_link_libraries(fastapproach_server ${catkin_LIBRARIES})
+# add_dependencies(fastapproach_server  ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
-add_executable(fastapproach_client src/fastapproach_action_client.cpp ${SOURCES})
-target_link_libraries(fastapproach_client ${catkin_LIBRARIES})
-add_dependencies(fastapproach_client  ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+# add_executable(fastapproach_client src/fastapproach_action_client.cpp ${SOURCES})
+# target_link_libraries(fastapproach_client ${catkin_LIBRARIES})
+# add_dependencies(fastapproach_client  ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
 add_executable(tb1_pose_publisher src/tb1_publisher.cpp ${SOURCES})
 target_link_libraries(tb1_pose_publisher ${catkin_LIBRARIES})
