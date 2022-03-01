@@ -101,6 +101,16 @@ If failure occurs, remove the corresp. line from the pathfollow launch files and
 
 ```
 
+# Predcition!
+```
+rosrun gmm human_belief
+```
+To change prediction
+```
+rosrun gmm human_belief prediction_client.py
+rosrun gmm human_belief prediction_client2.py
+```
+
 # Five Turtlbebot
 Gazebo world
 ```
