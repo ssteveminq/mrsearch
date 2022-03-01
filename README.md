@@ -68,6 +68,39 @@ Once all paths are obtained
 roslaunch search_service pathfollow.launch
 ```
 
+# Three Turtlbebot with Replanning
+Gazebo world
+```
+export TURTLEBOT3_MODEL=burger
+roslaunch tmp three_turtle_home_outdoor.launch
+roslaunch search_service pose_pub.launch
+
+```
+Search Server
+```
+roslaunch search_service mtsp_search_three_turtle.launch
+```
+
+Set_polygon
+```
+rosrun search_service multisearch_action_client.py
+```
+
+Once all paths are obtained
+
+```
+roslaunch search_service pathfollow.launch
+roslaunch search_service pathfollowclient.launch
+```
+To Re-Plan, kill both of the pathfollow launch files, and run 
+```
+rosrun search_service replan_multisearch_client.py
+```
+If failure occurs, remove the corresp. line from the pathfollow launch files and then re launch once replan client is done.
+```
+
+```
+
 # Five Turtlbebot
 Gazebo world
 ```
