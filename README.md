@@ -44,6 +44,29 @@ rosrun search_service multisearch_action_client.py
 - https://github.com/ROBOTIS-GIT/turtlebot3_simulations
 - https://github.com/ROBOTIS-GIT/turtlebot3_msgs
 
+# Three Turtlbebot
+Gazebo world
+```
+export TURTLEBOT3_MODEL=burger
+roslaunch tmp three_turtle_home_outdoor.launch
+roslaunch search_service pose_pub.launch
+
+```
+Search Server
+```
+roslaunch search_service mtsp_search_three_turtle.launch
+```
+
+Set_polygon
+```
+rosrun search_service multisearch_action_client.py
+```
+
+Once all paths are obtained
+
+```
+roslaunch search_service pathfollow.launch
+```
 
 # Five Turtlbebot
 Gazebo world
