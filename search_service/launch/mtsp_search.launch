@@ -71,11 +71,11 @@
     <node name="agent_3_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
     <node name="agent_4_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
 
-    <arg name="get_plan_agent0" default="tb1/move_base/make_plan"/>
-    <arg name="get_plan_agent1" default="tb2/move_base/make_plan"/>
-    <arg name="get_plan_agent2" default="tb3/move_base/make_plan"/>
-    <arg name="get_plan_agent3" default="tb4/move_base/make_plan"/>
-    <arg name="get_plan_agent4" default="tb5/move_base/make_plan"/>
+    <arg name="get_plan_agent0" default="tb1/move_base/GlobalPlanner/make_plan"/>
+    <arg name="get_plan_agent1" default="tb2/move_base/GlobalPlanner/make_plan"/>
+    <arg name="get_plan_agent2" default="tb3/move_base/GlobalPlanner/make_plan"/>
+    <arg name="get_plan_agent3" default="tb4/move_base/GlobalPlanner/make_plan"/>
+    <arg name="get_plan_agent4" default="tb5/move_base/GlobalPlanner/make_plan"/>
 
     <node name="agent_0_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent0)"/>
     <node name="agent_1_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent1)"/>

@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<launch>
+
+    <rosparam file="$(find search_service)/config/ahg.yaml"/>
+
+    <arg name="agent1_pose_topic" default="tb1/amcl_pose"/>
+    <arg name="agent2_pose_topic" default="tb2/amcl_pose"/>
+    <arg name="agent3_pose_topic" default="tb3/amcl_pose"/>
+    <arg name="agent4_pose_topic" default="tb4/amcl_pose"/>
+    <!--<arg name="agent5_pose_topic" default="tb5/amcl_pose"/>-->
+
+    <arg name="agent1_map_topic" default="tb1/move_base/local_costmap/costmap"/>
+    <arg name="agent2_map_topic" default="tb2/move_base/local_costmap/costmap"/>
+    <arg name="agent3_map_topic" default="tb3/move_base/local_costmap/costmap"/>
+    <arg name="agent4_map_topic" default="tb4/move_base/local_costmap/costmap"/>
+    <!--<arg name="agent5_map_topic" default="tb5/move_base/local_costmap/costmap"/>-->
+
+    <arg name="planner_topic" default="tb1/move_base/make_plan"/>
+    <arg name="max_x" default="12.0"/>
+    <arg name="min_x" default="-10.0"/>
+    <arg name="max_y" default="10.0"/>
+    <arg name="min_y" default="-10"/>
+    <arg name="num_agents" default="4"/>
+
+    <param name="MAX_X" value="$(arg max_x)"/>
+    <param name="MAX_Y" value="$(arg max_y)"/>
+    <param name="MIN_X" value="$(arg min_x)"/>
+    <param name="MIN_Y" value="$(arg min_y)"/>
+
+    <param name="AGENT1_POSE_TOPIC" value="$(arg agent1_pose_topic)"/>
+    <param name="AGENT2_POSE_TOPIC" value="$(arg agent2_pose_topic)"/>
+    <param name="AGENT3_POSE_TOPIC" value="$(arg agent3_pose_topic)"/>
+    <param name="AGENT4_POSE_TOPIC" value="$(arg agent4_pose_topic)"/>
+    <!--<param name="AGENT5_POSE_TOPIC" value="$(arg agent4_pose_topic)"/>-->
+    <param name="AGENT1_MAP_TOPIC" value="$(arg agent1_map_topic)"/>
+    <param name="AGENT2_MAP_TOPIC" value="$(arg agent2_map_topic)"/>
+    <param name="AGENT3_MAP_TOPIC" value="$(arg agent3_map_topic)"/>
+    <param name="AGENT4_MAP_TOPIC" value="$(arg agent4_map_topic)"/>
+    <!--<param name="AGENT5_MAP_TOPIC" value="$(arg agent5_map_topic)"/>-->
+    <param name="PLANNER_TOPIC" value="$(arg planner_topic)"/>
+    <param name="NUM_AGENT" value="$(arg num_agents)"/>
+
+    <node name="scaled_map_converter" pkg="search_service" type="scaled_map_converter" output="screen"/>
+    <node name="multisearch_action" pkg="search_service" type="mtsp_server" output="screen"/>
+    <node name="getunknowns" pkg="visual_perception" type="prediction_server" output="screen"/>
+    <!--<node name="tsp_solve_action" pkg="search_service" type="tsp_server" output="screen"/>-->
+    <node name="polygon_client" pkg="search_service" type="plugin_client" output="screen"/>
+
+
+    <!--<arg name="target_nav_action_0" default="tb1/move_base"/>-->
+    <!--<arg name="target_nav_action_1" default="tb2/move_base"/>-->
+    <!--<arg name="target_nav_action_2" default="tb3/move_base"/>-->
+    <!--<arg name="target_nav_action_3" default="tb4/move_base"/>-->
+
+    <!--<arg name="target_path_0" default="agent_0_path"/>-->
+    <!--<arg name="target_path_1" default="agent_1_path"/>-->
+    <!--<arg name="target_path_2" default="agent_2_path"/>-->
+    <!--<arg name="target_path_3" default="agent_3_path"/>-->
+
+    <!--<node name="path_follow_agent_0" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_0) $(arg target_path_0)"/>-->
+    <!--<node name="path_follow_agent_1" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_1) $(arg target_path_1)"/>-->
+    <!--<node name="path_follow_agent_2" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_2) $(arg target_path_2)"/>-->
+    <!--<node name="path_follow_agent_3" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_3) $(arg target_path_3)"/>-->
+
+    <node name="agent_0_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
+    <node name="agent_1_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
+    <node name="agent_2_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
+    <node name="agent_3_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
+    <!--<node name="agent_4_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>-->
+
+    <arg name="get_plan_agent0" default="tb1/move_base/GlobalPlanner/make_plan"/>
+    <arg name="get_plan_agent1" default="tb2/move_base/GlobalPlanner/make_plan"/>
+    <arg name="get_plan_agent2" default="tb3/move_base/GlobalPlanner/make_plan"/>
+    <arg name="get_plan_agent3" default="tb4/move_base/GlobalPlanner/make_plan"/>
+    <!--<arg name="get_plan_agent4" default="tb5/move_base/GlobalPlanner/make_plan"/>-->
+
+    <node name="agent_0_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent0)"/>
+    <node name="agent_1_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent1)"/>
+    <node name="agent_2_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent2)"/>
+    <node name="agent_3_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent3)"/>
+    <!--<node name="agent_4_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent4)"/>-->
+
+<!--<node name="tb1_pose_publisher" pkg="search_service" type="tb1_pose_publisher" output="screen" />-->
+<!--<node name="tb2_pose_publisher" pkg="search_service" type="tb2_pose_publisher" output="screen" />-->
+<!--<node name="tb3_pose_publisher" pkg="search_service" type="tb3_pose_publisher" output="screen" />-->
+<!--<node name="tb4_pose_publisher" pkg="search_service" type="tb4_pose_publisher" output="screen" />-->
+<!--<node name="tb5_pose_publisher" pkg="search_service" type="tb5_pose_publisher" output="screen" />-->
+
+
+
+</launch>

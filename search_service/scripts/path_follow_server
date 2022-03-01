@@ -59,25 +59,41 @@ class waypoint_manager(object):
         self.cli.wait_for_server()
         rospy.loginfo("wait_for_move_base-done")
 
+        
         movegoal =MoveBaseGoal()
         current_path =self.desired_path
         current_path_size = len(current_path.poses)
         print("current_path_size: ",len(current_path.poses))
-        path_skip_const=70
+        path_skip_const=60
+        if current_path_size<path_skip_const:
+            path_skip_const=1
 
-        for pos_idx in range(0, current_path_size,path_skip_const):
-            pose = current_path.poses[pos_idx]
-            print("pose", pose)
-            # movegoal.target_pose.header= goal.header
-            movegoal.target_pose= pose
-            # rospy.loginfo("sending goal", self.goal)
-            self.cli.send_goal(movegoal)
-            self.cli.wait_for_result(rospy.Duration(15.0))
-            rospy.loginfo("moving to the goal")
-            action_state=self.cli.get_state()
-            rospy.loginfo(action_state)
-            if action_state == GoalStatus.SUCCEEDED:
-                rospy.loginfo("Navigation Succeeded = next waypoint")
+
+        r=rospy.Rate(1)
+        while not rospy.is_shutdown():
+            r=rospy.Rate(2)
+
+            for pos_idx in range(0, current_path_size,path_skip_const):
+                pose = current_path.poses[pos_idx]
+                print("pose", pose)
+                # movegoal.target_pose.header= goal.header
+                movegoal.target_pose= pose
+                # rospy.loginfo("sending goal", self.goal)
+                self.cli.send_goal(movegoal)
+                self.cli.wait_for_result(rospy.Duration(13.0))
+                rospy.loginfo("moving to the goal")
+                action_state=self.cli.get_state()
+                rospy.loginfo(action_state)
+                if action_state == GoalStatus.SUCCEEDED:
+                    rospy.loginfo("Navigation Succeeded = next waypoint")
+
+                if self._as.is_preempt_requested():
+                    rospy.loginfo('Action Halted')
+                    self.cli.cancel_goal()
+                    #cancelmovebase
+                    self._as.set_preempted()
+
+            r.sleep()
 
         rospy.loginfo("Done?")
         self.result_.is_done=True

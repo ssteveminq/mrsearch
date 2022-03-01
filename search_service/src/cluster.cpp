@@ -24,6 +24,8 @@ HCluster::HCluster(int num_label_, vector<double>& xs, vector<double>& ys, vecto
             m_centery.resize(num_data,0.0);
             m_center_updated.resize(num_data,0);
             m_weights.resize(num_data,1.0);
+            for(int j(0);j<weights.size();j++)
+                m_weights[j]=1/(weights[j]+1);
         }
         else
         {
