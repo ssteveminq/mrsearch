@@ -13,9 +13,9 @@ def mains():
     client = actionlib.SimpleActionClient('multisearch_action',search_service.msg.MultiSearchAction)
     client.wait_for_server()
     goal = search_service.msg.MultiSearchGoal()
-    goal.replan=False
-    goal.num_agent=4
-    goal.fail_idx=-1
+    goal.replan=True
+    goal.num_agent=2
+    goal.fail_idx=3
     print("call search action client")
 
     rospy.loginfo("start action")

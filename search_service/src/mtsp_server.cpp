@@ -169,7 +169,7 @@ public:
      nh_.param("AGENT4_MAP_TOPIC", agent4_map_topic, {"spot4/costmap"});
      nh_.param("AGENT5_MAP_TOPIC", agent5_map_topic, {"spot5/costmap"});
      nh_.param("PLANNER_TOPIC", planner_topic,{"/tb1/move_base/make_plan"});
-     nh_.param("NUM_AGENT", NUMAGENTS, {5});
+     nh_.param("NUM_AGENT", NUMAGENTS, {4});
 
      nh_.getParam("AGENT1_POSE_TOPIC", agent1_pose_topic);
      nh_.getParam("AGENT2_POSE_TOPIC", agent2_pose_topic);
@@ -258,12 +258,12 @@ public:
      agent2_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent2_map_topic, 10,&MultiSearchManager::agent2_localmap_callback,this);
      agent3_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent3_map_topic, 10,&MultiSearchManager::agent3_localmap_callback,this);
      agent4_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent4_map_topic, 10,&MultiSearchManager::agent4_localmap_callback,this);
-     agent5_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent5_map_topic, 10,&MultiSearchManager::agent5_localmap_callback,this);
+     //agent5_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent5_map_topic, 10,&MultiSearchManager::agent5_localmap_callback,this);
      agent1_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent1_pose_topic,10,&MultiSearchManager::agent1_pose_callback,this);
      agent2_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent2_pose_topic,10,&MultiSearchManager::agent2_pose_callback,this);
      agent3_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent3_pose_topic,10,&MultiSearchManager::agent3_pose_callback,this);
      agent4_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent4_pose_topic,10,&MultiSearchManager::agent4_pose_callback,this);
-     agent5_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent5_pose_topic,10,&MultiSearchManager::agent5_pose_callback,this);
+     //agent5_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent5_pose_topic,10,&MultiSearchManager::agent5_pose_callback,this);
 
      //service client for glboal path planner (A*)
      planner_srv_client= nh_.serviceClient<nav_msgs::GetPlan>(planner_topic);
@@ -345,6 +345,35 @@ public:
   /* MultiSearch action callback function */
   void executeCB(const search_service::MultiSearchGoalConstPtr &goal)
   {
+     std::vector<int> agentvec;
+     ROS_INFO("replan %d", goal->replan);
+     ROS_INFO("fail_idx%d", goal->fail_idx);
+     if((goal->replan) && (int(goal->fail_idx)>0))
+     {
+         NUMAGENTS=goal->num_agent;
+         agentvec.clear();
+         for(int k(0);k<(NUMAGENTS+1);k++)
+         {
+             if(k!=int(goal->fail_idx))
+             {
+                 agentvec.push_back(k);
+                 ROS_INFO("push_back!! %d", k);
+             }
+         }
+     }
+    else{
+
+        for(int k(0);k<NUMAGENTS;k++)
+         {
+             agentvec.push_back(k);
+         }
+    }
+
+    for(int k(0);k<NUMAGENTS;k++)
+    {
+        ROS_INFO("agent vec i: %d", agentvec[k]);
+    }
+
     //reset values
     smooth_paths.clear();
     smooth_paths.resize(NUMAGENTS);
@@ -394,14 +423,14 @@ public:
          waypoints= res_->waypoints;
          ROS_INFO("clustering started");
          //Waypoints = > clustering 
-         if(clustering(NUMAGENTS)){
+         if(clustering(NUMAGENTS, agentvec)){
              //Call TSP Solver
              agent_paths.resize(NUMAGENTS);
              for(size_t j(0);j<NUMAGENTS;j++)
              {
                  search_service::SingleTSPSolveGoal tspgoal;
                  tspgoal.waypoints= clustered_poses[j];
-                 tspgoal.pose = agent_poses.poses[j];
+                 tspgoal.pose = agent_poses.poses[agentvec[j]];
                  //call TSP Solve Action
                  stsp_vec[j]->sendGoal(tspgoal);
                  ROS_INFO("Single TSP Solve for agent %d started", j);
@@ -410,7 +439,7 @@ public:
              //call single_tsp_solve_action_server (parallel)
              for(size_t j(0);j<NUMAGENTS;j++)
              {
-                 finished_before_timeout_stsp= stsp_vec[j]->waitForResult(ros::Duration(30.0));
+                 finished_before_timeout_stsp= stsp_vec[j]->waitForResult(ros::Duration(25.0));
                  if(finished_before_timeout_stsp )
                  {
                       ROS_INFO("STSP solution obtained for agent %d",j);
@@ -429,8 +458,11 @@ public:
              {
                  search_service::GetSmoothPathGoal pathgoal;
                  pathgoal.agent_idx=j;
-                 pathgoal.start_pos= agent_poses.poses[j];
+                 pathgoal.start_pos= agent_poses.poses[agentvec[j]];
                  pathgoal.input_path=agent_paths[j];
+                 pathgoal.search_map=search_map;
+                 //check IG for path
+                 
                  //call GetSmoothPath Action
                  gsp_vec[j]->sendGoal(pathgoal);
                  ROS_INFO("Get Smooth Path for agent %d started", j);
@@ -438,7 +470,8 @@ public:
 
              for(size_t j(0);j<NUMAGENTS;j++)
              {
-                finished_before_timeout_gsp= gsp_vec[j]->waitForResult(ros::Duration(20.0));
+                finished_before_timeout_gsp= gsp_vec[j]->waitForResult(ros::Duration(15.0));
+                //finished_before_timeout_gsp= gsp_vec[j]->waitForResult();
                  if(finished_before_timeout_gsp)
                  {
                       ROS_INFO("GSP solution obtained for agent %d",j);
@@ -510,7 +543,7 @@ public:
   {
       //ROS_INFO("waypoints_pose_callback");
       waypoints=*msg;
-      clustering(NUMAGENTS);
+      //clustering(NUMAGENTS);
   }
 
   void agent2_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
@@ -944,7 +977,7 @@ bool get_smooth_paths(int n_agent)
 //Output:
 */
 
-bool clustering(int n_agent )
+bool clustering(int n_agent, std::vector<int> agentvec_)
 {
     ROS_INFO("Clustering for %d agents!!", n_agent);
     agent_xs.resize(n_agent);
@@ -954,9 +987,12 @@ bool clustering(int n_agent )
     std::vector<double> weights;
     for(size_t i(0);i<n_agent; i++)
     {
-        Posevec.push_back(agent_poses.poses[i]);
+        ROS_INFO("agentvec i : %d" , agentvec_[i]);
+        Posevec.push_back(agent_poses.poses[agentvec_[i]]);
         weights.push_back(1.0);
     }
+    weights[1]=1.8;
+    weights[2]=1.8;
 
     if(!clustered)
     {
