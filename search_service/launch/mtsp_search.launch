@@ -20,7 +20,7 @@
     <arg name="min_x" default="-10.0"/>
     <arg name="max_y" default="10.0"/>
     <arg name="min_y" default="-10"/>
-    <arg name="num_agents" default="5"/>
+    <arg name="num_agents" default="4"/>
 
     <param name="MAX_X" value="$(arg max_x)"/>
     <param name="MAX_Y" value="$(arg max_y)"/>
@@ -63,13 +63,13 @@
     <node name="path_follow_agent_1" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_1) $(arg target_path_1)"/>
     <node name="path_follow_agent_2" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_2) $(arg target_path_2)"/>
     <node name="path_follow_agent_3" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_3) $(arg target_path_3)"/>
-    <node name="path_follow_agent_4" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_4) $(arg target_path_4)"/>
+    <!-- <node name="path_follow_agent_4" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_4) $(arg target_path_4)"/> -->
 
     <node name="agent_0_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
     <node name="agent_1_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
     <node name="agent_2_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
     <node name="agent_3_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
-    <node name="agent_4_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
+    <!-- <node name="agent_4_tspsolve" pkg="search_service" type="stsp_server" output="screen"/> -->
 
     <arg name="get_plan_agent0" default="tb1/move_base/make_plan"/>
     <arg name="get_plan_agent1" default="tb2/move_base/make_plan"/>
@@ -81,6 +81,6 @@
     <node name="agent_1_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent1)"/>
     <node name="agent_2_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent2)"/>
     <node name="agent_3_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent3)"/>
-    <node name="agent_4_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent4)"/>
+    <!-- <node name="agent_4_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent4)"/> -->
 
 </launch>
