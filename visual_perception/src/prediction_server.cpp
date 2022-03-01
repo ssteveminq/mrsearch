@@ -669,7 +669,7 @@ void prediction_manager::SplitFrontiers(const frontier_exploration::Frontier& fr
 
 frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int initial_cell, unsigned int reference_, std::vector<bool>& visited_flag){
 
-    int max_size = 110;
+    int max_size = 90;
     //int max_size = 100;
     //initialize frontier structure
     frontier_exploration::Frontier output;
