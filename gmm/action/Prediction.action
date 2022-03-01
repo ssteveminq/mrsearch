@@ -1,0 +1,9 @@
+#goal definition
+
+float64[] mean_xs
+float64[] mean_ys
+float64[] covs
+---
+#result definition
+---
+#feedback

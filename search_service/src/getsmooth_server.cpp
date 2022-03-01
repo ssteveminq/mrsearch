@@ -132,7 +132,7 @@ public:
 
       double dist_=pow(pos1.position.x-pos2.position.x, 2);
       dist_+=pow(pos1.position.y-pos2.position.y, 2);
-        return dist_;
+        return sqrt(dist_);
 
   }
 
@@ -165,55 +165,96 @@ public:
     int min_idx = 0;
     nav_msgs::Path tmp_plan;
 
-    real_dst.resize(goal->input_path.poses.size(),0.0);
-    double min_dist=1000.0;
-    for(size_t i(0);i<goal->input_path.poses.size();i++)
+    if(goal->use_prediction>0)
     {
-        idx_set.push_back(i);
-        srv_.request.goal= goal->input_path.poses[i];
-        srv_.request.goal.header.frame_id= "map";
-        if(planner_srv_client.call(srv_))
+        real_dst.resize(goal->input_path.poses.size(),0.0);
+        double min_dist=1000.0;
+        for(size_t i(0);i<goal->input_path.poses.size();i++)
         {
-           double tmp_dst=0.0;
-           if(srv_.response.plan.poses.size()>1)
-           {
-               for(int m(0);m<srv_.response.plan.poses.size()-1;m++)
-                   tmp_dst+=calc_dist(srv_.response.plan.poses[m].pose, srv_.response.plan.poses[m+1].pose);
-           }
-           else{
-               tmp_dst = calc_dist(srv_.request.start.pose, srv_.response.plan.poses[0].pose);
-               double len_pose =srv_.response.plan.poses.size();
-               //ROS_INFO("len_pose: %f", len_pose);
-            }
-            real_dst[i]=tmp_dst;
-            ROS_INFO("tmp_dst: %.2lf", tmp_dst);
-            if(real_dst[i]<min_dist)
-            {
-                min_dist =real_dst[i];
-                tmp_plan=srv_.response.plan;
-            }
-                //calculate the path length to the pose(for finding the nearest pose from the robot location)
-        }
-        else{
-            ROS_INFO("global planner make plan service failed");
-            real_dst[i]=500.0;
-        }
-    }
-    if(real_dst.size()>0)
-    {
-        auto minIt = std::min_element(real_dst.begin(), real_dst.end());
-        double minElement = *minIt;
-        min_idx = minIt -real_dst.begin();
 
-        srv_.request.start.pose= goal->input_path.poses[min_idx].pose;
-        idx_set.erase(std::remove(idx_set.begin(),idx_set.end(),min_idx), idx_set.end());
-        for(size_t k(0);k<tmp_plan.poses.size();k++)
-            smooth_path.poses.push_back(tmp_plan.poses[k]);
+            idx_set.push_back(i);
+            double tmp_dst=0.0;
+            tmp_dst=calc_dist(goal->prediction_pos,goal->input_path.poses[i].pose);
+            std::cout<<"tmp_dst:"<<tmp_dst<<std::endl;;
+            real_dst[i]=tmp_dst;
+            if(real_dst[i]<min_dist)
+                {
+                    min_dist =real_dst[i];
+                    min_idx = i;
+                }
+        }
+        ROS_INFO("call the service");
+        //call the service
+        //
+            srv_.request.goal= goal->input_path.poses[min_idx];
+            srv_.request.goal.header.frame_id= "map";
+            if(planner_srv_client.call(srv_))
+            {
+            
+            for(size_t k(0);k<srv_.response.plan.poses.size();k++)
+                smooth_path.poses.push_back(srv_.response.plan.poses[k]);
+            }
+
+            srv_.request.start.pose= goal->input_path.poses[min_idx].pose;
+            idx_set.erase(std::remove(idx_set.begin(),idx_set.end(),min_idx), idx_set.end());
+    
     }
     else{
-        min_idx=0;
-        idx_set.erase(std::remove(idx_set.begin(),idx_set.end(),min_idx), idx_set.end());
+
+        real_dst.resize(goal->input_path.poses.size(),0.0);
+        double min_dist=1000.0;
+        for(size_t i(0);i<goal->input_path.poses.size();i++)
+        {
+            idx_set.push_back(i);
+            srv_.request.goal= goal->input_path.poses[i];
+            srv_.request.goal.header.frame_id= "map";
+            if(planner_srv_client.call(srv_))
+            {
+               double tmp_dst=0.0;
+               if(srv_.response.plan.poses.size()>1)
+               {
+                   for(int m(0);m<srv_.response.plan.poses.size()-1;m++)
+                       tmp_dst+=calc_dist(srv_.response.plan.poses[m].pose, srv_.response.plan.poses[m+1].pose);
+               }
+               else{
+                   tmp_dst = calc_dist(srv_.request.start.pose, srv_.response.plan.poses[0].pose);
+                   double len_pose =srv_.response.plan.poses.size();
+                   //ROS_INFO("len_pose: %f", len_pose);
+                }
+                real_dst[i]=tmp_dst;
+                ROS_INFO("tmp_dst: %.2lf", tmp_dst);
+                if(real_dst[i]<min_dist)
+                {
+                    min_dist =real_dst[i];
+                    tmp_plan=srv_.response.plan;
+                }
+                    //calculate the path length to the pose(for finding the nearest pose from the robot location)
+            }
+            else{
+                ROS_INFO("global planner make plan service failed");
+                real_dst[i]=500.0;
+            }
+        }
+        if(real_dst.size()>0)
+        {
+            auto minIt = std::min_element(real_dst.begin(), real_dst.end());
+            double minElement = *minIt;
+            min_idx = minIt -real_dst.begin();
+
+            srv_.request.start.pose= goal->input_path.poses[min_idx].pose;
+            idx_set.erase(std::remove(idx_set.begin(),idx_set.end(),min_idx), idx_set.end());
+            for(size_t k(0);k<tmp_plan.poses.size();k++)
+                smooth_path.poses.push_back(tmp_plan.poses[k]);
+        }
+        else{
+            min_idx=0;
+            idx_set.erase(std::remove(idx_set.begin(),idx_set.end(),min_idx), idx_set.end());
+        }
+
     }
+    std::cout<<"here"<<std::endl;
+
+
     //after first point, iterate with idx_set 
     real_dst.clear();
     //call service from current point
@@ -221,6 +262,9 @@ public:
     bool max_iter_reached=false;
     int idx_iter=0;
     int cur_idx = min_idx;
+
+
+
     double max_dst=0.0;
     while(idx_set.size()>0){
         //ROS_INFO("idx_set.size() : %d", idx_set.size());

@@ -150,6 +150,7 @@ public:
   clustered(false),
   pathUpdated(false),
   called_once(false),
+   IsmeanPose(false),
   weight_entropy(0.25),
   weight_travel(1.5),
   m_params(NULL)
@@ -253,6 +254,7 @@ public:
 
 
      //subscribers
+     mean_pose_sub = nh_.subscribe<geometry_msgs::PoseArray>("/mean_poses", 1, &MultiSearchManager::mean_pose_callback, this);
      global_map_sub = nh_.subscribe<nav_msgs::OccupancyGrid>("/scaled_static_map", 1, &MultiSearchManager::global_map_callback, this);
      agent1_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent1_map_topic,10,&MultiSearchManager::agent1_localmap_callback,this);
      agent2_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent2_map_topic, 10,&MultiSearchManager::agent2_localmap_callback,this);
@@ -461,6 +463,17 @@ public:
                  pathgoal.start_pos= agent_poses.poses[agentvec[j]];
                  pathgoal.input_path=agent_paths[j];
                  pathgoal.search_map=search_map;
+                 if(IsmeanPose)
+                 {
+                     pathgoal.prediction_pos= mean_poses.poses[agentvec[j]];
+                     pathgoal.use_prediction=1;
+                 }
+                 else
+                 {
+                     pathgoal.use_prediction=0;
+                 
+                 }
+
                  //check IG for path
                  
                  //call GetSmoothPath Action
@@ -470,7 +483,7 @@ public:
 
              for(size_t j(0);j<NUMAGENTS;j++)
              {
-                finished_before_timeout_gsp= gsp_vec[j]->waitForResult(ros::Duration(15.0));
+                finished_before_timeout_gsp= gsp_vec[j]->waitForResult(ros::Duration(22.0));
                 //finished_before_timeout_gsp= gsp_vec[j]->waitForResult();
                  if(finished_before_timeout_gsp)
                  {
@@ -642,7 +655,12 @@ public:
     //check_obstacle
 }
 
-
+void mean_pose_callback(const geometry_msgs::PoseArray::ConstPtr& msg)
+{
+    //ROS_INFO("global map callback");
+    mean_poses = *msg;
+    IsmeanPose=true;
+}
 
 
 void global_map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
@@ -1244,6 +1262,7 @@ protected:
 
   ros::Subscriber unknown_poses_sub;
   ros::Subscriber global_map_sub;
+  ros::Subscriber mean_pose_sub;
 
   //Publishers
   ros::Publisher search_map_pub;
@@ -1265,6 +1284,7 @@ protected:
 
   geometry_msgs::PoseArray waypoints;
   geometry_msgs::PoseArray agent_poses;
+  geometry_msgs::PoseArray mean_poses;
   std::vector<geometry_msgs::PoseArray> clustered_poses;
 
   //location map--villa_navigation
@@ -1289,6 +1309,7 @@ protected:
   bool IsActive;
   bool IsCalled;
   bool pathUpdated;
+  bool IsmeanPose;
   //bool smoothpath;
   std::vector<bool> Issmoothpath;
 
