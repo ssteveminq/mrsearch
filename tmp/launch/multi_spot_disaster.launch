@@ -6,6 +6,8 @@
   <arg name="rviz" default="true"/>
   <arg name="gazebo_visualization" default="false" />
   <arg name="paused" default="true" />
+  <arg name="husky_x" default=".0"/>
+  <arg name="husky_y" default ="-4.0"/> 
   <arg name="spot_x" default=".0"/>
   <arg name="spot_y" default ="-2.0"/> 
   <arg name="spot2_x" default="0.0"/>
@@ -14,8 +16,8 @@
   <arg name="use_sim_time" default="true"/>
 
  <arg name="ahg_sim" default="true" />
-  <arg name="world_name" value="$(find tmp)/worlds/test_humantrajectory.world"/>
-  <arg name="map" default="$(find tmp)/maps/full_demo_map.yaml" />
+  <arg name="world_name" value="$(find tmp)/worlds/disaster.world"/>
+  <arg name="map" default="$(find tmp)/maps/disaster.yaml" />
   <param name="/use_sim_time" value="true"/>
   <arg name="param_file" default="$(optenv HOME ~)/.ros/params.yaml" />
 
@@ -29,7 +31,16 @@
 
   <node name="map_server" pkg="map_server" type="map_server" args="$(arg map)"/>
 
-  <!-- Frist Agent -->
+  <!-- Clicked Point Agent -->
+  <arg name="clickpoint_namespace"  default="husky"/>
+
+  <include file="$(find husky_gazebo)/launch/spawn_husky.launch"/>
+
+  <include file="$(find husky_navigation)/launch/amcl_disaster.launch"/>
+
+
+
+  <!-- First Agent -->
   <arg name="spot_namespace"  default="spot"/>
   <group ns ="$(arg spot_namespace)">
       <param name="robot_description" command="$(find xacro)/xacro --inorder $(find spot_description)/urdf/spot.urdf.xacro"/>
@@ -95,11 +106,11 @@
     <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
  </node>
 
- <include file="$(find tmp)/launch/amcl_diff.xml">
+    <include file="$(find tmp)/launch/amcl_diff.xml">
       <arg name="namespace" value="$(arg spot2_namespace)"/>
       <arg name="pos_x" value="$(arg spot2_x)"/>
       <arg name="pos_y" value="$(arg spot2_y)"/>
-      </include>
+    </include>
 
 
   </group>
