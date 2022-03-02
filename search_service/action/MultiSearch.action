@@ -3,6 +3,9 @@
 # Boundary for exploration task
 #geometry_msgs/PolygonStamped boundary
 # Starting point for exploration task, inside the boundary
+bool replan
+int32 num_agent
+int32 fail_idx
 ---
 #result definition
 nav_msgs/Path[] paths
