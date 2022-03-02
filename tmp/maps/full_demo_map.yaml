@@ -1,0 +1,7 @@
+image: full_demo_map_black.pgm
+resolution: 0.200000
+origin: [-232.900003, -162.299997, 0.0]
+negate: 0
+occupied_thresh: 0.35
+free_thresh: 0.196
+

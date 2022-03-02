@@ -57,10 +57,10 @@
 
     <arg name="get_plan_agent0" default="tb1/move_base/make_plan"/>
     <arg name="get_plan_agent1" default="tb2/move_base/make_plan"/>
-    <arg name="get_plan_agent2" default="tb3/move_base/make_plan"/>
+    <!--<arg name="get_plan_agent2" default="tb3/move_base/make_plan"/>-->
 
     <node name="agent_0_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent0)"/>
     <node name="agent_1_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent1)"/>
-    <node name="agent_2_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent2)"/>
+    <!--<node name="agent_2_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent2)"/>-->
 
 </launch>

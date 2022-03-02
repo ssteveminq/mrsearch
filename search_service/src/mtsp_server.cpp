@@ -218,6 +218,7 @@ public:
      agent_poses.poses.resize(NUMAGENTS);
      Issmoothpath.resize(NUMAGENTS);
      smooth_paths.resize(NUMAGENTS);
+     tsp_paths.resize(NUMAGENTS);
      path_pubs.resize(NUMAGENTS);
 
      //agent1_pose.resize(3,0.0);
@@ -375,6 +376,9 @@ public:
     }
 
     //reset values
+
+    tsp_paths.clear();
+    tsp_paths.resize(NUMAGENTS);
     smooth_paths.clear();
     smooth_paths.resize(NUMAGENTS);
     for(int j(0);j<NUMAGENTS;j++)
@@ -439,13 +443,15 @@ public:
              //call single_tsp_solve_action_server (parallel)
              for(size_t j(0);j<NUMAGENTS;j++)
              {
-                 finished_before_timeout_stsp= stsp_vec[j]->waitForResult(ros::Duration(25.0));
+                 finished_before_timeout_stsp= stsp_vec[j]->waitForResult(ros::Duration(30.0));
                  if(finished_before_timeout_stsp )
                  {
                       ROS_INFO("STSP solution obtained for agent %d",j);
                       auto stsp_res=stsp_vec[j]->getResult();
                       //save_paths for each agents
                       agent_paths[j] = stsp_res->path;
+                      tsp_paths[j] = stsp_res->path;
+                      Issmoothpath[j]=true;
                  }
                  else{
                     ROS_WARN("can't obtain tsp path for agent %d",j);
@@ -453,51 +459,15 @@ public:
                     return;
                  }
              }
+             result_.paths=tsp_paths;
+             as_.setSucceeded(result_);
+
              //call get_smooth_action_server (parallel)
-             for(size_t j(0);j<NUMAGENTS;j++)
-             {
-                 search_service::GetSmoothPathGoal pathgoal;
-                 pathgoal.agent_idx=j;
-                 pathgoal.start_pos= agent_poses.poses[agentvec[j]];
-                 pathgoal.input_path=agent_paths[j];
-                 pathgoal.search_map=search_map;
-                 //check IG for path
-                 
-                 //call GetSmoothPath Action
-                 gsp_vec[j]->sendGoal(pathgoal);
-                 ROS_INFO("Get Smooth Path for agent %d started", j);
-             }
-
-             for(size_t j(0);j<NUMAGENTS;j++)
-             {
-                finished_before_timeout_gsp= gsp_vec[j]->waitForResult(ros::Duration(15.0));
-                //finished_before_timeout_gsp= gsp_vec[j]->waitForResult();
-                 if(finished_before_timeout_gsp)
-                 {
-                      ROS_INFO("GSP solution obtained for agent %d",j);
-                      auto gsp_res=gsp_vec[j]->getResult();
-                      //save_paths for each agents
-                      //agent_paths[j] = gsp_res->output_path;
-                      smooth_paths[j]=gsp_res->output_path;
-                      Issmoothpath[j]=true;
-                 }
-                 else{
-                    ROS_WARN("can't obtain smooth path for agent %d",j);
-                    //as_.setAborted(result_);
-                    //return;
-                    //
-                    smooth_paths[j]=agent_paths[j];
-                    Issmoothpath[j]=true;
-                 }
-             }
-
-                 result_.cur_entropy = search_entropy;
-                 result_.paths=smooth_paths;
-                 as_.setSucceeded(result_);
-                 ROS_INFO("succedded");
-                 pathUpdated=true;
-                 publish_paths();
-                 return;
+             as_.setSucceeded(result_);
+             ROS_INFO("succedded");
+             pathUpdated=true;
+             publish_paths();
+             return;
          }
          else{
              ROS_WARN("At least one agent doesn't have assigned waypoints");
@@ -819,7 +789,7 @@ void publish_paths()
     {
         if(Issmoothpath[i])
         {
-            path_pubs[i].publish(smooth_paths[i]);
+            path_pubs[i].publish(tsp_paths[i]);
         }
     }
 }
@@ -1318,6 +1288,7 @@ protected:
   std::vector<std::vector<double> >agent_xs;
   std::vector<std::vector<double> >agent_ys;
   std::vector<nav_msgs::Path> smooth_paths;
+  std::vector<nav_msgs::Path> tsp_paths;
 
 
   tf2_ros::Buffer tf_buffer;
