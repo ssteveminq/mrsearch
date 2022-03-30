@@ -63,6 +63,14 @@
     <rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />
     <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
  </node>
+
+
+ <arg name="agent_pose" default="amcl_pose"/>
+ <arg name="camera_frame" default="spot/camera_link"/>
+    <node pkg="visual_perception" type="visible_manager" name="camera_region" output="screen" args="$(arg agent_pose) $(arg camera_frame)">
+        <remap from="/camera_region_map" to="fov_map"/>
+    </node>
+
   </group>
 
 
@@ -100,6 +108,15 @@
       <arg name="pos_x" value="$(arg spot2_x)"/>
       <arg name="pos_y" value="$(arg spot2_y)"/>
       </include>
+
+
+      <arg name="agent_pose2" default="amcl_pose"/>
+      <arg name="camera_frame2" default="spot2/camera_link"/>
+    <node pkg="visual_perception" type="visible_manager" name="camera_region" output="screen" args="$(arg agent_pose2) $(arg camera_frame2)">
+        <remap from="/camera_region_map" to="fov_map"/>
+    </node>
+
+
 
 
   </group>

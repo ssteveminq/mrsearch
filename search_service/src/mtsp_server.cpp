@@ -169,7 +169,8 @@ public:
      nh_.param("AGENT4_MAP_TOPIC", agent4_map_topic, {"spot4/costmap"});
      nh_.param("AGENT5_MAP_TOPIC", agent5_map_topic, {"spot5/costmap"});
      nh_.param("PLANNER_TOPIC", planner_topic,{"/tb1/move_base/make_plan"});
-     nh_.param("NUM_AGENT", NUMAGENTS, {4});
+     nh_.param("NUM_AGENT", NUMAGENTS, {2});
+     nh_.param("BOOL_INITPOSES", BOOL_INITPOSES, {1});
 
      nh_.getParam("AGENT1_POSE_TOPIC", agent1_pose_topic);
      nh_.getParam("AGENT2_POSE_TOPIC", agent2_pose_topic);
@@ -177,6 +178,7 @@ public:
      nh_.getParam("AGENT4_POSE_TOPIC", agent4_pose_topic);
      nh_.getParam("AGENT5_POSE_TOPIC", agent5_pose_topic);
      nh_.getParam("NUM_AGENT", NUMAGENTS);
+     nh_.getParam("BOOL_INITPOSES", BOOL_INITPOSES);
      nh_.getParam("AGENT1_MAP_TOPIC", agent1_map_topic);
      nh_.getParam("AGENT2_MAP_TOPIC", agent2_map_topic);
      nh_.getParam("AGENT3_MAP_TOPIC", agent3_map_topic);
@@ -200,6 +202,7 @@ public:
      ROS_INFO("agent5_map_topic: %s",agent5_map_topic.c_str());
      ROS_INFO("planner_topic: %s",  planner_topic.c_str());
      ROS_INFO("num_agent: %d",NUMAGENTS);
+     ROS_INFO("init_pose: %d",BOOL_INITPOSES);
      ROS_INFO("max_x: %.2lf",MAX_X);
      ROS_INFO("max_y: %.2lf",MAX_Y);
      ROS_INFO("min_x: %.2lf",MIN_X);
@@ -427,7 +430,7 @@ public:
          waypoints= res_->waypoints;
          ROS_INFO("clustering started");
          //Waypoints = > clustering 
-         if(clustering(NUMAGENTS, agentvec)){
+         if(clustering(NUMAGENTS, agentvec, BOOL_INITPOSES)){
              //Call TSP Solver
              agent_paths.resize(NUMAGENTS);
              for(size_t j(0);j<NUMAGENTS;j++)
@@ -947,7 +950,7 @@ bool get_smooth_paths(int n_agent)
 //Output:
 */
 
-bool clustering(int n_agent, std::vector<int> agentvec_)
+bool clustering(int n_agent, std::vector<int> agentvec_, int mode_=1)
 {
     ROS_INFO("Clustering for %d agents!!", n_agent);
     agent_xs.resize(n_agent);
@@ -955,14 +958,39 @@ bool clustering(int n_agent, std::vector<int> agentvec_)
 
     std::vector<geometry_msgs::Pose> Posevec;
     std::vector<double> weights;
-    for(size_t i(0);i<n_agent; i++)
-    {
-        ROS_INFO("agentvec i : %d" , agentvec_[i]);
-        Posevec.push_back(agent_poses.poses[agentvec_[i]]);
-        weights.push_back(1.0);
+
+    if(mode_==1){
+        for(size_t i(0);i<n_agent; i++)
+        {
+            //ROS_INFO("agentvec i : %d" , agentvec_[i]);
+            Posevec.push_back(agent_poses.poses[agentvec_[i]]);
+            weights.push_back(1.0);
+        }
+        weights[0]=1.4;
+        weights[1]=1.9;
     }
-    weights[1]=1.4;
-    weights[2]=1.9;
+    else{
+        //fake center points FIXME
+        if(n_agent==2)
+        {
+        geometry_msgs::Pose tmp_pose;
+        tmp_pose.position.x=4;
+        tmp_pose.position.y=-2;
+        Posevec.push_back(tmp_pose);
+        weights.push_back(1.0);
+        tmp_pose.position.x=6;
+        tmp_pose.position.y=7;
+        Posevec.push_back(tmp_pose);
+        weights.push_back(1.0);
+        }
+        else{
+            ROS_INFO("Something_wrong");
+        
+        
+        }
+
+    
+    }
 
     if(!clustered)
     {
@@ -1198,6 +1226,7 @@ protected:
   double MIN_X;
   double MIN_Y;
   int NUMAGENTS;
+  int BOOL_INITPOSES;
 
   //Subscribers
   ros::Subscriber agent1_pose_sub;

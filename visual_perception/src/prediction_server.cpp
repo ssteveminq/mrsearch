@@ -161,7 +161,7 @@ void prediction_manager::searchmap_callback(const nav_msgs::OccupancyGrid::Const
         costmap_size_x=msg->info.width;
         costmap_size_y=msg->info.height;
         MIN_X = msg->info.origin.position.x;
-        MIN_Y = msg->info.origin.position.x;
+        MIN_Y = msg->info.origin.position.y;
         MAX_X = MIN_X+costmap_size_x*msg->info.resolution;
         MAX_Y = MIN_Y+costmap_size_y*msg->info.resolution;
         unsigned int search_size =costmap_size_x*costmap_size_y;
@@ -560,7 +560,7 @@ bool prediction_manager::isNewUnknown(unsigned int idx, const std::vector<bool>&
         return false;
     }
 
-    //frontier cells should have at least one cell in 4-connected neighbourhood that is free
+    //frontier cells should not have at least one cell in 4-connected neighbourhood that is not free
     BOOST_FOREACH(unsigned int nbr, nhood4(idx)){
         if(costmap_[nbr] != NO_INFORMATION){
             return false;
@@ -669,7 +669,7 @@ void prediction_manager::SplitFrontiers(const frontier_exploration::Frontier& fr
 
 frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int initial_cell, unsigned int reference_, std::vector<bool>& visited_flag){
 
-    int max_size = 110;
+    int max_size = 150;
     //int max_size = 100;
     //initialize frontier structure
     frontier_exploration::Frontier output;
@@ -702,7 +702,6 @@ frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int 
 
         //try adding cells in 8-connected neighborhood to frontier
         BOOST_FOREACH(unsigned int nbr, nhood8(idx)){
-
 
             //check if neighbour is a potential frontier cell
             if(output.size>max_size)
