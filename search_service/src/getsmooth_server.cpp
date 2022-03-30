@@ -21,7 +21,6 @@
 #include "tf/message_filter.h"
 #include "tf/tf.h"
 
-
 #define CELL_MAX_ENTROPY 0.693147
 
 using namespace std;
@@ -252,7 +251,6 @@ public:
         }
 
     }
-    std::cout<<"here"<<std::endl;
 
 
     //after first point, iterate with idx_set 
@@ -302,7 +300,7 @@ public:
 
                 //ROS_INFO("tmp_gain: %.2lf", tmp_gain);
                 //ROS_INFO("tmp_dst: %.2lf", tmp_dst);
-                real_dst[j]=0.01*tmp_gain-15*tmp_dst;
+                real_dst[j]=0.00*tmp_gain-50*tmp_dst;
                 if(real_dst[j]>max_dst)
                 {
                     max_dst=real_dst[j];
@@ -323,7 +321,7 @@ public:
         for(size_t k(0);k<tmp_plan.poses.size();k++)
             smooth_path.poses.push_back(tmp_plan.poses[k]);
         idx_iter++;
-        if(idx_iter>15)
+        if(idx_iter>40)
             break;
     }//while
 

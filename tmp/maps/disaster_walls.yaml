@@ -1,4 +1,4 @@
-image: disaster_walls_rot_25_77.pgm
+image: disaster_walls_rot_25_77_empty.pgm
 resolution: 0.050000
 origin: [-50.70000, -51, 0.000000]
 negate: 0

@@ -13,20 +13,20 @@
   <arg name="world" default="gazebo"/>
   <!--turtlebot3-->
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
-  <arg name="x_pos" default="6.0"/>
-  <arg name="y_pos" default="6.0"/>
+  <arg name="x_pos" default="5.0"/>
+  <arg name="y_pos" default="-8.0"/>
   <arg name="z_pos" default="0.0"/>
 
-  <arg name="x_pos2" default="6.0"/>
-  <arg name="y_pos2" default="-6.0"/>
+  <arg name="x_pos2" default="-13.0"/>
+  <arg name="y_pos2" default="-12.0"/>
   <arg name="z_pos2" default="0.0"/>
 
-  <arg name="x_pos3" default="-3.0"/>
-  <arg name="y_pos3" default="-7.0"/>
+  <arg name="x_pos3" default="11.0"/>
+  <arg name="y_pos3" default="13.0"/>
   <arg name="z_pos3" default="0.0"/>
 
-  <arg name="x_pos4" default="-6.0"/>
-  <arg name="y_pos4" default="6.0"/>
+  <arg name="x_pos4" default="-11.0"/>
+  <arg name="y_pos4" default="10.0"/>
   <arg name="z_pos4" default="0.0"/>
 
   <arg name="x_pos5" default="0.0"/>
@@ -59,7 +59,7 @@
 
 
  <arg name="ahg_sim" default="true" />
-  <arg name="world_name" value="$(find tmp)/worlds/disaster_walls_human.world"/>
+  <arg name="world_name" value="$(find tmp)/worlds/disaster_walls.world"/>
   <!--<arg name="map" default="$(find tmp)/maps/ahg_map_rev.yaml" />-->
   <param name="/use_sim_time" value="true"/>
   <arg name="param_file" default="$(optenv HOME ~)/.ros/params.yaml" />
