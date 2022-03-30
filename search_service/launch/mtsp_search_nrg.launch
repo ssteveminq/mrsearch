@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <launch>
 
-    <arg name="agent1" default="walrus"/>
-    <arg name="agent2" default="jackal"/>
+    <arg name="agent1" default="jackal"/>
+    <arg name="agent2" default="walrus"/>
     <arg name="agent3" default="spot"/>
 
     <rosparam file="$(find search_service)/config/ahg.yaml"/>
@@ -18,6 +18,7 @@
     <arg name="max_y" default="10.0"/>
     <arg name="min_y" default="-10"/>
     <arg name="num_agents" default="2"/>
+    <arg name="use_initpose" default="0"/>
 
     <param name="MAX_X" value="$(arg max_x)"/>
     <param name="MAX_Y" value="$(arg max_y)"/>
@@ -32,6 +33,7 @@
     <param name="PLANNER_TOPIC" value="$(arg planner_topic)"/>
     <param name="NUM_AGENT" value="$(arg num_agents)"/>
     <param name="DIR_PATH" value="$(arg num_agents)"/>
+    <param name="BOOL_INITPOSES" value="$(arg use_initpose)"/>
 
 
   <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/full_demo_map.yaml"/>
@@ -40,8 +42,8 @@
         <!--<remap from="/map" to="/walrus/map"/>-->
     </node>
     <node name="multisearch_action" pkg="search_service" type="mtsp_server" output="screen">
-        <remap from="/agent_0_path" to="/walrus/search_agent_manager/waypoint_plan"/>
-        <remap from="/agent_1_path" to="/jackal/search_agent_manager/waypoint_plan"/>
+        <remap from="/agent_0_path" to="/jackal/search_agent_manager/waypoint_plan"/>
+        <remap from="/agent_1_path" to="/walrus/search_agent_manager/waypoint_plan"/>
     </node>
     <node name="getunknowns" pkg="visual_perception" type="prediction_server" output="screen"/>
     <!--<node name="tsp_solve_action" pkg="search_service" type="tsp_server" output="screen"/>-->
@@ -49,6 +51,22 @@
 
     <node name="agent_0_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
     <node name="agent_1_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
+    
+    <arg name="agent_pose" default="walrus/amcl_pose"/>
+    <arg name="camera_frame" default="walrus/realsense_front_link"/>
+    <node pkg="visual_perception" type="visible_manager" name="walrus_camera_region" output="screen" args="$(arg agent_pose) $(arg camera_frame)">
+        <remap from="/camera_region_map" to="walrus/fov_map"/>
+    </node>
+
+    <arg name="agent_pose2" default="jackal/amcl_pose"/>
+    <arg name="camera_frame2" default="jackal/realsense_front_link"/>
+    <node pkg="visual_perception" type="visible_manager" name="jackal_camera_region" output="screen" args="$(arg agent_pose2) $(arg camera_frame2)">
+        <remap from="/camera_region_map" to="jackal/fov_map"/>
+    </node>
+
+    <node name="agent_0_getpath" pkg="search_service" type="get_forwardpath_server" output="screen"/>
+    <node name="agent_1_getpath" pkg="search_service" type="get_forwardpath_server" output="screen"/>
+
 
     <!--<arg name="target_nav_action_0" default="$(arg agent1)/move_base"/>-->
     <!--<arg name="target_nav_action_1" default="$(arg agent1)/move_base"/>-->

@@ -27,8 +27,8 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
 #include <std_msgs/Bool.h>
-#include <search_service/GetSmoothPathAction.h>
-#include <search_service/GetSmoothPathResult.h>
+#include <search_service/GetForwardPathAction.h>
+#include <search_service/GetForwardPathResult.h>
 #include <search_service/MultiSearchAction.h>
 #include <search_service/MultiSearchResult.h>
 #include <search_service/SetSearchRegionAction.h>
@@ -69,7 +69,7 @@
 
 
 typedef actionlib::SimpleActionClient<search_service::SingleTSPSolveAction>  al_stsp;
-typedef actionlib::SimpleActionClient<search_service::GetSmoothPathAction>  al_gsp;
+typedef actionlib::SimpleActionClient<search_service::GetForwardPathAction>  al_gsp;
 
 using namespace std;
 
@@ -454,7 +454,7 @@ public:
                       //save_paths for each agents
                       agent_paths[j] = stsp_res->path;
                       tsp_paths[j] = stsp_res->path;
-                      Issmoothpath[j]=true;
+                      //Issmoothpath[j]=true;
                  }
                  else{
                     ROS_WARN("can't obtain tsp path for agent %d",j);
@@ -462,11 +462,46 @@ public:
                     return;
                  }
              }
-             result_.paths=tsp_paths;
+             //find the shortest path with connecting the waypoint which is nearest from the previous one
+             for(size_t j(0);j<NUMAGENTS;j++)
+             {
+                 search_service::GetForwardPathGoal pathgoal;
+                 pathgoal.agent_idx=j;
+                 pathgoal.start_pos= agent_poses.poses[agentvec[j]];
+                 pathgoal.input_path=agent_paths[j];
+                 pathgoal.search_map=search_map;
+                 //check IG for path
+                 gsp_vec[j]->sendGoal(pathgoal);
+                 ROS_INFO("Get Forward Path for agent %d started", j);
+             }
+
+             for(size_t j(0);j<NUMAGENTS;j++)
+             {
+                finished_before_timeout_gsp= gsp_vec[j]->waitForResult(ros::Duration(30.0));
+                 if(finished_before_timeout_gsp)
+                 {
+                      ROS_INFO("GSP solution obtained for agent %d",j);
+                      auto gsp_res=gsp_vec[j]->getResult();
+                      //agent_paths[j] = gsp_res->output_path;
+                      smooth_paths[j]=gsp_res->output_path;
+                      Issmoothpath[j]=true;
+                 }
+                 else{
+                    ROS_WARN("can't obtain smooth path for agent %d",j);
+                    //as_.setAborted(result_);
+                    //return;
+                    //
+                    smooth_paths[j]=agent_paths[j];
+                    Issmoothpath[j]=true;
+                 }
+             }
+
+             result_.cur_entropy = search_entropy;
+             result_.paths=smooth_paths;
              as_.setSucceeded(result_);
 
              //call get_smooth_action_server (parallel)
-             as_.setSucceeded(result_);
+             //as_.setSucceeded(result_);
              ROS_INFO("succedded");
              pathUpdated=true;
              publish_paths();
@@ -792,12 +827,12 @@ void publish_paths()
     {
         if(Issmoothpath[i])
         {
-            path_pubs[i].publish(tsp_paths[i]);
+            path_pubs[i].publish(smooth_paths[i]);
         }
     }
 }
 
-/* function: Obtaining Smooth Paths from her publisher function to publish smooth paths*/
+/* function: Obtaining Forward Paths from her publisher function to publish smooth paths*/
 bool get_smooth_paths(int n_agent)
 {
 
