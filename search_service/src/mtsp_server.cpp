@@ -961,8 +961,8 @@ bool clustering(int n_agent, std::vector<int> agentvec_)
         Posevec.push_back(agent_poses.poses[agentvec_[i]]);
         weights.push_back(1.0);
     }
-    weights[1]=1.8;
-    weights[2]=1.8;
+    weights[1]=1.4;
+    weights[2]=1.9;
 
     if(!clustered)
     {
