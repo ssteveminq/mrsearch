@@ -1013,8 +1013,8 @@ bool clustering(int n_agent, std::vector<int> agentvec_, int mode_=1)
         tmp_pose.position.y=-2;
         Posevec.push_back(tmp_pose);
         weights.push_back(1.0);
-        tmp_pose.position.x=6;
-        tmp_pose.position.y=7;
+        tmp_pose.position.x=5;
+        tmp_pose.position.y=4;
         Posevec.push_back(tmp_pose);
         weights.push_back(1.0);
         }

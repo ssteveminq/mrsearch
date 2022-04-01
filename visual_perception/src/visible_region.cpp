@@ -304,7 +304,7 @@ double visible_manager::getDistance_from_Vec(std::vector<double> origin, double 
 void visible_manager::global_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
 {
   //ROS_INFO("pose_callback");
-    std::cout<<"pos_callback"<<std::endl;
+    //std::cout<<"pos_callback"<<std::endl;
 
    global_pose[0]=msg->pose.pose.position.x;
    global_pose[1]=msg->pose.pose.position.y;

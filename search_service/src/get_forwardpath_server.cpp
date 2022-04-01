@@ -19,7 +19,8 @@
 #include <actionlib/server/simple_action_server.h>
 #include "tf/transform_listener.h"
 #include "tf/message_filter.h"
-#include "tf/tf.h"
+#include <tf/tf.h>
+#include <tf/transform_datatypes.h>
 
 
 #define CELL_MAX_ENTROPY 0.693147
@@ -230,6 +231,44 @@ public:
         int path_len = smooth_path.poses.size();
         for(int k(path_len-2);k<smooth_path.poses.size();k--)
             smooth_path.poses.push_back(smooth_path.poses[k]);
+
+        for(int i(1);i<smooth_path.poses.size();i++)
+        {
+            if(i<smooth_path.poses.size()-2)
+            {
+                double dev_x=smooth_path.poses[i+1].pose.position.x-smooth_path.poses[i].pose.position.x;
+                double dev_y=smooth_path.poses[i+1].pose.position.y-smooth_path.poses[i].pose.position.y;
+                double yaw = atan2(dev_y,dev_x);
+            geometry_msgs::Quaternion q;
+
+              double t0 = cos(yaw * 0.5);
+              double t1 = sin(yaw * 0.5);
+              double t2 = cos(0.0* 0.5);
+              double t3 = sin(0.0 * 0.5);
+              double t4 = cos(0.0 * 0.5);
+              double t5 = sin(0.0 * 0.5);
+              q.w = t0 * t2 * t4 + t1 * t3 * t5;
+              q.x = t0 * t3 * t4 - t1 * t2 * t5;
+              q.y = t0 * t2 * t5 + t1 * t3 * t4;
+              q.z = t1 * t2 * t4 - t0 * t3 * t5;
+              smooth_path.poses[i+1].pose.orientation.x=q.x;
+              smooth_path.poses[i+1].pose.orientation.y=q.y;
+              smooth_path.poses[i+1].pose.orientation.z=q.z;
+              smooth_path.poses[i+1].pose.orientation.w=q.w;
+
+            }
+            else if(i==smooth_path.poses.size()-1){
+
+                smooth_path.poses[i].pose.orientation = smooth_path.poses[i-1].pose.orientation;
+            }
+
+        
+        
+        }
+
+
+
+
         result_.output_path=smooth_path;
         ROS_INFO("smooth_path Updated");
         as_.setSucceeded(result_);
