@@ -75,4 +75,8 @@
     <!--<node name="path_follow_agent_0" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_0) $(arg target_path_0)"/>-->
     <!--<node name="path_follow_agent_1" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_1) $(arg target_path_1)"/>-->
 
+    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find search_service)/rviz/survey_demo.rviz">
+        <remap from="/initialpose" to="$(arg agent2)/initialpose"/>
+    </node>
+    
 </launch>
