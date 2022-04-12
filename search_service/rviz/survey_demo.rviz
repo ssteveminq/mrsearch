@@ -294,6 +294,89 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        ark_enclosure_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        chassis_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        front_fender_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        front_left_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        front_mount:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        front_right_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        mid_mount:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        navsat_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rear_fender_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        rear_left_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rear_mount:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        rear_right_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        sensor_plate_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        velodyne:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        velodyne_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        velodyne_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
       Name: RobotModel
       Robot Description: jackal/robot_description
       TF Prefix: s
@@ -315,7 +398,7 @@ Visualization Manager:
       Marker Topic: /search_polygon_marker
       Name: Marker
       Namespaces:
-        explore_points: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -372,6 +455,237 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        jackal/ark_enclosure_link:
+          Value: true
+        jackal/base:
+          Value: true
+        jackal/base_link:
+          Value: true
+        jackal/chassis_link:
+          Value: true
+        jackal/front_fender_link:
+          Value: true
+        jackal/front_left_wheel_link:
+          Value: true
+        jackal/front_mount:
+          Value: true
+        jackal/front_right_wheel_link:
+          Value: true
+        jackal/imu_link:
+          Value: true
+        jackal/imu_link_ned:
+          Value: true
+        jackal/mid_mount:
+          Value: true
+        jackal/navsat_link:
+          Value: true
+        jackal/odom:
+          Value: true
+        jackal/realsense_front_link:
+          Value: true
+        jackal/rear_fender_link:
+          Value: true
+        jackal/rear_left_wheel_link:
+          Value: true
+        jackal/rear_mount:
+          Value: true
+        jackal/rear_right_wheel_link:
+          Value: true
+        jackal/sensor_plate_link:
+          Value: true
+        jackal/tracking_camera_link:
+          Value: true
+        jackal/velodyne:
+          Value: true
+        jackal/velodyne_base_link:
+          Value: true
+        jackal/velodyne_link:
+          Value: true
+        map:
+          Value: true
+        walrus/aux_battery_link:
+          Value: true
+        walrus/base:
+          Value: true
+        walrus/base_chassis_link:
+          Value: true
+        walrus/base_link:
+          Value: true
+        walrus/bsa_link:
+          Value: true
+        walrus/cage_bottom:
+          Value: true
+        walrus/cage_bottom_aft:
+          Value: true
+        walrus/cage_bottom_left:
+          Value: true
+        walrus/cage_bottom_right:
+          Value: true
+        walrus/cage_wall_aft:
+          Value: true
+        walrus/cage_wall_fore:
+          Value: true
+        walrus/cage_wall_left:
+          Value: true
+        walrus/cage_wall_left_front:
+          Value: true
+        walrus/cage_wall_left_rear:
+          Value: true
+        walrus/cage_wall_right:
+          Value: true
+        walrus/cage_wall_right_front:
+          Value: true
+        walrus/cage_wall_right_rear:
+          Value: true
+        walrus/duro_aft_antenna_link:
+          Value: true
+        walrus/duro_front_antenna_link:
+          Value: true
+        walrus/estop_box:
+          Value: true
+        walrus/estop_button:
+          Value: true
+        walrus/front_chassis_link:
+          Value: true
+        walrus/hokuyo_left_link:
+          Value: true
+        walrus/hokuyo_right_link:
+          Value: true
+        walrus/inertial_collision_link:
+          Value: true
+        walrus/left_spacer_link:
+          Value: true
+        walrus/map:
+          Value: true
+        walrus/mcu_0_battery_link:
+          Value: true
+        walrus/mcu_1_battery_link:
+          Value: true
+        walrus/mcu_2_battery_link:
+          Value: true
+        walrus/mcu_3_battery_link:
+          Value: true
+        walrus/odom:
+          Value: true
+        walrus/os_imu:
+          Value: true
+        walrus/os_lidar:
+          Value: true
+        walrus/ouster_link:
+          Value: true
+        walrus/realsense_front_link:
+          Value: true
+        walrus/rear_chassis_link:
+          Value: true
+        walrus/right_spacer_link:
+          Value: true
+        walrus/sensor_plate_link:
+          Value: true
+        walrus/tracking_camera_link:
+          Value: true
+        walrus/ui_box_link:
+          Value: true
+        walrus/ui_box_mount_link:
+          Value: true
+        walrus/uwb_left_front:
+          Value: true
+        walrus/uwb_left_rear:
+          Value: true
+        walrus/uwb_right_front:
+          Value: true
+        walrus/uwb_right_rear:
+          Value: true
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        map:
+          walrus/map:
+            walrus/odom:
+              walrus/base:
+                walrus/base_link:
+                  walrus/base_chassis_link:
+                    walrus/aux_battery_link:
+                      {}
+                    walrus/front_chassis_link:
+                      walrus/bsa_link:
+                        {}
+                    walrus/inertial_collision_link:
+                      {}
+                    walrus/left_spacer_link:
+                      {}
+                    walrus/mcu_0_battery_link:
+                      {}
+                    walrus/mcu_1_battery_link:
+                      {}
+                    walrus/mcu_2_battery_link:
+                      {}
+                    walrus/mcu_3_battery_link:
+                      {}
+                    walrus/rear_chassis_link:
+                      {}
+                    walrus/right_spacer_link:
+                      {}
+                    walrus/ui_box_link:
+                      {}
+                    walrus/ui_box_mount_link:
+                      {}
+                  walrus/cage_bottom:
+                    walrus/cage_bottom_aft:
+                      {}
+                    walrus/cage_bottom_left:
+                      {}
+                    walrus/cage_bottom_right:
+                      {}
+                    walrus/cage_wall_aft:
+                      walrus/estop_box:
+                        walrus/estop_button:
+                          {}
+                    walrus/cage_wall_fore:
+                      {}
+                    walrus/cage_wall_left:
+                      {}
+                    walrus/cage_wall_left_front:
+                      walrus/uwb_left_front:
+                        {}
+                    walrus/cage_wall_left_rear:
+                      walrus/uwb_left_rear:
+                        {}
+                    walrus/cage_wall_right:
+                      {}
+                    walrus/cage_wall_right_front:
+                      walrus/uwb_right_front:
+                        {}
+                    walrus/cage_wall_right_rear:
+                      walrus/uwb_right_rear:
+                        {}
+                  walrus/duro_aft_antenna_link:
+                    {}
+                  walrus/duro_front_antenna_link:
+                    {}
+                  walrus/realsense_front_link:
+                    {}
+                  walrus/sensor_plate_link:
+                    walrus/hokuyo_left_link:
+                      {}
+                    walrus/hokuyo_right_link:
+                      {}
+                    walrus/ouster_link:
+                      walrus/os_imu:
+                        {}
+                      walrus/os_lidar:
+                        {}
+                  walrus/tracking_camera_link:
+                    {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -400,16 +714,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 42.20931625366211
+      Distance: 39.25651550292969
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 5.83798360824585
+        Y: -0.303130567073822
+        Z: -0.0003393035149201751
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
