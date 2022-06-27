@@ -14,7 +14,7 @@ def mains():
     client.wait_for_server()
     goal = search_service.msg.MultiSearchGoal()
     goal.replan=False
-    goal.num_agent=2
+    goal.num_agent=1
     goal.fail_idx=-1
     print("call search action client")
 

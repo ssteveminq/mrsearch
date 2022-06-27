@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="use_sim_time" default="true" />
+  <arg name="gui" default="true" />
+  <arg name="headless" default="false" />
+  <arg name="world_name" default="$(find tmp)/worlds/ut_campus.world" />
+  <arg name="use_map_topic" default="true"/>
+
+  <!-- Short-term hack to support the original front_laser:=true argument for spawning
+       the simulator. This will be removed in favour of using the config:=x arg instead. -->
+  <arg name="front_laser" default="true" />
+  <arg name="default_config" value="front_laser" if="$(arg front_laser)" />
+  <arg name="default_config" value="base" unless="$(arg front_laser)" />
+  <!-- end of hack -->
+
+  <!-- Configuration of Jackal which you would like to simulate.
+       See jackal_description for details. -->
+  <arg name="config" default="$(arg default_config)" />
+
+  <!-- Optionally enable teleop for the simulation -->
+  <arg name="joystick" default="false" />
+
+  <!-- Launch Gazebo with the specified world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="debug" value="0" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="use_sim_time" value="$(arg use_sim_time)" />
+    <arg name="headless" value="$(arg headless)" />
+    <arg name="world_name" value="$(arg world_name)" />
+  </include>
+
+  <!-- Spawn Jackal -->
+  <include file="$(find jackal_gazebo)/launch/spawn_jackal.launch">
+    <arg name="x" value="0" />
+    <arg name="y" value="0" />
+    <arg name="z" value="0.5" />
+    <arg name="yaw" value="0" />
+    <arg name="config" value="$(arg config)" />
+    <arg name="joystick" value="$(arg joystick)" />
+  </include>
+
+
+ <arg name="map_file" default="$(find tmp)/maps/campus3.yaml"/>
+ <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+  <arg name="scan_topic" default="$(eval optenv('JACKAL_LASER_TOPIC', 'front/scan'))" />
+  <!--- Run AMCL -->
+  <include file="$(find jackal_navigation)/launch/include/amcl.launch">
+    <arg name="use_map_topic" value="$(arg use_map_topic)" />
+    <arg name="scan_topic"    value="$(arg scan_topic)" />
+  </include>
+
+  <!--- Run Move Base -->
+ <include file="$(find jackal_navigation)/launch/include/move_base.launch" />
+
+
+  <arg name="agent_pose" default="amcl_pose"/>
+  <arg name="camera_frame" default="front_camera"/>
+  <node pkg="visual_perception" type="visible_manager" name="jackal_camera_region" output="screen" args="$(arg agent_pose) $(arg camera_frame)">
+      <remap from="/camera_region_map" to="jackal/fov_map"/>
+  </node>
+
+
+ <!--<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">-->
+
+  <!--<rosparam file="$(find jackal_navigation)/params/costmap_common_params.yaml" command="load" ns="global_costmap" />-->
+  <!--<rosparam file="$(find jackal_navigation)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />-->
+
+  <!--<rosparam file="$(find jackal_navigation)/params/odom_nav_params/global_costmap_params.yaml" command="load" />-->
+  <!--<rosparam file="$(find jackal_navigation)/params/odom_nav_params/local_costmap_params.yaml" command="load" />-->
+
+  <!--<rosparam file="$(find jackal_navigation)/params/base_local_planner_params.yaml" command="load" />-->
+  <!--<rosparam file="$(find jackal_navigation)/params/move_base_params.yaml" command="load" />-->
+
+  <!--<param name="base_global_planner" type="string" value="navfn/NavfnROS" />-->
+  <!--<param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>-->
+
+  <!--<remap from="odom" to="odometry/filtered" />-->
+ <!--</node>-->
+
+ <!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find jackal_viz)/rviz/robot.rviz"/>-->
+
+
+</launch>

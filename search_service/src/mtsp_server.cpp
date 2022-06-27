@@ -36,7 +36,7 @@
 #include <search_service/SetSearchRegionResult.h>
 #include <search_service/MultiSearchResult.h>
 #include <search_service/SearchAction.h>
-#include <visual_perception/UnknownSearchAction.h>
+#include <visual_perception/VisualUnknownSearchAction.h>
 #include <search_service/TSPSolveAction.h>
 #include <search_service/TSPSolveResult.h>
 #include <search_service/SingleTSPSolveAction.h>
@@ -418,7 +418,7 @@ public:
      ROS_INFO("current_entropy: %.2lf", search_entropy);
 
      //Call Waypoint Generateion (UnknwonSearch action)
-     visual_perception::UnknownSearchGoal unknwongoal;
+     visual_perception::VisualUnknownSearchGoal unknwongoal;
      ac_.sendGoal(unknwongoal);
      bool finished_before_timeout = ac_.waitForResult(ros::Duration(30.0)); //Wait for 20s
      bool finished_before_timeout_stsp;
@@ -1189,7 +1189,7 @@ protected:
   ros::NodeHandle nh_;
   actionlib::SimpleActionServer<search_service::MultiSearchAction> as_;
   actionlib::SimpleActionServer<search_service::SetSearchRegionAction> as_region;
-  actionlib::SimpleActionClient<visual_perception::UnknownSearchAction> ac_;
+  actionlib::SimpleActionClient<visual_perception::VisualUnknownSearchAction> ac_;
   std::vector<al_stsp*> stsp_vec;
   std::vector<al_gsp*> gsp_vec;
   //actionlib::SimpleActionClient<search_service::SingleTSPSolveAction> ac_stsp;
