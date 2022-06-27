@@ -28,6 +28,7 @@ class single_tspmanager(object):
     #Output: array of paths for each agent
 
     def execute_cb(self, goal):
+        rospy.loginfo("---")
         rospy.loginfo("single_tsp_solve execute_cb")
         #Save clustered pose array to cluster_goals
         self.waypoints=[]

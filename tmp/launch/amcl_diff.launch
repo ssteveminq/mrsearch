@@ -4,8 +4,8 @@
 
 <node pkg="amcl" type="amcl" name="amcl" output="screen">
   <!-- Publish scans from best pose at a max of 10 Hz -->
-  <param name="initial_pose_x" value="0.0"/>
-  <param name="initial_pose_y" value="-2.0"/>
+  <param name="initial_pose_x" value="-7.5"/>
+  <param name="initial_pose_y" value="-1.5"/>
   <param name="initial_pose_a" value="-0.0"/>
   <param name="base_frame_id" value="spot/base_footprint"/>
   <param name="odom_model_type" value="diff"/>

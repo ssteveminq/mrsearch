@@ -9,7 +9,9 @@
 #include "std_msgs/Float32.h"
 #include "geometry_msgs/Pose2D.h"
 #include "geometry_msgs/PointStamped.h"
+#include "geometry_msgs/PolygonStamped.h"
 #include "geometry_msgs/PoseArray.h"
+#include "geometry_tools.h"
 #include "geometry_msgs/Twist.h"
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -22,11 +24,22 @@
 #include <boost/thread/thread.hpp>
 #include <std_msgs/Bool.h>
 #include <nav_msgs/GetPlan.h>
-//#include <nav_msgs/GetMultiMultiPlan.h>
-//#include <nav_msgs/GetMultiPlan.h>
+#include <search_service/GetForwardPathAction.h>
+#include <search_service/GetForwardPathResult.h>
 #include <search_service/MultiSearchAction.h>
+#include <search_service/MultiSearchResult.h>
+#include <search_service/SetSearchRegionAction.h>
+#include <search_service/SetSearchRegionGoal.h>
+#include <search_service/SetSearchRegionResult.h>
+#include <search_service/MultiSearchResult.h>
 #include <search_service/SearchAction.h>
+#include <visual_perception/UnknownSearchAction.h>
+#include <search_service/TSPSolveAction.h>
+#include <search_service/TSPSolveResult.h>
+#include <search_service/SingleTSPSolveAction.h>
+#include <search_service/SingleTSPSolveResult.h>
 #include <actionlib/server/simple_action_server.h>
+#include <actionlib/client/simple_action_client.h>
 #include <actionlib_msgs/GoalID.h>
 #include <XmlRpcValue.h>
 #include <yaml-cpp/yaml.h>
@@ -50,6 +63,13 @@
 #define CELL_MAX_ENTROPY 0.693147
 #define GOAL_THRESHOLD 2.0
 
+
+typedef actionlib::SimpleActionClient<search_service::SingleTSPSolveAction>  al_stsp;
+typedef actionlib::SimpleActionClient<search_service::GetForwardPathAction>  al_gsp;
+
+
+
+
 using namespace std;
 
 double atan_zero_to_twopi(double y, double x){
@@ -60,6 +80,20 @@ double atan_zero_to_twopi(double y, double x){
 
     return angle;
 }
+
+
+double calc_dist(geometry_msgs::Pose pos1, geometry_msgs::Pose pos2)
+{
+
+    double dist_=pow(pos1.position.x-pos2.position.x, 2);
+    dist_+=pow(pos1.position.y-pos2.position.y, 2);
+
+    return dist_;
+
+}
+
+
+
 
 class precastDB
 {
@@ -153,107 +187,121 @@ public:
     
   MultiSearchManager(std::string name): 
   as_(nh_, name, boost::bind(&MultiSearchManager::executeCB, this,_1), false),
+  as_region(nh_, "set_search_region", boost::bind(&MultiSearchManager::executeCB_SR, this,_1), false),
+  ac_("getunknowns", true),
   action_name_(name),
-  IsGoal(false),
   IsActive(false),
+  IsCalled(false),
   srv_time(0.0),
   tolerance(0.5),
   search_entropy(1.0),
-  neargoal_agent1(false),
-  neargoal_agent2(false),
   clustered(false),
-  no_count(0),
-  horizon(15),
+  pathUpdated(false),
   called_once(false),
   weight_entropy(0.25),
   weight_travel(1.5),
   m_params(NULL)
   {
-    nh_.param("MAX_X", MAX_X, {15.5});
-    nh_.param("MIN_X", MIN_X, {-4.0});
+    nh_.param("MAX_X", MAX_X, {16.5});
+    nh_.param("MIN_X", MIN_X, {-15.0});
     nh_.param("MAX_Y", MAX_Y, {20.0});
-    nh_.param("MIN_Y", MIN_Y, {-25.0});
+    nh_.param("MIN_Y", MIN_Y, {-35.0});
     nh_.param("AGENT1_POSE_TOPIC", agent1_pose_topic, {"global_pose_a1_121"});
-    nh_.param("AGENT2_POSE_TOPIC", agent1_pose_topic, {"hsr/global_pose"});
-    //nh_.param("AGENT1_POSE_TOPIC", agent1_pose_topic, {"global_pose_a1_121"});
-    //nh_.param("AGENT2_POSE_TOPIC", agent1_pose_topic, {"global_pose_a1_950"});
     nh_.param("AGENT1_MAP_TOPIC", agent1_map_topic, {"costmap_node/costmap/costmap"});
-    nh_.param("AGENT2_MAP_TOPIC", agent2_map_topic, {"hsr/costmap"});
-    //nh_.param("N_P", N_P, {16});
+    nh_.param("PLANNER_TOPIC", planner_topic,{"/tb1/move_base/make_plan"});
+    nh_.param("NUM_AGENT", NUMAGENTS, {1});
+    nh_.param("BOOL_INITPOSES", BOOL_INITPOSES, {1});
+
+
+    nh_.getParam("AGENT1_POSE_TOPIC", agent1_pose_topic);
+    nh_.getParam("NUM_AGENT", NUMAGENTS);
+    nh_.getParam("BOOL_INITPOSES", BOOL_INITPOSES);
+    nh_.getParam("AGENT1_MAP_TOPIC", agent1_map_topic);
+    nh_.getParam("PLANNER_TOPIC", planner_topic);
+    nh_.getParam("MAX_X", MAX_X);
+    nh_.getParam("MIN_X", MIN_X);
+    nh_.getParam("MAX_Y", MAX_Y);
+    nh_.getParam("MIN_Y", MIN_Y);
+
+     ROS_INFO("agent1_pose_topic: %s",agent1_pose_topic.c_str());
+     ROS_INFO("agent1_map_topic: %s",agent1_map_topic.c_str());
+     ROS_INFO("planner_topic: %s",  planner_topic.c_str());
+     ROS_INFO("num_agent: %d",NUMAGENTS);
+     ROS_INFO("init_pose: %d",BOOL_INITPOSES);
+     ROS_INFO("max_x: %.2lf",MAX_X);
+     ROS_INFO("max_y: %.2lf",MAX_Y);
+     ROS_INFO("min_x: %.2lf",MIN_X);
+     ROS_INFO("min_y: %.2lf",MIN_Y);
+
 
 
     m_params= new Map_params(MAX_X, MAX_Y, MIN_X, MIN_Y);
-    parseparameters(nh_);
     search_map.info.resolution = m_params->xyreso;
     search_map.info.width= m_params->xw;
     search_map.info.height= m_params->yw;
     search_map.info.origin.position.x= m_params->xmin;
     search_map.info.origin.position.y= m_params->ymin;
     search_map.data.resize((search_map.info.width * search_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
-    //
-    //initially the entropy can be computed as #of cells in serchmap * uncertainty
-    total_entropy=search_map.data.size()*CELL_MAX_ENTROPY;
-    //self.srv_client=rospy.ServiceProxy('planner/planner/make_multimultiplan', GetMultiMultiPlan)
-    //publishers
-    //search_map_pub=nh_.advertise<nav_msgs::OccupancyGrid>("/search_map",50,true);
-    //search_goal_pub=nh_.advertise<geometry_msgs::PoseStamped>("/search_goal",50,true);
-    //agent1_move_cancel_pub=nh_.advertise<actionlib_msgs::GoalID>("/localnavi_server/cancel",50,true);
-    //search_entropy_pub=nh_.advertise<std_msgs::Float32>("/search_entropy",50,true);
-    //nh_.param("N_P", N_P, {16});
 
-    //m_params= new Map_params();
-    //parseparameters(nh_);
-    //search_map.info.resolution = m_params->xyreso;
-    //search_map.info.width= m_params->xw;
-    //search_map.info.height= m_params->yw;
-    //search_map.info.origin.position.x= m_params->xmin;
-    //search_map.info.origin.position.y= m_params->ymin;
-    //search_map.data.resize((search_map.info.width * search_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
-    
-    //initially the entropy can be computed as #of cells in serchmap * uncertainty
-    //total_entropy=search_map.data.size()*CELL_MAX_ENTROPY;
-    //publishers
-    search_map_pub=nh_.advertise<nav_msgs::OccupancyGrid>("/search_map",50,true);
-    search_goal_pub=nh_.advertise<geometry_msgs::PoseStamped>("/search_goal",50,true);
-    agent1_move_cancel_pub=nh_.advertise<actionlib_msgs::GoalID>("/localnavi_server/cancel",50,true);
-    search_entropy_pub=nh_.advertise<std_msgs::Float32>("/search_entropy",50,true);
-    //search_goal2_pub=nh_.advertise<geometry_msgs::PoseStamped>("/search_goal2",50,true);
+     agent_poses.poses.resize(NUMAGENTS);
+     Issmoothpath.resize(NUMAGENTS);
+     smooth_paths.resize(NUMAGENTS);
+     tsp_paths.resize(NUMAGENTS);
+     path_pubs.resize(NUMAGENTS);
 
-    visual_marker_pub= nh_.advertise<visualization_msgs::MarkerArray>("clusters", 5);
-    //planner_srv_client= nh_.serviceClient<nav_msgs::GetMultiMultiPlan>("/planner/planner/make_multimultiplan");
-    //planner_srv_client_single= nh_.serviceClient<nav_msgs::GetMultiPlan>("/planner/planner/make_multiplan");
-    //
-    
-    //subscribers
-    global_map_sub = nh_.subscribe<nav_msgs::OccupancyGrid>("/scaled_static_map", 1, &MultiSearchManager::global_map_callback, this);
-    frontiers_poses_sub=nh_.subscribe<geometry_msgs::PoseArray>("/frontier_poses",10,&MultiSearchManager::frontiers_callback,this);
-    unknown_poses_sub=nh_.subscribe<geometry_msgs::PoseArray>("/waypoint_poses",10,&MultiSearchManager::unknown_poses_callback,this);
-    agent1_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent1_map_topic,10,&MultiSearchManager::agent1_localmap_callback,this);
-    //agent2_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>("/spot2/move_base/local_costmap/costmap", 10,&MultiSearchManager::agent2_localmap_callback,this);
-    //agent3_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>("/spot3/move_base/local_costmap/costmap", 10,&MultiSearchManager::agent3_localmap_callback,this);
+     for(size_t i(0);i<NUMAGENTS;i++)
+         Issmoothpath[i]=false;
 
-    agent1_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent1_pose_topic,10,&MultiSearchManager::agent1_pose_callback,this);
-    //agent2_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>("spot2/amcl_pose",10,&MultiSearchManager::agent2_pose_callback,this);
-    //agent3_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>("spot3/amcl_pose",10,&MultiSearchManager::agent3_pose_callback,this);
+     search_map_pub=nh_.advertise<nav_msgs::OccupancyGrid>("/search_map",50,true);
+     agent1_move_cancel_pub=nh_.advertise<actionlib_msgs::GoalID>("/localnavi_server/cancel",50,true);
+     search_entropy_pub=nh_.advertise<std_msgs::Float32>("/search_entropy",50,true);
+     visual_marker_pub= nh_.advertise<visualization_msgs::MarkerArray>("clusters", 5);
+     polygon_pub = nh_.advertise<geometry_msgs::PolygonStamped>("current_polygon", 10, true);
 
-    //receive scaled_global_map
-    nav_msgs::OccupancyGrid::ConstPtr shared_map;
-    shared_map= ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("/scaled_static_map",nh_);
-    if(shared_map!= NULL){
-     scaled_global_map= *shared_map;
-     crop_globalmap(*shared_map);
-    }
-    total_entropy-=occ_entropy;
-    ROS_INFO("total_initial_entropy: %.2f",  total_entropy);
 
-    agent1_pose.resize(3,0.0);
-    agent2_pose.resize(3,0.0);
-    agent3_pose.resize(3,0.0);
-    as_.registerPreemptCallback(boost::bind(&MultiSearchManager::preemptCB, this));
-    as_.start();
-    ROS_INFO("multi-search action_started");
+ //publishers for agents
+     for(size_t i(0);i<NUMAGENTS;i++)
+     {
+         std::string topic_name_ = "agent_"+std::to_string(i)+"_path";
+         path_pubs[i]=nh_.advertise<nav_msgs::Path>(topic_name_, 50, true);
+
+     }
+
+     //tsp_solver(single agent)
+     stsp_vec.resize(NUMAGENTS);
+     gsp_vec.resize(NUMAGENTS);
+     for(size_t i(0); i<NUMAGENTS;i++)
+     {
+         stsp_vec[i]= new al_stsp("agent_"+std::to_string(i)+"_tspsolve", true);
+         gsp_vec[i]= new al_gsp("agent_"+std::to_string(i)+"_getpath", true);
+     }
+
+     //subscribers
+     global_map_sub = nh_.subscribe<nav_msgs::OccupancyGrid>("/scaled_static_map", 1, &MultiSearchManager::global_map_callback, this);
+     agent1_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent1_map_topic,10,&MultiSearchManager::agent1_localmap_callback,this);
+     //agent1_pose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent1_pose_topic,10,&MultiSearchManager::agent1_pose_callback,this);
+     agent1_pose_sub=nh_.subscribe<geometry_msgs::PoseStamped>(agent1_pose_topic,10,&MultiSearchManager::agent1_pose_callback,this);
+
+     //service client for glboal path planner (A*)
+     planner_srv_client= nh_.serviceClient<nav_msgs::GetPlan>(planner_topic);
+
+     //receive scaled_global_map (default map)
+     nav_msgs::OccupancyGrid::ConstPtr shared_map;
+     shared_map= ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("/scaled_static_map",nh_);
+     if(shared_map!= NULL){
+         scaled_global_map= *shared_map;
+         crop_globalmap(*shared_map, geometry_msgs::Polygon());
+     }
+
+
+     as_region.start();
+     ROS_INFO("Set-search region_started");
+     as_.registerPreemptCallback(boost::bind(&MultiSearchManager::preemptCB, this));
+     as_.start();
+     ROS_INFO("Single-search action_started");
   }
 
+  
   ~MultiSearchManager(void)
   {
   }
@@ -304,11 +352,104 @@ public:
 
   }
 
-  void executeCB(const search_service::MultiSearchGoalConstPtr &goal)
+ /* Set_Search_region action callback function */
+  void executeCB_SR(const search_service::SetSearchRegionGoalConstPtr &goal)
   {
-     int num_points=2;
+
+     updateBoundsFromPolygon(goal->boundary.polygon,MIN_X,MIN_Y,MAX_X, MAX_Y);
+     //calculate_ max,max_y, min_x, min_y
+     m_params= new Map_params(MAX_X, MAX_Y, MIN_X, MIN_Y);
+     search_map.info.resolution = m_params->xyreso;
+     search_map.info.width= m_params->xw;
+     search_map.info.height= m_params->yw;
+     search_map.info.origin.position.x= m_params->xmin;
+     search_map.info.origin.position.y= m_params->ymin;
+     search_map.data.resize((search_map.info.width * search_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
+     ROS_INFO("width: %.2lf, height: %.2lf ", m_params->xw, m_params->yw);
+
+     nav_msgs::OccupancyGrid::ConstPtr shared_map;
+     shared_map= ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("/scaled_static_map",nh_);
+     if(shared_map!= NULL){
+         scaled_global_map= *shared_map;
+         crop_globalmap(*shared_map, goal->boundary.polygon);
+     }
+     //total_entropy-=occ_entropy;
+     //ROS_INFO("total_initial_entropy: %.2f",  total_entropy);
+     
+    polygon_.polygon.points.clear();
+    polygon_.header.frame_id="map";
+    geometry_msgs::Point32 tmp_pnt;
+    for (const auto & point : goal->boundary.polygon.points)
+      {
+         tmp_pnt.x = point.x;
+         tmp_pnt.y = point.y;
+         tmp_pnt.z = point.z;
+         polygon_.polygon.points.push_back(tmp_pnt);
+      }
+      
+     polygon_pub.publish(polygon_);
+     total_entropy=get_searchmap_entropy();
+     search_map_pub.publish(search_map);
+     result_region.success=true;
+     as_region.setSucceeded(result_region);
+
+  }
+
+
+void executeCB(const search_service::MultiSearchGoalConstPtr &goal)
+  {
+     std::vector<int> agentvec;
+     ROS_INFO("replan %d", goal->replan);
+     ROS_INFO("fail_idx%d", goal->fail_idx);
+     if((goal->replan) && (int(goal->fail_idx)>0))
+     {
+         NUMAGENTS=goal->num_agent;
+         agentvec.clear();
+         for(int k(0);k<(NUMAGENTS+1);k++)
+         {
+             if(k!=int(goal->fail_idx))
+             {
+                 agentvec.push_back(k);
+                 ROS_INFO("push_back!! %d", k);
+             }
+         }
+     }
+    else{
+
+        for(int k(0);k<NUMAGENTS;k++)
+         {
+             agentvec.push_back(k);
+         }
+    }
+
+    for(int k(0);k<NUMAGENTS;k++)
+    {
+        ROS_INFO("agent vec i: %d", agentvec[k]);
+    }
+
+    //reset values
+
+    tsp_paths.clear();
+    tsp_paths.resize(NUMAGENTS);
+    smooth_paths.clear();
+    smooth_paths.resize(NUMAGENTS);
+    for(int j(0);j<NUMAGENTS;j++)
+        Issmoothpath[j]=false;
+     pathUpdated=false;
+     clustered=false;
      bool success = true;
-     bool lead_trj=false;
+
+     //check servers are running 
+     ROS_INFO("Resizing Map with Search_Polygon");
+     ROS_INFO("MultiSearchManager action is called!!");
+     ac_.waitForServer(ros::Duration(5.0));
+     ROS_INFO("WaypointGeneration Server is running....!!");
+     //ac_stsp.waitForServer(ros::Duration(5.0));
+     ROS_INFO("TSP_solve Server is running....!!");
+
+     double sleep_rate= 2.0;
+     ros::Rate r(sleep_rate);
+     //search_entropy = get_searchmap_entropy()/ total_entropy;
      if (as_.isPreemptRequested() || !ros::ok())
       {
         ROS_INFO("%s: Preempted", action_name_.c_str());
@@ -319,278 +460,177 @@ public:
         // break;
       }
 
-     if(search_entropy<0.05)
+    //Call Search Service
+    while(ros::ok() && !as_.isPreemptRequested())
+    {
+     search_entropy = get_searchmap_entropy();
+     ROS_INFO("current_entropy: %.2lf", search_entropy);
+
+     //Call Waypoint Generateion (UnknwonSearch action)
+     visual_perception::UnknownSearchGoal unknwongoal;
+     ac_.sendGoal(unknwongoal);
+     bool finished_before_timeout = ac_.waitForResult(ros::Duration(30.0)); //Wait for 20s
+     bool finished_before_timeout_stsp;
+     bool finished_before_timeout_gsp;
+     if(finished_before_timeout)
      {
-        ROS_INFO("search is finished!!!");
-        as_.setSucceeded(result_);
-        return;
+         ROS_INFO("waypoints are generated");
+         auto res_ = ac_.getResult();
+         waypoints= res_->waypoints;
+         ROS_INFO("clustering started");
+         //Waypoints = > clustering 
+         if(clustering(NUMAGENTS, agentvec, BOOL_INITPOSES)){
+             //Call TSP Solver
+             agent_paths.resize(NUMAGENTS);
+             for(size_t j(0);j<NUMAGENTS;j++)
+             {
+                 search_service::SingleTSPSolveGoal tspgoal;
+                 tspgoal.waypoints= clustered_poses[j];
+                 tspgoal.pose = agent_poses.poses[agentvec[j]];
+                 //call TSP Solve Action
+                 stsp_vec[j]->sendGoal(tspgoal);
+                 ROS_INFO("Single TSP Solve for agent %d started", j);
+             }
+
+             //call single_tsp_solve_action_server (parallel)
+             for(size_t j(0);j<NUMAGENTS;j++)
+             {
+                 finished_before_timeout_stsp= stsp_vec[j]->waitForResult(ros::Duration(30.0));
+                 if(finished_before_timeout_stsp )
+                 {
+                      ROS_INFO("STSP solution obtained for agent %d",j);
+                      auto stsp_res=stsp_vec[j]->getResult();
+                      //save_paths for each agents
+                      agent_paths[j] = stsp_res->path;
+                      tsp_paths[j] = stsp_res->path;
+                      //Issmoothpath[j]=true;
+                 }
+                 else{
+                    ROS_WARN("can't obtain tsp path for agent %d",j);
+                    as_.setAborted(result_);
+                    return;
+                 }
+             }
+             //find the shortest path with connecting the waypoint which is nearest from the previous one
+             for(size_t j(0);j<NUMAGENTS;j++)
+             {
+                 search_service::GetForwardPathGoal pathgoal;
+                 pathgoal.agent_idx=j;
+                 pathgoal.start_pos= agent_poses.poses[agentvec[j]];
+                 pathgoal.input_path=agent_paths[j];
+                 pathgoal.search_map=search_map;
+                 //check IG for path
+                 gsp_vec[j]->sendGoal(pathgoal);
+                 ROS_INFO("Get Forward Path for agent %d started", j);
+             }
+
+             for(size_t j(0);j<NUMAGENTS;j++)
+             {
+                finished_before_timeout_gsp= gsp_vec[j]->waitForResult(ros::Duration(30.0));
+                 if(finished_before_timeout_gsp)
+                 {
+                      ROS_INFO("GSP solution obtained for agent %d",j);
+                      auto gsp_res=gsp_vec[j]->getResult();
+                      //agent_paths[j] = gsp_res->output_path;
+                      smooth_paths[j]=gsp_res->output_path;
+                      Issmoothpath[j]=true;
+                 }
+                 else{
+                    ROS_WARN("can't obtain smooth path for agent %d",j);
+                    //as_.setAborted(result_);
+                    //return;
+                    //
+                    smooth_paths[j]=agent_paths[j];
+                    Issmoothpath[j]=true;
+                 }
+             }
+
+             result_.cur_entropy = search_entropy;
+             result_.paths=smooth_paths;
+             as_.setSucceeded(result_);
+
+             //call get_smooth_action_server (parallel)
+             //as_.setSucceeded(result_);
+             ROS_INFO("succedded");
+             pathUpdated=true;
+             publish_paths();
+             return;
+         }
+         else{
+             ROS_WARN("At least one agent doesn't have assigned waypoints");
+             ROS_WARN("Search Action will be aborted");
+             as_.setAborted(result_);
+             return;
+         
+         }
      }
-
-    //Setting 
-    ROS_INFO("MultiSearchManager action is called!!");
-
-    if(called_once)
-    {
-        agent1_history.poses.push_back(agent1_gpose.pose);
-        agent2_history.poses.push_back(agent2_gpose.pose);
-        //agents_history.poses.push_back(agent1_gpose.pose);
-        //agents_history.poses.push_back(agent2_gpose.pose);
+     else{
+             ROS_INFO("Waypoint Generateion is not completed");
+         }
+     ros::spinOnce();
+     r.sleep();
     }
-
-    double sleep_rate= 2.0;
-    //if(!neargoal_agent1 and !neargoal_agent2)
-    if(!neargoal_agent1 && !neargoal_agent2 && called_once)
-    {
-      ROS_INFO("Robot is not close to the previous goal. wait until it's near to that goal");
-      result_.goal.pose.orientation=agent1_gpose.pose.orientation;
-      as_.setSucceeded(result_);
-      sleep(2.0);
-      no_count++;
-      return;
-    }
-    if(no_count>100)
-        no_count=0;
-    //search_entropy
-    if(search_entropy<0.5)
-    {
-        horizon=25;
-        num_points=3;
-    }
-    if(search_entropy<0.25)
-    {
-        horizon=-1;
-        num_points=4;
-    }
-
-    std::vector<geometry_msgs::PoseArray> agent1_path;
-    std::vector<geometry_msgs::PoseArray> agent2_path;
-    std::vector<geometry_msgs::PoseArray> agent3_path;
-    std::vector<geometry_msgs::PoseStamped> goals_agent1;
-    std::vector<geometry_msgs::PoseStamped> goals_agent2;
-    std::vector<geometry_msgs::PoseStamped> goals_agent3;
-
-    /*
-    if(search_entropy<-0.4)
-    {
-
-        if(call_multiplan_service(agent1_path, agent2_path))
-        {
-            //agent1-path
-            std::vector<tk::spline2D> agent1_splines;
-            Convert_Poses2trjs(agent1_path, agent1_splines);
-            //trjs_to_sample(agent1_splines, agent1_path, agent1_history, horizon);
-            trjs_to_sample(agent1_splines, agent1_path, agents_history, horizon);
-            int maxidx = calc_IG_trjs(agent1_path, num_points);
-
-            if(maxidx>=0)
-            {
-                set_goal_from_path(agent1_path[maxidx].poses.back(), result_.goal);
-                lead_trj=true;
-            }
-            else{
-                int minidx=0;
-                goal_sampling_frontiers(agent1_gpose, goals_agent1, minidx);
-                result_.goal=goals_agent1[minidx];
-            }
-
-            //agent2-path
-            std::vector<tk::spline2D> agent2_splines;
-            Convert_Poses2trjs(agent2_path, agent2_splines);
-            trjs_to_sample(agent2_splines, agent2_path, agents_history, horizon);
-            int maxidx2=0;
-            if(lead_trj)
-                maxidx2 = calc_IG_trjs_with_leadtrj(agent2_path, agent1_path[maxidx], num_points);
-            else
-                maxidx2 = calc_IG_trjs_with_leadgoal(agent2_path, result_.goal.pose, num_points);
-
-            if(maxidx2>=0)
-                set_goal_from_path(agent2_path[maxidx2].poses.back(), result_.goal2);
-            else{
-
-                int minidx=0;
-                goal_sampling_frontiers(agent2_gpose, goals_agent2, minidx);
-                result_.goal2=goals_agent2[minidx];
-                int pcount=0;
-                while(near_eachother(result_.goal.pose, result_.goal2.pose) && (pcount< unknown_poses.poses.size()))
-                {
-                    result_.goal2.pose=unknown_poses.poses[pcount];
-                    pcount++;
-                }
-            }
-
-            called_once=true;
-        }
-        else{
-
-            ROS_WARN("MultiPlan service failed");
-
-            int minidx=0;
-            goal_sampling_frontiers(agent1_gpose, goals_agent1, minidx);
-            result_.goal=goals_agent1[minidx];
-            goal_sampling_frontiers(agent2_gpose, goals_agent2, minidx);
-            result_.goal2=goals_agent2[minidx];
-
-        }
-    }
-    else{
-        int minidx=0;
-            goal_sampling_frontiers(agent1_gpose, goals_agent1,minidx);
-            result_.goal=goals_agent1[minidx];
-            goal_sampling_frontiers(agent2_gpose, goals_agent2,minidx);
-            result_.goal2=goals_agent2[minidx];
-       
-    
-    
-    }
-  */
-
-    //agent1_history.poses.push_back(result_.goal.pose);
-    //agent2_history.poses.push_back(result_.goal2.pose);
-    //agents_history.poses.push_back(result_.goal.pose);
-    //agents_history.poses.push_back(result_.goal2.pose);
-    //last_goal_agent1=result_.goal;
-    //last_goal_agent2=result_.goal2;
-    search_entropy = get_searchmap_entropy()/ total_entropy;
-    //cancel previous search action
-    //actionlib_msgs::GoalID cancel_msg;
-    ROS_INFO("current entropy: %.2lf", search_entropy);
-    //search_goal_pub.publish(result_.goal);
-    //search_goal2_pub.publish(result_.goal2);
-    //std_msgs::Float32 entropy_msg;
-    //entropy_msg.data=search_entropy;
-    //search_entropy_pub.publish(entropy_msg);
-    //as_.setSucceeded(result_);
-    ROS_INFO("%s: succeeded", action_name_.c_str());
-    return;
-
-    //save the current global_pose w.r.t map
-    //double ros_rate = 2.0;
-    //while(ros::ok() && IsActive && !as_.isPreemptRequested())
-    //{
-        //as_.publishFeedback(feedback_);
-        //ros::spinOnce();
-        //r.sleep();
-    //}
 
   }
- 
 
-  void frontiers_callback(const geometry_msgs::PoseArray::ConstPtr& msg)
-  {
-  
-      ROS_INFO("frontier_callback");
-      frontier_poses=*msg;
-  
-  
-  }
+
+ void updateBoundsFromPolygon(const geometry_msgs::Polygon &polygon, double& min_x, double& min_y, 
+          double& max_x, double& max_y){
+
+      min_x = std::numeric_limits<double>::infinity();
+      min_y = std::numeric_limits<double>::infinity();
+      max_x = -std::numeric_limits<double>::infinity();
+      max_y = -std::numeric_limits<double>::infinity();
+
+      for (const auto & point : polygon.points)
+      {
+        min_x = std::min(min_x, static_cast<double>(point.x));
+        min_y = std::min(min_y, static_cast<double>(point.y));
+        max_x = std::max(max_x, static_cast<double>(point.x));
+        max_y = std::max(max_y, static_cast<double>(point.y));
+      }
+      min_x = floor(min_x);
+      min_y = floor(min_y);
+      max_x = floor(max_x);
+      max_y = floor(max_y);
+
+      ROS_INFO("min_x: %.2lf, max_x: %.2lf ,min_y: %.2lf, max_y: %.2lf", min_x, max_x, min_y,max_y);
+    }
 
   void unknown_poses_callback(const geometry_msgs::PoseArray::ConstPtr& msg)
   {
-  
-      ROS_INFO("unknown_pose_callback");
-      unknown_poses=*msg;
-      clustering();
-  
+      //ROS_INFO("waypoints_pose_callback");
+      waypoints=*msg;
+      //clustering(NUMAGENTS);
   }
 
+ 
 
-  void agent2_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
+  void agent1_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
   {
       //* global_pose w.r.t "map" frame
-      //agent2_gpose=*msg;
-      ROS_INFO("agent3_callback");
-      agent2_gpose.pose=msg->pose.pose;
-      agent2_pose[0]=msg->pose.pose.position.x;
-      agent2_pose[1]=msg->pose.pose.position.y;
-      agent2_pose[2]=tf2::getYaw(msg->pose.pose.orientation);
-      agent2_pose_updated=true;
-
-      if(called_once)
-        {
-            double temp_dist = sqrt(pow(last_goal_agent2.pose.position.x-agent2_pose[0],2)
-                                        +pow(last_goal_agent2.pose.position.y-agent2_pose[1],2));
-            if(temp_dist<GOAL_THRESHOLD)
-                neargoal_agent2=true;
-            else
-                neargoal_agent2=false;
-    }
-  }
-
-  void agent3_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
-  {
-      //* global_pose w.r.t "map" frame
-      //agent2_gpose=*msg;
-      ROS_INFO("agent3_callback");
-      agent3_gpose.pose=msg->pose.pose;
-      agent3_pose[0]=msg->pose.pose.position.x;
-      agent3_pose[1]=msg->pose.pose.position.y;
-      agent3_pose[2]=tf2::getYaw(msg->pose.pose.orientation);
-      agent3_pose_updated=true;
-
-      if(called_once)
-        {
-            double temp_dist = sqrt(pow(last_goal_agent3.pose.position.x-agent3_pose[0],2)
-                                        +pow(last_goal_agent3.pose.position.y-agent3_pose[1],2));
-            if(temp_dist<GOAL_THRESHOLD)
-                neargoal_agent3=true;
-            else
-                neargoal_agent3=false;
-    }
-  }
-
-
-  void agent1_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
-  {
-      //* global_pose w.r.t "map" frame
-      agent1_gpose.pose=msg->pose.pose;
-      agent1_pose[0]=msg->pose.pose.position.x;
-      agent1_pose[1]=msg->pose.pose.position.y;
-      agent1_pose[2]=tf2::getYaw(msg->pose.pose.orientation);
+      agent1_gpose.pose=msg->pose;
       global_pose_a1_updated=true;
 
-      if(called_once)
-      {
-          double temp_dist = sqrt(pow(last_goal_agent1.pose.position.x-agent1_pose[0],2)
-                                        +pow(last_goal_agent1.pose.position.y-agent1_pose[1],2));
-            if(temp_dist<GOAL_THRESHOLD)
-                neargoal_agent1=true;
-            else
-                neargoal_agent1=false;
-      }
-
+      agent_poses.poses[0]=msg->pose;
       search_map_pub.publish(search_map);
+
+     //if(pathUpdated)
+         //publish_paths();
   }
   
-
   void agent1_localmap_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 {
     agent1_local_map=*msg;
     agent1_local_map_updated = true;
     update_occ_grid_map(msg);
-
+    //publish search map
     std_msgs::Float32 entropy_msg;
     entropy_msg.data=search_entropy;
     search_entropy_pub.publish(entropy_msg);
-    //check_obstacle
 }
 
-  void agent2_localmap_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
-{
-    agent2_local_map=*msg;
-    agent2_local_map_updated = true;
 
-    update_occ_grid_map(msg);
-    //check_obstacle
-}
-
-  void agent3_localmap_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
-{
-    agent3_local_map=*msg;
-    agent3_local_map_updated = true;
-
-    update_occ_grid_map(msg);
-    //check_obstacle
-}
 
 
 
@@ -600,7 +640,6 @@ void global_map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
     global_map = *msg;
     global_map_updated = true;
 }
-
 
 //search mapupdate function
 void update_occ_grid_map(const nav_msgs::OccupancyGridConstPtr& msg)
@@ -621,23 +660,20 @@ void update_occ_grid_map(const nav_msgs::OccupancyGridConstPtr& msg)
             if(search_idx<search_map.data.size())
             {
                 if(msg->data[map_idx]!=-1 and search_map.data[search_idx]!=int(L_SOCC)) 
-                {
                     //if local measurment is not unknown and not filled with static obstacle//
                     if(msg->data[map_idx]==0)
-                        search_map.data[search_idx]= int(L_FREE); //free
+                        search_map.data[search_idx]= int(L_FREE);
                     else
                     {
                         //not unknown, not static obstacle, not free --> dynamic obstacle
                         search_map.data[search_idx]= int(L_DOCC);
                     }
-                }
             }
         }
 
 
     search_map_pub.publish(search_map);
 }
-
 
 double get_searchmap_entropy()
 {
@@ -654,34 +690,41 @@ double get_searchmap_entropy()
     return map_count*CELL_MAX_ENTROPY;
 }
 
-void crop_globalmap(const nav_msgs::OccupancyGrid global_map)
+
+void crop_globalmap(const nav_msgs::OccupancyGrid global_map, const geometry_msgs::Polygon _polygon)
 {
     //"Crop global_map-->fill search map with static obstacle "
-    //searchmap info / globalmap_info
-    ROS_INFO("Crop global_map");
+    //ROS_INFO("Crop_global_map");
     int count=0;
-
     double px, py =0.0;
     int global_idx,search_idx =0;
 
     //iteration for search map to apply globalmap info 
+    geometry_msgs::Point tmp_pnt;
     for(int j(0); j< search_map.info.height;j++)
         for(int i(0); i< search_map.info.width;i++)
         {
-            px = search_map.info.origin.position.x+(i+0.5)*search_map.info.resolution;
-            py = search_map.info.origin.position.y+(j+0.5)*search_map.info.resolution;
+            px = search_map.info.origin.position.x+(i)*search_map.info.resolution;
+            py = search_map.info.origin.position.y+(j)*search_map.info.resolution;
             global_idx = Coord2CellNum(px,py, global_map);  
             search_idx = Coord2CellNum(px,py, search_map);         // get search cell idx 
             //if static_obstacle data in global_map
-            if(global_map.data[global_idx]>0)
+            if(global_map.data[global_idx]==100)
             {
                     search_map.data[search_idx]= int(L_SOCC);
                     count++;
             }
+            else{
+                    search_map.data[search_idx]= 0.0;
+            }
+
+            tmp_pnt.x=px;
+            tmp_pnt.y=py;
+            if(!pointInPolygon(tmp_pnt, _polygon))
+                search_map.data[search_idx]=int(L_SOCC);
             //Update searchmap according to local measurement
             // if local_map is known (occ or free) and global_map is not occupied by static obstacle 
         }
-
         occ_entropy=double(count)*CELL_MAX_ENTROPY;  //the amount of entropy reduced
         ROS_INFO("occ_entropy_sum: %.2lf ", occ_entropy);
         ROS_INFO("crop_map finished");
@@ -689,7 +732,7 @@ void crop_globalmap(const nav_msgs::OccupancyGrid global_map)
 }
 
 
-
+/* function: cell_index to global pose w.r.t. global map*/
 void Idx2Globalpose(int idx, std::vector<double>& global_coord, const nav_msgs::OccupancyGrid& inputmap_)
 {
     global_coord.resize(2,0.0);
@@ -702,520 +745,23 @@ void Idx2Globalpose(int idx, std::vector<double>& global_coord, const nav_msgs::
 }
 
 
-    int Coord2CellNum(double _x, double _y, const nav_msgs::OccupancyGrid& inputmap_)
-    {	
-        //ROS_INFO("x: %.2lf, y: %.2lf", _x, _y);
-        std::vector<int> target_Coord;
-        target_Coord.resize(2,0);
-        //double reference_origin_x;
-        //double reference_origin_y;
+/* function--> (x,y) to  cell_index */
+int Coord2CellNum(double _x, double _y, const nav_msgs::OccupancyGrid& inputmap_)
+{	
+    //ROS_INFO("x: %.2lf, y: %.2lf", _x, _y);
+    std::vector<int> target_Coord;
+    target_Coord.resize(2,0);
 
-        //reference_origin_x=inputmap_.info.origin.position.x;
-        //reference_origin_y=inputmap_.info.origin.position.y;
+    double  temp_x  = _x-inputmap_.info.origin.position.x;
+    double  temp_y = _y-inputmap_.info.origin.position.y;
 
-        double  temp_x  = _x-inputmap_.info.origin.position.x;
-        double  temp_y = _y-inputmap_.info.origin.position.y;
+    target_Coord[0]= (int) floor(temp_x/inputmap_.info.resolution);
+    target_Coord[1]= (int) floor(temp_y/inputmap_.info.resolution);
 
-        target_Coord[0]= (int) floor(temp_x/inputmap_.info.resolution);
-        target_Coord[1]= (int) floor(temp_y/inputmap_.info.resolution);
-
-        int index= target_Coord[0]+inputmap_.info.width*target_Coord[1];
-        return index;
-        //ROS_INFO("targertcoord: x: %d, y: %d", target_Coord[0], target_Coord[1]);
-    }
-
-
-    bool call_multiplan_service_single(std::vector<geometry_msgs::PoseArray>& path_agent1)
-    {
-
-     if(agent1_history.poses.size()>0)
-            {
-                startpose_agent1.header.stamp=ros::Time().now();
-                startpose_agent1.header.frame_id="map";
-                startpose_agent1.pose.position.x=last_goal_agent1.pose.position.x+0.1;
-                startpose_agent1.pose.position.y=last_goal_agent1.pose.position.y+0.1;
-            }
-            else{
-
-                startpose_agent1.header.stamp=ros::Time().now();
-                startpose_agent1.header.frame_id="map";
-                startpose_agent1.pose=agent1_gpose.pose;
-                
-            }
-       startpose_agent1.pose.orientation.w=1.0;
-
-       std::vector<geometry_msgs::PoseStamped> goals_agent1;
-       if(search_entropy>0.45)
-       {
-            goal_sampling_waypoints(agent1_gpose, goals_agent1);
-       }
-       else{
-          int idx=0; 
-          goal_sampling_frontiers(agent1_gpose, goals_agent1, idx);
-       
-       }
-
-       //nav_msgs::GetMultiPlan srv_;
-       //srv_.request.start = startpose_agent1;
-       //srv_.request.goals= goals_agent1;
-       //std::cout<<"startpose_agent1: "<<startpose_agent1<<std::endl;
-       //std::cout<<"startpose_agent1"<<std::endl;
-       //std::cout<<"x: "<< startpose_agent1.pose.position.x<<", y: "<<startpose_agent1.pose.position.y<<std::endl;
-       //std::cout<<"-------------------------"<<std::endl;
-       //std::cout<<"size of goals: "<<goals_agent1.size()<<std::endl;
-
-       //if(planner_srv_client_single.call(srv_))
-       //{
-          //ROS_INFO("get MultiPlan service finished!!");
-          //path_agent1= srv_.response.multiplan.poses;
-          //return true;
-       //}
-       //else
-       //{
-           //ROS_WARN("Failed to call service multiplan");
-           //return false;
-       //}
-    }
-
-
-    bool call_multiplan_service(std::vector<geometry_msgs::PoseArray>& path_agent1, std::vector<geometry_msgs::PoseArray>& path_agent2)
-    {
-        if(agent1_history.poses.size()>0)
-        {
-
-            startpose_agent1.header.stamp=ros::Time().now();
-            startpose_agent1.header.frame_id="map";
-            startpose_agent1.pose.position.x=last_goal_agent1.pose.position.x+0.1;
-            startpose_agent1.pose.position.y=last_goal_agent1.pose.position.y+0.1;
-        }
-        else{
-
-            startpose_agent1.header.stamp=ros::Time().now();
-            startpose_agent1.header.frame_id="map";
-            startpose_agent1.pose=agent1_gpose.pose;
-        }
-
-        if(agent2_history.poses.size()>0)
-        {
-
-            startpose_agent2.header.stamp=ros::Time().now();
-            startpose_agent2.header.frame_id="map";
-            startpose_agent2.pose.position.x=last_goal_agent2.pose.position.x+0.1;
-            startpose_agent2.pose.position.y=last_goal_agent2.pose.position.y+0.1;
-        }
-        else{
-
-            startpose_agent2.header.stamp=ros::Time().now();
-            startpose_agent2.header.frame_id="map";
-            startpose_agent2.pose=agent2_gpose.pose;
-        }
-
-       startpose_agent1.pose.orientation.w=1.0;
-       startpose_agent2.pose.orientation.w=1.0;
-
-
-       std::vector<geometry_msgs::PoseStamped> goals_agent1;
-       std::vector<geometry_msgs::PoseStamped> goals_agent2;
-
-       if(search_entropy>0.35)
-       {
-            goal_sampling_waypoints(agent1_gpose, goals_agent1);
-            goal_sampling_waypoints(agent2_gpose, goals_agent2);
-       }
-       else
-       {
-           int minidx=0;
-            goal_sampling_frontiers(agent1_gpose, goals_agent1,minidx);
-            goal_sampling_frontiers(agent2_gpose, goals_agent2,minidx);
-       }
-
-       //nav_msgs::GetMultiMultiPlan srv_;
-       //srv_.request.start = startpose_agent1;
-       //srv_.request.start2 = startpose_agent2;
-       //srv_.request.goals= goals_agent1;
-       //srv_.request.goals2 = goals_agent2;
-       //std::cout<<"startpose_agent1"<<std::endl;
-       //std::cout<<"x: "<< startpose_agent1.pose.position.x<<", y: "<<startpose_agent1.pose.position.y<<std::endl;
-       //std::cout<<"size of goals: "<<goals_agent1.size()<<std::endl;
-       //std::cout<<"-------------------------"<<std::endl;
-       //std::cout<<"startpose_agent2"<<std::endl;
-       //std::cout<<"x: "<< startpose_agent2.pose.position.x<<", y: "<<startpose_agent2.pose.position.y<<std::endl;
-       //std::cout<<"size of goals: "<<goals_agent2.size()<<std::endl;
-       //std::cout<<"-------------------------"<<std::endl;
-
-
-
-       //if(planner_srv_client.call(srv_))
-       //{
-          //ROS_INFO("get MultiMultiPlan service finished!!");
-          //ROS_INFO("path1 size: %d , path2 size: %d", srv_.response.multiplan.poses.size(), srv_.response.multiplan2.poses.size());
-          //path_agent1= srv_.response.multiplan.poses;
-          //path_agent2= srv_.response.multiplan2.poses;
-          //return true;
-       //}
-       //else
-       //{
-           //ROS_WARN("Failed to call service multiplan");
-           //return false;
-       //}
-    }
-
-
-void goal_sampling_waypoints(const geometry_msgs::PoseStamped agent_pos, std::vector<geometry_msgs::PoseStamped>& goals)
-{
-    double randx, randy=0.0;
-    goals.clear();
-    geometry_msgs::PoseStamped tmp_pose;
-    tmp_pose.header.stamp =ros::Time().now();
-    tmp_pose.header.frame_id="map";
-    if(search_entropy>0.5){
-        std::map< std::string, std::vector<double> >::iterator map_iter=goal_maps.begin();
-        for(map_iter; map_iter!=goal_maps.end();map_iter++)
-        {
-
-            randx = (static_cast<float>(rand())/static_cast <float>(RAND_MAX)-0.5)*2*RAND_RANGE;
-            randy = (static_cast<float>(rand())/static_cast <float>(RAND_MAX)-0.5)*2*RAND_RANGE;
-            //cout<<"randx:" <<randx << "randy:"<<randy <<std::endl;
-            tmp_pose.pose.position.x=map_iter->second[0]+randx;
-            tmp_pose.pose.position.y=map_iter->second[1]+randy;
-            if (tmp_pose.pose.position.x> m_params->xmax || tmp_pose.pose.position.x< m_params->xmin)
-                tmp_pose.pose.position.x=map_iter->second[0];
-            if (tmp_pose.pose.position.y> m_params->ymax || tmp_pose.pose.position.y< m_params->ymin)
-                tmp_pose.pose.position.y=map_iter->second[0];
-
-            //
-            //
-            //should consider searchmap if dynamic obstacle is occupied
-            int search_idx = Coord2CellNum(tmp_pose.pose.position.x, tmp_pose.pose.position.y, search_map);         // get search cell idx 
-            double dist_goal = sqrt(pow(tmp_pose.pose.position.x-agent_pos.pose.position.x,2)+pow(tmp_pose.pose.position.y-agent_pos.pose.position.y,2));
-            if(search_idx<search_map.data.size())
-            {
-                if(search_map.data[search_idx]!=int(L_SOCC) and search_map.data[search_idx]!=int(L_DOCC)) 
-                {
-                    if(dist_goal<Max_Dist )
-                        goals.push_back(tmp_pose);
-                }
-            }
-            //goals.push_back(tmp_pose);
-
-        }
-    }
-    else{
-    
-         for(int j(0); j< unknown_poses.poses.size();j++)
-        {
-            tmp_pose.pose=unknown_poses.poses[j];
-            double dist_goal = sqrt(pow(tmp_pose.pose.position.x-agent_pos.pose.position.x,2)+pow(tmp_pose.pose.position.y-agent_pos.pose.position.y,2));
-
-            if(dist_goal<Max_Dist )
-                goals.push_back(tmp_pose);
-        }
-    }
-
-
-    for(int i(0); i< frontier_poses.poses.size();i++) 
-    {
-        tmp_pose.pose=frontier_poses.poses[i];
-
-        double dist_goal = sqrt(pow(tmp_pose.pose.position.x-agent_pos.pose.position.x,2)+pow(tmp_pose.pose.position.y-agent_pos.pose.position.y,2));
-        if(dist_goal<Max_Dist )
-            goals.push_back(tmp_pose);
-    }
-
-    //for(int j(0); j< unknown_poses.poses.size();j++)
-    //{
-    
-        //tmp_pose.pose=unknown_poses.poses[j];
-        //goals.push_back(tmp_pose);
-    //}
-
-    return;
+    int index= target_Coord[0]+inputmap_.info.width*target_Coord[1];
+    return index;
 }
 
-//This function generate 2d spline using sampled points from nav_msg/Path  
-//This function will make (s-x), (s-y) splines using arc length (s)
-void Convert_Poses2trjs(const std::vector<geometry_msgs::PoseArray>& paths, std::vector<tk::spline2D>& spline_set)
-{
-    spline_set.clear();
-    //ToDo: check path size
-    ROS_INFO("global paths size: %d", paths.size());
-    int path_const=20;
-
-    for(int i(0); i< paths.size();i++){
-        std::vector<double> xs;
-        std::vector<double> ys;
-        std::cout<<i<<"-th poses size:"<<paths[i].poses.size()<<std::endl;
-        path_const=20;
-        if(paths[i].poses.size()<80)
-            path_const=10;
-
-        for(int j(0); j< paths[i].poses.size();j++)
-        {
-            if(j%path_const==0 || (j==paths[i].poses.size()-1)){
-                xs.push_back(paths[i].poses[j].position.x);
-                ys.push_back(paths[i].poses[j].position.y);
-            }
-        }
-        if(xs.size()>2)
-        {
-            tk::spline2D spline2d(xs,ys);
-            spline_set.push_back(spline2d);
-        }
-        else{
-        
-            xs.clear();
-            ys.clear();
-            for(int j(0); j< paths[i].poses.size();j++)
-            {
-                xs.push_back(paths[i].poses[j].position.x);
-                ys.push_back(paths[i].poses[j].position.y);
-            }
-
-            if(xs.size()>2)
-            {
-                tk::spline2D spline2d(xs,ys);
-                spline_set.push_back(spline2d);
-            }
-            else
-            {
-                ROS_WARN("failed to sample trajectroies");
-            }
-        
-        }
-    }
-}
-
-
-
-bool near_history(const geometry_msgs::PoseArray trjs_, const geometry_msgs::PoseArray history_)
-{
-    //if the last point is near one of history (range: Dist_history), return true. 
-    bool near_hiostory=false;
-    for(int i(0); i< history_.poses.size();i++)
-    {
-        double dist = sqrt( pow(trjs_.poses.back().position.x-history_.poses[i].position.x,2)+pow(trjs_.poses.back().position.y-history_.poses[i].position.y,2));
-        if(dist<Dist_History )
-            return true;
-    }
-    return false;
-}
-
-bool near_eachother(const geometry_msgs::Pose pos1, const geometry_msgs::Pose pos2)
-{
-    //if the last point is near one of history (range: Dist_history), return true. 
-    //bool near_=false;
-    double dist = sqrt( pow(pos1.position.x-pos2.position.x,2)+pow(pos1.position.y-pos2.position.y,2));
-    if(dist<Dist_GOAL)
-        return true;
-    
-    return false;
-}
-
-
-
-   
-//void trjs_to_sample(std::vector<tk::spline2D>& spline_set, std::vector<nav_msgs::Path>& trjs, int horizon=20)
-void trjs_to_sample(std::vector<tk::spline2D>& spline_set, std::vector<geometry_msgs::PoseArray>& trjs, 
-                    const geometry_msgs::PoseArray hisotry_, int horizon=15)
-{
-    //output: trjs (sampling points from trajectory with (ds=0.5) using horizon
-
-    std::cout<<"trjs_to_sample function, current_horizon:  "<<horizon<<std::endl;
-    double ds=0.5;
-    double tmp_x, tmp_y=0.0;
-    trjs.clear();
-    //trjs.resize(spline_set.size());
-    for(int i(0); i <spline_set.size();i++)
-    {
-        geometry_msgs::PoseArray tmp_posearray;
-        double s_length = spline_set[i].get_length();
-        //std::cout<<i<<"-th path length: "<< s_length<<std::endl;
-        std::vector<double> rangeset = tk::range(0.0, s_length, ds);
-        //for(int k(0);k<rangeset.size();k++)
-            //std::cout<<"k: "<<k<< ",rangeset[k]" << rangeset[k] <<std::endl;
-        auto s_iter=rangeset.begin();
-        int count_iter=0;
-        for(s_iter;s_iter!=rangeset.end();s_iter++)
-        {
-            if(count_iter<horizon && horizon>0)
-            {
-                spline_set[i].calc_positions(*s_iter,tmp_x,tmp_y);
-                geometry_msgs::Pose tmp_pose;
-                tmp_pose.position.x=tmp_x;
-                tmp_pose.position.y=tmp_y;
-                //std::cout<<"s_iter" <<*s_iter<<", x: "<<tmp_x <<", y: "<<tmp_y<<std::endl;
-                tmp_posearray.poses.push_back(tmp_pose);
-                count_iter++;
-            }
-            else if(horizon<0)
-            {
-                spline_set[i].calc_positions(*s_iter,tmp_x,tmp_y);
-                geometry_msgs::Pose tmp_pose;
-                tmp_pose.position.x=tmp_x;
-                tmp_pose.position.y=tmp_y;
-                tmp_posearray.poses.push_back(tmp_pose);
-            }
-        }
-
-        //trjs.push_back(tmp_posearray);
-        //last point check!!
-        if(search_entropy>0.4)
-        {
-            if(!near_history(tmp_posearray, hisotry_))
-            {
-                trjs.push_back(tmp_posearray);
-            }
-        }
-        else
-            trjs.push_back(tmp_posearray);
-
-    }
-}
-
-//double calc_min_distance_from_trj(double px, double py, std::vector<geometry_msgs::Point>& trj)
-double calc_min_distance_from_trj(double px, double py, const geometry_msgs::PoseArray trj)
-{
-    double min_dist = 100.0;
-    for(size_t i(0);i<trj.poses.size();i++)
-    {
-        double tempdist = sqrt(pow(px-trj.poses[i].position.x,2)+pow(py-trj.poses[i].position.y,2));
-        if(tempdist < min_dist)
-            min_dist = tempdist;
-    }
-
-    return min_dist;
-}
-
-double get_expected_entropy_infov(const geometry_msgs::Point pose)
-{
-    double minx,miny,maxx,maxy,xw,yw=0.0;
-    double agent_x = pose.x;
-    double agent_y = pose.y;
-
-    m_params->calc_grid_map_config(agent_x,agent_y, minx, miny, maxx, maxy, xw, yw);
-    std::vector<int> impossible_idx;
-    get_impossible_indices(pose, impossible_idx);
-
-    double entropy_sum=0.0;
-    int cell_count=0;
-
-    for(int i(0);i < xw; i++){
-        for (int j(0); j<yw; j++){
-            double px = i * m_params->xyreso + minx;
-            double py = j * m_params->xyreso + miny;
-        
-            if(px > m_params->xmax || px < m_params->xmin)
-                continue;
-            if(py > m_params->ymax || py < m_params->ymin)
-                continue;
-
-            int search_idx = Coord2CellNum(px,py, search_map);
-
-            //convert log-occ to probability
-            if( std::find(impossible_idx.begin(), impossible_idx.end(), search_idx) ==impossible_idx.end())
-            {
-                if(search_map.data[search_idx]==0)
-                    cell_count++;
-            }
-        }
-    }
- 
-    //ROS_INFO("cell counts: %d ", cell_count);
-    entropy_sum=double(cell_count)*CELL_MAX_ENTROPY;
-
-    return entropy_sum;
-}
-
-
-
-double get_expected_entropy_infov_trj( const geometry_msgs::Point pose,geometry_msgs::PoseArray leader_trj, double  dist_th=6.0)
-{
-
-    double minx,miny,maxx,maxy,xw,yw=0.0;
-    double agent_x = pose.x;
-    double agent_y = pose.y;
-
-    m_params->calc_grid_map_config(agent_x,agent_y, minx, miny, maxx, maxy, xw, yw);
-    std::vector<int> impossible_idx;
-    get_impossible_indices(pose, impossible_idx);
-
-    double entropy_sum=0.0;
-    int cell_count=0;
-
-    for(int i(0);i < xw; i++){
-        for (int j(0); j<yw; j++){
-            double px = i * m_params->xyreso + minx;
-            double py = j * m_params->xyreso + miny;
-        
-            if(px > m_params->xmax || px < m_params->xmin)
-                continue;
-            if(py > m_params->ymax || py < m_params->ymin)
-                continue;
-
-            int search_idx = Coord2CellNum(px,py, search_map);
-            double min_dist = calc_min_distance_from_trj(px,py,leader_trj);
-
-            //convert log-occ to probability
-            if( std::find(impossible_idx.begin(), impossible_idx.end(), search_idx) ==impossible_idx.end() && 
-                    (min_dist>dist_th)){
-
-                if(search_map.data[search_idx]==0)
-                    cell_count++;
-            }
-        }
-    }
- 
-    ROS_INFO("cell counts: %d ", cell_count);
-    entropy_sum=double(cell_count)*CELL_MAX_ENTROPY;
-
-    return entropy_sum;
-
-}
-
-double get_expected_entropy_infov_leadgoal( const geometry_msgs::Point pose,geometry_msgs::Pose leader_goal, double  dist_th=6.0)
-{
-
-    double minx,miny,maxx,maxy,xw,yw=0.0;
-    double agent_x = pose.x;
-    double agent_y = pose.y;
-
-    m_params->calc_grid_map_config(agent_x,agent_y, minx, miny, maxx, maxy, xw, yw);
-    std::vector<int> impossible_idx;
-    get_impossible_indices(pose, impossible_idx);
-
-    double entropy_sum=0.0;
-    int cell_count=0;
-
-    for(int i(0);i < xw; i++){
-        for (int j(0); j<yw; j++){
-            double px = i * m_params->xyreso + minx;
-            double py = j * m_params->xyreso + miny;
-        
-            if(px > m_params->xmax || px < m_params->xmin)
-                continue;
-            if(py > m_params->ymax || py < m_params->ymin)
-                continue;
-
-            int search_idx = Coord2CellNum(px,py, search_map);
-
-            //double dist= sqrt(pow(px-agent_x,2)+ pow((py-agent_y),2));
-            //double min_dist = calc_min_distance_from_trj(px,py,leader_trj);
-
-            //convert log-occ to probability
-            if( std::find(impossible_idx.begin(), impossible_idx.end(), search_idx) ==impossible_idx.end())
-            {
-                if(search_map.data[search_idx]==0)
-                    cell_count++;
-            }
-        }
-    }
- 
-    ROS_INFO("cell counts: %d ", cell_count);
-    entropy_sum=double(cell_count)*CELL_MAX_ENTROPY;
-
-    return entropy_sum;
-
-}
 
 
 
@@ -1265,481 +811,264 @@ void precasting(const geometry_msgs::Point pose, std::map<int,std::vector<precas
 }
 
 
-void get_impossible_indices(const geometry_msgs::Point pose, std::vector<int>& impossible_idx)
+/* function: publisher function to publish smooth paths*/
+void publish_paths()
 {
-    impossible_idx.clear();
-    double agent_x = pose.x;
-    double agent_y = pose.y;
-    double minx,miny,maxx,maxy,xw,yw=0.0;
-    m_params->calc_grid_map_config(agent_x,agent_y, minx, miny, maxx, maxy, xw, yw);
+    for(size_t i(0);i<NUMAGENTS;i++)
+    {
+        if(Issmoothpath[i])
+        {
+            path_pubs[i].publish(smooth_paths[i]);
+        }
+    }
+}
 
-    std::map<int,std::vector<precastDB> > premap;
-    precasting(pose,premap);
+/* function: Obtaining Forward Paths from her publisher function to publish smooth paths*/
+bool get_smooth_paths(int n_agent)
+{
 
-    //min_angle_map
-    std::map<int, double> min_anglemap;
 
-    for(int i(0);i < xw; i++){
-        for (int j(0); j<yw; j++){
-            double px = i * m_params->xyreso + minx;
-            double py = j * m_params->xyreso + miny;
-        
-            if(px > m_params->xmax || px < m_params->xmin)
-                continue;
-            if(py > m_params->ymax || py < m_params->ymin)
-                continue;
 
-            int gmap_idx = Coord2CellNum(px,py, global_map);
-            if(global_map.data[gmap_idx]>0)
+
+    nav_msgs::GetPlan srv_;
+    for(int n(0); n<NUMAGENTS;n++)
+    {
+        nav_msgs::Path smooth_path;
+        srv_.request.start.pose = agent_poses.poses[n]; //current agent_pose
+        srv_.request.start.header.frame_id = "map";
+        srv_.request.start.header.stamp= ros::Time::now();
+        std::vector<int> real_dst;
+        std::vector<int> idx_set;
+        int min_idx = 0;
+        nav_msgs::Path tmp_plan;
+
+        real_dst.resize(agent_paths[n].poses.size(),0.0);
+        double min_dist=1000.0;
+        for(size_t i(0);i<agent_paths[n].poses.size();i++)
+        {
+            idx_set.push_back(i);
+            srv_.request.goal= agent_paths[n].poses[i];
+            srv_.request.goal.header.frame_id= "map";
+            if(planner_srv_client.call(srv_))
             {
-                double obs_angle = atan_zero_to_twopi(py-agent_y,px-agent_x);
-                int angleid =  int(floor(obs_angle / m_params->yawreso));
-                double dist= sqrt(pow(px-agent_x,2)+ pow((py-agent_y),2));
-
-                auto it = min_anglemap.find(angleid);
-                if(it !=min_anglemap.end())
+                double tmp_dst=0.0;
+                if(srv_.response.plan.poses.size()>1)
                 {
-                    if(dist<it->second)
+                    for(int m(0);m<srv_.response.plan.poses.size()-1;m++)
                     {
-                        min_anglemap[angleid]=dist;
+                        tmp_dst+=calc_dist(srv_.response.plan.poses[m].pose, srv_.response.plan.poses[m+1].pose);
                     }
                 }
                 else{
-                    min_anglemap[angleid]=dist;
+                    tmp_dst = calc_dist(srv_.request.start.pose, srv_.response.plan.poses[0].pose);
+                    double len_pose =srv_.response.plan.poses.size();
+                    ROS_INFO("len_pose: %f", len_pose);
                 }
-            }
-        }
-    }
-
-    auto mapit = min_anglemap.begin();
-    for(mapit; mapit!=min_anglemap.end();mapit ++)
-    {
-        auto pre_iter= premap.find(mapit->first);
-        for(int j(0);j< pre_iter->second.size();j++ )
-        {
-            
-            //for the grid point such that distacne is greater than min_distance, add impossible_idx
-           if((pre_iter->second)[j].dist>mapit->second)
-           {
-            int gmap_idx = Coord2CellNum((pre_iter->second)[j].px,(pre_iter->second)[j].py, search_map);
-            impossible_idx.push_back(gmap_idx);
-           }
-        }
-    }
-
-
-}
-
-int calc_IG_trjs_with_leadtrj(const std::vector<geometry_msgs::PoseArray> trjs_candidates, const geometry_msgs::PoseArray lead_trj, int num_points=2)
-{
-
-  
-    if(trjs_candidates.size()>0)
-    {
-        std::vector<double> utilities, igs,travels;
-        //tpoints=[]
-        for(auto it = trjs_candidates.begin(); it!= trjs_candidates.end(); ++it)
-        {
-            int pose_size = (*it).poses.size();
-            int mid_point = floor(pose_size/2);
-            double ig=0.0;
-            double travel=0.0;
-            std::vector<int> idx_set(num_points,0);
-            if(num_points==2)
-            {
-                idx_set[0]=mid_point;
-                idx_set[1]=pose_size-1;
+                real_dst[i]=tmp_dst;
+                ROS_INFO("tmp_dst: %.2lf", tmp_dst);
+                if(real_dst[i]<min_dist)
+                {
+                    min_dist =real_dst[i];
+                    tmp_plan=srv_.response.plan;
+                }
+                //calculate the path length to the pose(for finding the nearest pose from the robot location)
             }
             else{
-
-                int size_const= floor(pose_size/num_points);
-                for(int k(0);k<num_points-1;k++)
-                {
-                    idx_set[k]=size_const*(k+1);
-                }
-                idx_set[num_points-1]=pose_size-1;
-            
+                ROS_INFO("global planner make plan service failed");
+                real_dst[i]=500.0;
             }
-        
-            //first point (should be saved because we are calculating the expected travel cost from this point)
-            double ref_x=(*it).poses.front().position.x;
-            double ref_y=(*it).poses.front().position.y;
-            //mid point
-            //end point
-            for(int k(0);k<num_points;k++)
-            {
-              //ig+=get_expected_entropy_infov_trj((*it).poses[idx_set[k]].position, lead_trj);
-              travel+= sqrt(pow((*it).poses[idx_set[k]].position.x-ref_x,2)+pow((*it).poses[idx_set[k]].position.x-ref_y,2));
-              ref_x=(*it).poses[idx_set[k]].position.x;
-              ref_y=(*it).poses[idx_set[k]].position.y;
-              double min_dist = calc_min_distance_from_trj(ref_x,ref_y,lead_trj);
-              if(min_dist >3.0)
-                  ig+=get_expected_entropy_infov((*it).poses[idx_set[k]].position);
-            }
-
-            double utility = weight_entropy*ig - weight_travel*travel;
-            std::cout<<"ig: "<<ig<<", travel: "<<travel <<", utility: "<<utility<<std::endl;
-            utilities.push_back(utility);
-            igs.push_back(ig);
-            travels.push_back(travel);
         }
 
-        //find l
-        auto maxIt = std::max_element(utilities.begin(), utilities.end());
-        double minElement = *maxIt;
-        int max_idx = maxIt -utilities.begin();
-        std::cout<<"max_index" << max_idx<<std::endl;
-        std::cout<<"max_utilities" << *maxIt<<std::endl;
-        return max_idx;
-
-    }
-    else
-    {
-        ROS_WARN("Something wrong!!!----- No trjs candidates ----");
-        return -1;
-    }
-
-}
-
-int calc_IG_trjs_with_leadgoal(const std::vector<geometry_msgs::PoseArray> trjs_candidates, const geometry_msgs::Pose lead_goal, int num_points=2)
-{
-
-    if(trjs_candidates.size()>0)
-    {
-        std::vector<double> utilities, igs,travels;
-        //tpoints=[]
-        for(auto it = trjs_candidates.begin(); it!= trjs_candidates.end(); ++it)
+        if(real_dst.size()>0)
         {
-            int pose_size = (*it).poses.size();
-            int mid_point = floor(pose_size/2);
-            double ig=0.0;
-            double travel=0.0;
-            std::vector<int> idx_set(num_points,0);
-            if(num_points==2)
-            {
-                idx_set[0]=mid_point;
-                idx_set[1]=pose_size-1;
-            }
-            else{
+            auto minIt = std::min_element(real_dst.begin(), real_dst.end());
+            double minElement = *minIt;
+            min_idx = minIt -real_dst.begin();
 
-                int size_const= floor(pose_size/num_points);
-                for(int k(0);k<num_points-1;k++)
-                {
-                    idx_set[k]=size_const*(k+1);
-                }
-                idx_set[num_points-1]=pose_size-1;
-            
-            }
-        
-            //first point (should be saved because we are calculating the expected travel cost from this point)
-            double ref_x=(*it).poses.front().position.x;
-            double ref_y=(*it).poses.front().position.y;
-            //mid point
-            //end point
-            for(int k(0);k<num_points;k++)
-            {
-              //ig+=get_expected_entropy_infov_trj((*it).poses[idx_set[k]].position, lead_trj);
-              travel+= sqrt(pow((*it).poses[idx_set[k]].position.x-ref_x,2)+pow((*it).poses[idx_set[k]].position.x-ref_y,2));
-              ref_x=(*it).poses[idx_set[k]].position.x;
-              ref_y=(*it).poses[idx_set[k]].position.y;
-              double tmp_dist=sqrt(pow(ref_x-lead_goal.position.x,2)+pow(ref_y-lead_goal.position.y,2));
-              if(tmp_dist>7.0)
-                  ig+=get_expected_entropy_infov((*it).poses[idx_set[k]].position);
-            }
-
-            double utility = weight_entropy*ig - weight_travel*travel;
-            std::cout<<"ig: "<<ig<<", travel: "<<travel <<", utility: "<<utility<<std::endl;
-            utilities.push_back(utility);
-            igs.push_back(ig);
-            travels.push_back(travel);
+            srv_.request.start.pose= agent_paths[n].poses[min_idx].pose;
+            idx_set.erase(std::remove(idx_set.begin(),idx_set.end(),min_idx), idx_set.end());
+            for(size_t k(0);k<tmp_plan.poses.size();k++)
+                smooth_path.poses.push_back(tmp_plan.poses[k]);
         }
+        else{
+            min_idx=0;
+            idx_set.erase(std::remove(idx_set.begin(),idx_set.end(),min_idx), idx_set.end());
+        }
+        //after first point, iterate with idx_set 
+        real_dst.clear();
+        //call service from current point
+        //check the pose length to the pose in idx_set
+        bool max_iter_reached=false;
+        int idx_iter=0;
+        int cur_idx = min_idx;
+        while(idx_set.size()>0){
+            //ROS_INFO("idx_set.size() : %d", idx_set.size());
+            min_dist=1000.0;
+            srv_.request.start.pose =agent_paths[n].poses[cur_idx].pose;
+            srv_.request.start.header.frame_id = "map";
+            srv_.request.start.header.stamp =ros::Time::now();
+            real_dst.resize(idx_set.size(),0.0);
+            for(size_t j(0);j<idx_set.size();j++)
+            {
+                srv_.request.goal= agent_paths[n].poses[idx_set[j]];
+                srv_.request.goal.header.frame_id= "map";
+                srv_.request.goal.header.stamp = ros::Time::now();
+                if(planner_srv_client.call(srv_))
+                   {
+                      double tmp_dst=0.0;
+                      if(srv_.response.plan.poses.size()>1){
+                          for(int m(0);m<srv_.response.plan.poses.size()-1;m++)
+                          {
+                              tmp_dst+=calc_dist(srv_.response.plan.poses[m].pose, srv_.response.plan.poses[m+1].pose);
+                          }
+                      }
+                      else{
+                          tmp_dst = calc_dist(srv_.request.start.pose, srv_.response.plan.poses[0].pose);
+                          int len_pose =srv_.response.plan.poses.size();
+                      
+                      }
+                      real_dst[j]=tmp_dst;
+                      if(real_dst[j]<min_dist)
+                      {
+                          min_dist=real_dst[j];
+                          tmp_plan=srv_.response.plan;
+                      }
+                   }
+                   else{
+                       real_dst[j]=500.0;
+                       ROS_INFO("failed to get plan");
+                   }
+            }
+            auto minIt = std::min_element(real_dst.begin(), real_dst.end());
+            double minElement = *minIt;
+            min_idx = minIt -real_dst.begin();
+            cur_idx=idx_set[min_idx];
+            idx_set.erase(std::remove(idx_set.begin(),idx_set.end(),cur_idx), idx_set.end());
+            for(size_t k(0);k<tmp_plan.poses.size();k++)
+                smooth_path.poses.push_back(tmp_plan.poses[k]);
+            idx_iter++;
+            if(idx_iter>20)
+                break;
 
-        //find l
-        auto maxIt = std::max_element(utilities.begin(), utilities.end());
-        double minElement = *maxIt;
-        int max_idx = maxIt -utilities.begin();
-        std::cout<<"max_index" << max_idx<<std::endl;
-        std::cout<<"max_utilities" << *maxIt<<std::endl;
-        return max_idx;
+        }//while
+        //ROS_INFO("outside_loop: smooth_path size: %d", smooth_path.poses.size());
+        if(smooth_path.poses.size()>0)
+        {
+            smooth_path.header.frame_id="map";
+            smooth_path.header.stamp=ros::Time::now();
+            smooth_paths[n]=smooth_path;
+            Issmoothpath[n]=true;
 
-    }
-    else
-    {
-        ROS_WARN("Something wrong!!!----- No trjs candidates ----");
-        return -1;
-    }
+            ROS_INFO("smooth_path Updated");
+        }
+        else{
+            ROS_INFO("pathsize is none!");
+        }
+    }//for
 
+    ROS_INFO("get_smooth_path done!");
+
+    return true;
 }
 
 
-
-
-
-
-
-
-int calc_IG_trjs(const std::vector<geometry_msgs::PoseArray> trjs_candidates, int num_points=2)
+bool clustering(int n_agent, std::vector<int> agentvec_, int mode_=1)
 {
- // Calculating Information gain on trajectories
- // 1) calculating sampling point for time horizon 
- // 2) calculating FOV region over sampling points 
- // 3) Collecting IG gain for overlapped region
- // 4) input trjs should be re-sampled w.r.t arc length for managing horizon
- // double weight_t=1.0
-  
-    if(trjs_candidates.size()>0)
-    {
-        std::vector<double> utilities, igs,travels;
-        //tpoints=[]
-        for(auto it = trjs_candidates.begin(); it!= trjs_candidates.end(); ++it)
-        {
-            int pose_size = (*it).poses.size();
-            int mid_point = floor(pose_size/2);
-            double ig=0.0;
-            double travel=0.0;
-            std::vector<int> idx_set(num_points,0);
-            if(num_points==2)
-            {
-                idx_set[0]=mid_point;
-                idx_set[1]=pose_size-1;
-            }
-            else{
+    ROS_INFO("Clustering for %d agents!!", n_agent);
+    agent_xs.resize(n_agent);
+    agent_ys.resize(n_agent);
 
-                int size_const= floor(pose_size/num_points);
-                for(int k(0);k<num_points-1;k++)
-                {
-                    idx_set[k]=size_const*(k+1);
-                }
-                idx_set[num_points-1]=pose_size-1;
-            
-            }
+    std::vector<geometry_msgs::Pose> Posevec;
+    std::vector<double> weights;
+
+    if(mode_==1){
+        for(size_t i(0);i<n_agent; i++)
+        {
+            //ROS_INFO("agentvec i : %d" , agentvec_[i]);
+            Posevec.push_back(agent_poses.poses[agentvec_[i]]);
+            weights.push_back(1.0);
+        }
+        //weights[0]=1.4;
+        //weights[1]=1.9;
+    }
+    else{
+        //fake center points FIXME
+        if(n_agent==2)
+        {
+        geometry_msgs::Pose tmp_pose;
+        tmp_pose.position.x=4;
+        tmp_pose.position.y=-2;
+        Posevec.push_back(tmp_pose);
+        weights.push_back(1.0);
+        tmp_pose.position.x=5;
+        tmp_pose.position.y=4;
+        Posevec.push_back(tmp_pose);
+        weights.push_back(1.0);
+        }
+        else{
+            //ROS_INFO("Something_wrong");
         
-            //first point (should be saved because we are calculating the expected travel cost from this point)
-            double ref_x=(*it).poses.front().position.x;
-            double ref_y=(*it).poses.front().position.y;
-            //mid point
-            //end point
-            for(int k(0);k<num_points;k++)
-            {
-              ig+=get_expected_entropy_infov((*it).poses[idx_set[k]].position);
-              travel+= sqrt(pow((*it).poses[idx_set[k]].position.x-ref_x,2)+pow((*it).poses[idx_set[k]].position.x-ref_y,2));
-              ref_x=(*it).poses[idx_set[k]].position.x;
-              ref_y=(*it).poses[idx_set[k]].position.y;
-            }
-
-            double utility = weight_entropy*ig - weight_travel*travel;
-            utilities.push_back(utility);
-            igs.push_back(ig);
-            travels.push_back(travel);
-            std::cout<<"ig: "<<ig<<", travel: "<<travel <<", utility: "<<utility<<std::endl;
+        
         }
 
-
-        //find l
-        auto maxIt = std::max_element(utilities.begin(), utilities.end());
-        double minElement = *maxIt;
-        int max_idx = maxIt -utilities.begin();
-        std::cout<<"max_index" << max_idx<<std::endl;
-        std::cout<<"max_utility" << *maxIt<<std::endl;
-        return max_idx;
-
-    }
-    else
-    {
-        ROS_WARN("Something wrong!!!----- No trjs candidates ----");
-        return -1;
-    }
-}
-
-
-
-//void goal_sampling_frontiers(const geometry_msgs::PoseStamped agent_pos, geometry_msgs::PoseArray& goals)
-void goal_sampling_frontiers(const geometry_msgs::PoseStamped agent_pos, std::vector<geometry_msgs::PoseStamped>& goals, int& min_dist_idx)
-{
-    goals.clear();
-    geometry_msgs::PoseStamped tmp_pose;
-    tmp_pose.header.stamp=ros::Time().now();
-    tmp_pose.header.frame_id="map";
-
-    //find minimum_dist from agent_pos
-    std::vector<double> distances;
-    double min_dist=100;
-    //double min_dist_idx=0;
-    double tmp_dist=0.0;
-    for(int i(0); i< unknown_poses.poses.size();i++) 
-    {
-        tmp_pose.pose=unknown_poses.poses[i];
-        goals.push_back(tmp_pose);
-        tmp_dist=sqrt(pow(tmp_pose.pose.position.x-agent_pos.pose.position.x,2)+pow(tmp_pose.pose.position.y-agent_pos.pose.position.y,2));
-        if(tmp_dist<min_dist)
-        {
-            min_dist=tmp_dist;
-            min_dist_idx=i;
-        }
-
-    }
-
-    if(min_dist==100)
-    {
-         for(int i(0); i< frontier_poses.poses.size();i++) 
-        {
-            tmp_pose.pose=frontier_poses.poses[i];
-
-            tmp_dist=sqrt(pow(tmp_pose.pose.position.x-agent_pos.pose.position.x,2)+pow(tmp_pose.pose.position.y-agent_pos.pose.position.y,2));
-            if(tmp_dist<min_dist)
-            {
-                min_dist=tmp_dist;
-                min_dist_idx=i;
-            }
-        }
     
     }
-    return;
-}
 
-
-void LoadPositionfromConfig(ros::NodeHandle n, std::string input_locations)
-{
-      XmlRpc::XmlRpcValue input_loc;
-      std::string param_name = "waypoints/" + input_locations;
-      std::cout<<param_name<<std::endl;
-      n.getParam(param_name, input_loc);
-      std::vector<double> tmp_pos(2,0.0);
-      tmp_pos[0]=static_cast<double>(input_loc[0]);
-      tmp_pos[1]=static_cast<double>(input_loc[1]);
-      goal_maps[input_locations]=tmp_pos;
-}
-
-
-
-    //void replanning(int& goal_idx)
-    //{
-        //nav_msgs::GetPlan plan_srv;
-        //plan_srv.request.start=m_pose;
-        //plan_srv.request.goal=m_goalpose;
-        //plan_srv.request.tolerance=0.5;
-        //double total_distance_to_goal=sqrt(pow((m_pose.pose.position.x-m_goalpose.pose.position.x),2)+pow((m_pose.pose.position.y-m_goalpose.pose.position.y),2));
-        //int num_subgoals=NUM_SUBS;
-        //if(total_distance_to_goal>10.0)
-            //num_subgoals=NUM_SUBS+int((total_distance_to_goal-10.0)/2.0);
-        //else if(total_distance_to_goal<5.0)
-            //num_subgoals=1;
-
-        //if(planner_srv_client.call(plan_srv))
-        //{
-            //subgoals.poses.clear();
-            //int path_length =plan_srv.response.plan.poses.size();
-            //int path_const = floor(path_length/num_subgoals);
-            //subgoals.poses.clear();
-            //subgoals.poses.push_back(plan_srv.response.plan.poses[0].pose);
-            //for(int i(0);i<(num_subgoals-1);i++)
-            //{
-                //int pose_idx=(i+1)*path_const;
-                //subgoals.poses.push_back(plan_srv.response.plan.poses[pose_idx].pose);
-            //}
-            //subgoals.poses.push_back(plan_srv.response.plan.poses[path_length-1].pose);
-            //goal_idx=0;
-            //ROS_INFO("Replanning Succeeded! ---Subgoal--Size: %d", subgoals.poses.size());
-
-        //}
-        //else{
-            //ROS_INFO("replanning failed");
-        //}
-
-
-    //}
-   void parseparameters(ros::NodeHandle n)
-  {
-      std::string target_frame;
-      n.getParam("waypoints/ref_frame", target_frame);
-      std::vector<std::string> locations_vector;
-      //std::string locations_list;
-      XmlRpc::XmlRpcValue location_list;
-      ROS_INFO_STREAM("reference frame: " << target_frame);
-      n.getParam("waypoints/locations", location_list);
-      //ROS_INFO("type %s",location_list.getType());
-      ROS_ASSERT(location_list.getType() ==XmlRpc::XmlRpcValue::TypeArray);
-      for(size_t j(0);j<location_list.size();j++)
-      {
-          //ROS_INFO_STREAM("Loded "<< "-" << (std::string)(location_list[j]));
-          std::string location_str = static_cast<std::string>(location_list[j]);
-          locations_vector.push_back(location_str);
-          LoadPositionfromConfig(n,location_str);
-      }
-      ROS_INFO("parsing finished");
-
-}
-
-void clustering()
-{
-    //std::vector<std::vector<double> >agent_xs;
-    //std::vector<std::vector<double> >agent_ys;
-    agent_xs.resize(3);
-    agent_ys.resize(3);
     if(!clustered)
     {
-        int data_size = unknown_poses.poses.size();
-
+        int data_size = waypoints.poses.size();
         std::vector<double> xs;
         std::vector<double> ys;
 
         for(size_t i(0);i<data_size;i++)
         {
-        
-            double tx = unknown_poses.poses[i].position.x;
-            double ty = unknown_poses.poses[i].position.y;
+            double tx = waypoints.poses[i].position.x;
+            double ty = waypoints.poses[i].position.y;
             xs.push_back(tx);
             ys.push_back(ty);
         }
 
-        
-        
-        std::vector<geometry_msgs::Pose> Posevec;
-        Posevec.push_back(agent1_gpose.pose);
-        Posevec.push_back(agent2_gpose.pose);
-        Posevec.push_back(agent3_gpose.pose);
-
-
-        std::vector<double> weights;
-        weights.push_back(1.0);
-        weights.push_back(1.0);
-        weights.push_back(1.0);
-          
-        HCluster test_cluster(3, xs,ys, Posevec, weights);
-       for(size_t i(0);i<3;i++)
+       HCluster test_cluster(n_agent, xs,ys, Posevec, weights);
+       for(size_t i(0);i<n_agent;i++)
         {
             test_cluster.get_labeled_x_y(i, agent_xs[i],agent_ys[i]);
         }
 
-       std::ofstream outfile;
-        outfile.open("/home/mk/workspaces/data/cluster_sol.csv", std::ofstream::out | std::ofstream::trunc);
-        for(int i(0);i<xs.size();i++)
-        {
-            outfile<<i<<"\t"<< xs[i]<<"\t"<<ys[i]<<"\t"<<test_cluster.m_labels[i]<<"\n";
-        }
-        outfile.close();
+       for(size_t i(0);i<n_agent;i++)
+       {
+           ROS_INFO("Clustered_points for agent %d: %d", i,agent_xs[i].size());
+           if(agent_xs[i].size()==0)
+           {
+               ROS_WARN("NO waypoints are assigned to the agent %d", i);
+               clustered=false;
+               return false;
+           }
 
-      std::ofstream outfile2;
-        outfile2.open("/home/mk/workspaces/data/cluster_con.csv", std::ofstream::out | std::ofstream::trunc);
-        for(int i(0);i<Posevec.size();i++)
-        {
-            outfile2<<i<<"\t"<< Posevec[i].position.x<<"\t"<<Posevec[i].position.y<<"\n";
-        }
-        outfile2.close();
+       }
 
+       //Save clustered_poses to geometry_msgs/PoseArray
+       clustered_poses.clear();
+       for(size_t i(0);i<n_agent;i++)
+       {
+           geometry_msgs::PoseArray tmp_posearray;
+           for(int k(0);k<agent_xs[i].size();k++)
+           {
+               geometry_msgs::Pose tmp_pos;
+               tmp_pos.position.x=agent_xs[i][k];
+               tmp_pos.position.y=agent_ys[i][k];
+               tmp_posearray.poses.push_back(tmp_pos);
+           }
+           clustered_poses.push_back(tmp_posearray);
+       }
 
         clustered=true;
+        return true;
 
     }
+
+    /*
     else{
 
-    //std::vector<double> agent0_ys;
-    //std::vector<double> agent1_xs;
-    //std::vector<double> agent1_ys;
-    //std::vector<double> agent2_xs;
-    //std::vector<double> agent2_ys;
-
-     
     std_msgs::ColorRGBA blue;
     blue.r = 0; blue.g = 0; blue.b = 1.0; blue.a = 1.0;
     std_msgs::ColorRGBA red;
@@ -1767,9 +1096,8 @@ void clustering()
         m.lifetime = ros::Duration(0);
         m.frame_locked = true;
 
-
     size_t id = 0;
-    for(size_t i(0);i<3;i++)
+    for(size_t i(0);i<n_agent;i++)
     {
         m.action = visualization_msgs::Marker::ADD;
         //size_t id = 0;
@@ -1795,23 +1123,88 @@ void clustering()
             markers.push_back(m);
             ++id;
         }
-   
-
     }
     visual_marker_pub.publish(markers_msg);
-
     }
+    */
 }
 
-
-void set_goal_from_path(const geometry_msgs::Pose pose_, geometry_msgs::PoseStamped& goal)
+void publish_clusters()
 {
+    if(clustered)
+    {
+        std_msgs::ColorRGBA blue;
+        blue.r = 0; blue.g = 0; blue.b = 1.0; blue.a = 1.0;
+        std_msgs::ColorRGBA red;
+        red.r = 1.0; red.g = 0; red.b = 0; red.a = 1.0;
+        std_msgs::ColorRGBA green;
+        green.r = 0; green.g = 1.0; green.b = 0; green.a = 1.0;
 
-    goal.header.stamp=ros::Time().now();
-    goal.header.frame_id="map";
-    goal.pose=pose_;
-    goal.pose.orientation.w=1.0;
+        std_msgs::ColorRGBA black;
+        black.r = 1; black.g = 1.0; black.b = 1; black.a = 1.0;
+
+        std_msgs::ColorRGBA orange;
+        orange.r = 0.5; orange.g = 0.1; orange.b = 0.21; orange.a = 1.0;
+
+        //ROS_DEBUG("visualising %lu frontiers", frontiers.size());
+        visualization_msgs::MarkerArray markers_msg;
+        std::vector<visualization_msgs::Marker>& markers = markers_msg.markers;
+        //visualization_msgs::Marker m;
+
+        visualization_msgs::Marker m;
+        m.header.frame_id ="map";
+        m.header.stamp = ros::Time::now();
+        m.ns = "unknowns";
+        m.scale.x = 1.0;
+        m.scale.y = 1.0;
+        m.scale.z = 1.0;
+        m.color.r = 0;
+        m.color.g = 0;
+        m.color.b = 255;
+        m.color.a = 255;
+        // lives forever
+        m.lifetime = ros::Duration(0);
+        m.frame_locked = true;
+
+        size_t id = 0;
+        for(size_t i(0);i<NUMAGENTS;i++)
+        {
+            m.action = visualization_msgs::Marker::ADD;
+            //size_t id = 0;
+            for (int j(0);j<agent_xs[i].size();j++) {
+                m.type = visualization_msgs::Marker::SPHERE;
+                m.id = int(id);
+                m.pose.position.x = agent_xs[i][j];
+                m.pose.position.y = agent_ys[i][j];
+                m.pose.position.z = 0.5;
+                m.pose.orientation.w = 1.0;
+                m.scale.x = 1.1;
+                m.scale.y = 1.1;
+                m.scale.z = 1.1;
+                //m.points = frontier.points;
+                
+                if(i==0)
+                    m.color=red;
+                else if(i==1)
+                    m.color=green;
+                else if(i==2)
+                    m.color=blue;
+                else if(i==3)
+                    m.color=orange;
+                else
+                    m.color=black;
+                    
+                markers.push_back(m);
+                ++id;
+            }
+        }
+        visual_marker_pub.publish(markers_msg);
+    }
+
+
 }
+
+
 
 
 
@@ -1820,111 +1213,93 @@ protected:
     
   ros::NodeHandle nh_;
   actionlib::SimpleActionServer<search_service::MultiSearchAction> as_;
+  actionlib::SimpleActionServer<search_service::SetSearchRegionAction> as_region;
+  actionlib::SimpleActionClient<visual_perception::UnknownSearchAction> ac_;
+  std::vector<al_stsp*> stsp_vec;
+  std::vector<al_gsp*> gsp_vec;
   ros::ServiceClient planner_srv_client;
-  ros::ServiceClient planner_srv_client_single;
+  //ros::ServiceClient planner_srv_client_single;
   std::string action_name_;
   int data_count_, goal_;
   float sum_, sum_sq_;
   search_service::MultiSearchFeedback feedback_;
   search_service::MultiSearchResult result_;
+  search_service::SetSearchRegionResult result_region;
 
+
+  //Topic names
+  std::string map_frame;
+  std::string base_frame;
 
   std::string agent1_pose_topic;
-  std::string agent2_pose_topic;
-  std::string agent3_pose_topic;
+
   std::string agent1_map_topic;
-  std::string agent2_map_topic;
-  std::string agent3_map_topic;
+  std::string planner_topic;
 
   double MAX_X;
   double MAX_Y;
   double MIN_X;
   double MIN_Y;
+  int NUMAGENTS;
+  int BOOL_INITPOSES;
 
-  //std::string agent1_map_topic;
-  //std::string agent2_map_topic;
-  //std::string agent3_map_topic;
-
+  //Subscribers
   ros::Subscriber agent1_pose_sub;
-  ros::Subscriber agent2_pose_sub;
-  ros::Subscriber agent3_pose_sub;
+
   ros::Subscriber agent1_localmap_sub;
-  ros::Subscriber agent2_localmap_sub;
-  ros::Subscriber agent3_localmap_sub;
 
-  ros::Subscriber frontiers_poses_sub;
   ros::Subscriber unknown_poses_sub;
-
   ros::Subscriber global_map_sub;
-  ros::Publisher agent1_path_pub;
-  ros::Publisher agent2_path_pub;
-  ros::Publisher agent3_path_pub;
+
+  //Publishers
   ros::Publisher search_map_pub;
-  ros::Publisher search_goal_pub;
-  ros::Publisher search_goal2_pub;
-  ros::Publisher search_goal3_pub;
   ros::Publisher agent1_move_cancel_pub;
   ros::Publisher search_entropy_pub;
   ros::Publisher visual_marker_pub;
+  ros::Publisher polygon_pub;
   int direction_z;
 
-  geometry_msgs::PoseStamped agent1_gpose;
-  geometry_msgs::PoseStamped agent2_gpose;
-  geometry_msgs::PoseStamped agent3_gpose;
+  std::vector<ros::Publisher> path_pubs;
+  std::vector<geometry_msgs::PoseStamped> agents_gpose;
+  std::vector<nav_msgs::OccupancyGrid> agents_maps;
 
-  geometry_msgs::PoseStamped searchgoal_agent1;
-  geometry_msgs::PoseStamped searchgoal_agent2;
-  geometry_msgs::PoseStamped searchgoal_agent3;
-  geometry_msgs::PoseStamped startpose_agent1;
-  geometry_msgs::PoseStamped startpose_agent2;
-  geometry_msgs::PoseStamped startpose_agent3;
-  geometry_msgs::PoseStamped last_goal_agent1;
-  geometry_msgs::PoseStamped last_goal_agent2;
-  geometry_msgs::PoseStamped last_goal_agent3;
-  geometry_msgs::PoseArray agent1_history;
-  geometry_msgs::PoseArray agent2_history;
-  geometry_msgs::PoseArray agent3_history;
-  geometry_msgs::PoseArray agents_history;
-  geometry_msgs::PoseArray frontier_poses;
-  geometry_msgs::PoseArray unknown_poses;
+  geometry_msgs::PoseStamped agent1_gpose;
+
+  geometry_msgs::PoseArray waypoints;
+  geometry_msgs::PoseArray agent_poses;
+  std::vector<geometry_msgs::PoseArray> clustered_poses;
 
   //location map--villa_navigation
   geometry_msgs::PoseArray subgoals;
   nav_msgs::OccupancyGrid agent1_local_map;
-  nav_msgs::OccupancyGrid agent2_local_map;
-  nav_msgs::OccupancyGrid agent3_local_map;
   nav_msgs::OccupancyGrid scaled_global_map;
   nav_msgs::OccupancyGrid global_map;
   nav_msgs::OccupancyGrid search_map;
-  nav_msgs::OccupancyGrid info_map;
   tf::TransformListener   listener;
 
+  //std::vector<double> agent1_pose;
+  //std::vector<double> agent2_pose;
+  //std::vector<double> agent3_pose;
 
-  std::vector<double> agent1_pose;
-  std::vector<double> agent2_pose;
-  std::vector<double> agent3_pose;
+  std::vector<nav_msgs::Path> agent_paths;
+  geometry_msgs::PolygonStamped polygon_;
 
-  bool IsGoal;
   bool IsActive;
+  bool IsCalled;
+  bool pathUpdated;
+  //bool smoothpath;
+  std::vector<bool> Issmoothpath;
+
   double srv_time; 
   double tolerance;
   bool agent1_local_map_updated;
-  bool agent2_local_map_updated;
-  bool agent3_local_map_updated;
   bool global_map_updated;
   bool global_pose_a1_updated;
   bool agent1_pose_updated;
-  bool agent2_pose_updated;
-  bool agent3_pose_updated;
   bool called_once;
-  bool neargoal_agent1;
-  bool neargoal_agent2;
-  bool neargoal_agent3;
   double search_entropy;
   double total_entropy;
   double occ_entropy;
-  int no_count;
-  int horizon;
   bool clustered;
 
   double weight_entropy; 
@@ -1932,6 +1307,8 @@ protected:
 
   std::vector<std::vector<double> >agent_xs;
   std::vector<std::vector<double> >agent_ys;
+  std::vector<nav_msgs::Path> smooth_paths;
+  std::vector<nav_msgs::Path> tsp_paths;
 
 
   tf2_ros::Buffer tf_buffer;
@@ -1941,6 +1318,9 @@ protected:
   Map_params* m_params;
   std::map< std::string, std::vector<double> > goal_maps;
   std::map<int, std::vector<precastDB>> precast_map;
+
+
+
 public:
 
   //StateLatticePlannerROS* pslp_planner;
@@ -1949,7 +1329,7 @@ public:
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "multisearch_action");
+  ros::init(argc, argv, "singlesearch_action");
   MultiSearchManager manager(ros::this_node::getName());
   double ros_rate = 2;
   ros::Rate r(ros_rate);
@@ -1959,6 +1339,8 @@ int main(int argc, char** argv)
       
 	 ros::spinOnce();
      r.sleep();
+     manager.publish_clusters();
+     manager.publish_paths();
   }
   ros::spin();
 

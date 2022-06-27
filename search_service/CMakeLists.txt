@@ -90,6 +90,13 @@ add_executable(mtsp_server src/mtsp_server.cpp src/cluster.cpp
 target_link_libraries(mtsp_server ${catkin_LIBRARIES})
 add_dependencies(mtsp_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
+add_executable(ssp_server src/stsp_server.cpp src/cluster.cpp
+    src/map_util.cpp ${SOURCES})
+target_link_libraries(ssp_server ${catkin_LIBRARIES})
+add_dependencies(ssp_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+
+
+
 add_executable(get_smooth_server src/getsmooth_server.cpp ${SOURCES})
 target_link_libraries(get_smooth_server ${catkin_LIBRARIES})
 add_dependencies(get_smooth_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)

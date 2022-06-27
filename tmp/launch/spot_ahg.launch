@@ -13,7 +13,7 @@
   <arg name="use_web" default="false" />
   <arg name="use_laser_odom" default="false" />
   <arg name="paused" default="true" />
-  <arg name="robot_pos"  default="-x -7.0 -y -5.8 -z 0 -Y 0" />
+  <arg name="robot_pos"  default="-x -7.0 -y -1.5 -z 0 -Y 0" />
   <arg name="fast_physics" default="false" />
   <arg name="robot_name" default="hsrb" />
   <arg name="visualization" default="true" />
@@ -74,6 +74,7 @@
     <rosparam file="$(find tmp)/config/local_costmap_params.yaml" command="load" />
     <rosparam file="$(find tmp)/config/global_costmap_params.yaml" command="load" /> 
     <rosparam file="$(find tmp)/config/base_local_planner_params.yaml" command="load" />
+    <param name="base_global_planner" value="rrtstar_planner/RRT"/>
  </node>
 
  <include file="$(find tmp)/launch/amcl_diff.launch" />
