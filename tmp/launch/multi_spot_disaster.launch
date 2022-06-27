@@ -15,7 +15,7 @@
 
  <arg name="ahg_sim" default="true" />
   <arg name="world_name" value="$(find tmp)/worlds/test_humantrajectory.world"/>
-  <arg name="map" default="$(find tmp)/maps/full_demo_map.yaml" />
+  <arg name="map" default="$(find tmp)/maps/disaster.yaml" />
   <param name="/use_sim_time" value="true"/>
   <arg name="param_file" default="$(optenv HOME ~)/.ros/params.yaml" />
 
