@@ -669,7 +669,7 @@ void prediction_manager::SplitFrontiers(const frontier_exploration::Frontier& fr
 
 frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int initial_cell, unsigned int reference_, std::vector<bool>& visited_flag){
 
-    int max_size = 150;
+    int max_size = 180;
     //int max_size = 100;
     //initialize frontier structure
     frontier_exploration::Frontier output;
@@ -1199,10 +1199,11 @@ std::vector<frontier_exploration::Frontier> prediction_manager::Unknown_search(g
 
         BOOST_FOREACH(unsigned int nbr,nhood4(idx))
         {
-            if(isNewUnknown(nbr, visited_flag))
+            if(costmap_[nbr]==NO_INFORMATION && !visited_flag[nbr])
             {
-                frontier_exploration::Frontier new_frontier = buildNewUnknown(nbr, pos, visited_flag);
+
                 bfs.push(nbr);
+                frontier_exploration::Frontier new_frontier = buildNewUnknown(nbr, pos, visited_flag);
                 unknowns_list.push_back(new_frontier);
             }
 
