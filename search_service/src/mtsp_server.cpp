@@ -88,7 +88,7 @@ double calc_dist(geometry_msgs::Pose pos1, geometry_msgs::Pose pos2)
     double dist_=pow(pos1.position.x-pos2.position.x, 2);
     dist_+=pow(pos1.position.y-pos2.position.y, 2);
 
-    return dist_;
+    return sqrt(dist_);
 
 }
 
@@ -155,7 +155,7 @@ public:
   weight_travel(1.5),
   m_params(NULL)
   {
-     nh_.param("MAX_X", MAX_X, {16.0});
+     nh_.param("MAX_X", MAX_X, {10.0});
      nh_.param("MIN_X", MIN_X, {-15.0});
      nh_.param("MAX_Y", MAX_Y, {20.0});
      nh_.param("MIN_Y", MIN_Y, {-30.0});
@@ -206,6 +206,7 @@ public:
      ROS_INFO("min_x: %.2lf",MIN_X);
      ROS_INFO("min_y: %.2lf",MIN_Y);
 
+     //search_map.data.resize((search_map.info.width * search_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
      m_params= new Map_params(MAX_X, MAX_Y, MIN_X, MIN_Y);
      search_map.info.resolution = m_params->xyreso;
      search_map.info.width= m_params->xw;
@@ -303,8 +304,8 @@ public:
   /* Set_Search_region action callback function */
   void executeCB_SR(const search_service::SetSearchRegionGoalConstPtr &goal)
   {
-
      updateBoundsFromPolygon(goal->boundary.polygon,MIN_X,MIN_Y,MAX_X, MAX_Y);
+     //ROS_INFO("MIN_X: %.2lf, MIN_Y: %.2lf , MAX_X: %.2lf , MAX_Y: %.2lf", MIN_X, MIN_Y, MAX_X, MAX_Y);
      //calculate_ max,max_y, min_x, min_y
      m_params= new Map_params(MAX_X, MAX_Y, MIN_X, MIN_Y);
      search_map.info.resolution = m_params->xyreso;
@@ -342,7 +343,6 @@ public:
      as_region.setSucceeded(result_region);
 
   }
-
 
   /* MultiSearch action callback function */
   void executeCB(const search_service::MultiSearchGoalConstPtr &goal)
@@ -471,25 +471,20 @@ public:
                  else
                  {
                      pathgoal.use_prediction=0;
-                 
                  }
-
                  //check IG for path
-                 
-                 //call GetSmoothPath Action
                  gsp_vec[j]->sendGoal(pathgoal);
                  ROS_INFO("Get Smooth Path for agent %d started", j);
              }
 
              for(size_t j(0);j<NUMAGENTS;j++)
              {
-                finished_before_timeout_gsp= gsp_vec[j]->waitForResult(ros::Duration(22.0));
+                finished_before_timeout_gsp= gsp_vec[j]->waitForResult(ros::Duration(45.0));
                 //finished_before_timeout_gsp= gsp_vec[j]->waitForResult();
                  if(finished_before_timeout_gsp)
                  {
                       ROS_INFO("GSP solution obtained for agent %d",j);
                       auto gsp_res=gsp_vec[j]->getResult();
-                      //save_paths for each agents
                       //agent_paths[j] = gsp_res->output_path;
                       smooth_paths[j]=gsp_res->output_path;
                       Issmoothpath[j]=true;
@@ -510,6 +505,7 @@ public:
                  ROS_INFO("succedded");
                  pathUpdated=true;
                  publish_paths();
+                 calc_length_paths();
                  return;
          }
          else{
@@ -842,6 +838,31 @@ void publish_paths()
     }
 }
 
+void calc_length_paths()
+{
+    
+    double path_distance =0.0;
+
+    for(size_t i(0);i<NUMAGENTS;i++)
+    {
+        if(Issmoothpath[i])
+        {
+            path_distance=0.0;
+            for(size_t j(0);j<smooth_paths[i].poses.size()-1;j++)
+            {
+                path_distance+=calc_dist(smooth_paths[i].poses[j].pose, smooth_paths[i].poses[j+1].pose);
+                //ROS_INFO("cur_pose: %.2lf, %.2lf ", smooth_paths[i].poses[j].pose.position.x, smooth_paths[i].poses[j].pose.position.y);
+                //ROS_INFO("next_pose: %.2lf, %.2lf", smooth_paths[i].poses[j+1].pose.position.x, smooth_paths[i].poses[j+1].pose.position.y);
+                //ROS_INFO("path_length: %.2lf", path_distance);
+
+            }
+            ROS_INFO("i: %d, path_length: %.2lf", i, path_distance);
+
+        }
+    }
+}
+
+
 /* function: Obtaining Smooth Paths from her publisher function to publish smooth paths*/
 bool get_smooth_paths(int n_agent)
 {
@@ -1009,8 +1030,8 @@ bool clustering(int n_agent, std::vector<int> agentvec_)
         Posevec.push_back(agent_poses.poses[agentvec_[i]]);
         weights.push_back(1.0);
     }
-    weights[1]=1.8;
-    weights[2]=1.8;
+    weights[0]=1.0;
+    weights[1]=1.0;
 
     if(!clustered)
     {

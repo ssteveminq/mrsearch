@@ -10,7 +10,8 @@
     <node name="pathfollow_client_0" pkg="search_service" type="pathfollow_client" output="screen" args="$(arg pf_agent0)"/>
     <node name="pathfollow_client_1" pkg="search_service" type="pathfollow_client" output="screen" args="$(arg pf_agent1)"/>
     <node name="pathfollow_client_2" pkg="search_service" type="pathfollow_client" output="screen" args="$(arg pf_agent2)"/>
-    <node name="pathfollow_client_3" pkg="search_service" type="pathfollow_client" output="screen" args="$(arg pf_agent3)"/>
+    <node name="pathfollow_client_3" pkg="search_service" type="pathfollow_client" output="screen" args="$(arg pf_agent3)"/> 
+
     <!--<node name="pathfollow_client_4" pkg="search_service" type="pathfollow_client" output="screen" args="$(arg pf_agent4)"/>-->
 
     <!--<arg name="target_nav_action_0" default="tb1/move_base"/>-->

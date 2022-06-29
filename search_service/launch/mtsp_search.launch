@@ -3,7 +3,7 @@
 
     <rosparam file="$(find search_service)/config/ahg.yaml"/>
 
-    <arg name="agent1_pose_topic" default="tb1/amcl_pose"/> <!-- "tb1/amcl_pose"/> -->
+    <arg name="agent1_pose_topic" default="tb1/pose"/> <!-- "tb1/amcl_pose"/> -->
     <arg name="agent2_pose_topic" default="tb2/pose"/> <!-- "tb2/amcl_pose"/> -->
     <arg name="agent3_pose_topic" default="tb3/pose"/> <!-- "tb3/amcl_pose"/> -->
     <arg name="agent4_pose_topic" default="tb4/pose"/> <!-- "tb4/amcl_pose"/> -->
@@ -14,10 +14,10 @@
     <arg name="agent4_map_topic" default="tb4/move_base/local_costmap/costmap"/>
 
     <arg name="planner_topic" default="tb1/move_base/make_plan"/>
-    <arg name="max_x" default="12.0"/>
-    <arg name="min_x" default="-10.0"/>
-    <arg name="max_y" default="10.0"/>
-    <arg name="min_y" default="-10"/>
+    <arg name="max_x" default="50.0"/>
+    <arg name="min_x" default="-50.0"/>
+    <arg name="max_y" default="50.0"/>
+    <arg name="min_y" default="-50"/>
     <arg name="num_agents" default="4"/>
 
     <param name="MAX_X" value="$(arg max_x)"/>
@@ -63,10 +63,10 @@
     <node name="agent_2_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
     <node name="agent_3_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
 
-    <arg name="get_plan_agent0" default="tb1/move_base/make_plan"/>
-    <arg name="get_plan_agent1" default="tb2/move_base/make_plan"/>
-    <arg name="get_plan_agent2" default="tb3/move_base/make_plan"/>
-    <arg name="get_plan_agent3" default="tb4/move_base/make_plan"/>
+    <arg name="get_plan_agent0" default="tb1/move_base/GlobalPlanner/make_plan"/>
+    <arg name="get_plan_agent1" default="tb2/move_base/GlobalPlanner/make_plan"/>
+    <arg name="get_plan_agent2" default="tb3/move_base/GlobalPlanner/make_plan"/>
+    <arg name="get_plan_agent3" default="tb4/move_base/GlobalPlanner/make_plan"/>
 
     <node name="agent_0_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent0)"/>
     <node name="agent_1_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent1)"/>

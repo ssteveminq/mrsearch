@@ -16,13 +16,13 @@
     <arg name="target_nav_action_0" default="tb1/move_base"/>
     <arg name="target_nav_action_1" default="tb2/move_base"/>
     <arg name="target_nav_action_2" default="tb3/move_base"/>
-    <!--<arg name="target_nav_action_3" default="tb4/move_base"/>-->
+    <arg name="target_nav_action_3" default="tb4/move_base"/>
     <!--<arg name="target_nav_action_4" default="tb5/move_base"/>-->
 
     <arg name="target_path_0" default="agent_0_path"/>
     <arg name="target_path_1" default="agent_1_path"/>
     <arg name="target_path_2" default="agent_2_path"/>
-    <!-- <arg name="target_path_3" default="agent_3_path"/> -->
+     <arg name="target_path_3" default="agent_3_path"/> 
     <!--<arg name="target_path_4" default="agent_4_path"/>-->
 
     <node name="path_follow_agent_0" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_0) $(arg target_path_0)"/>

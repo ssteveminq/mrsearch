@@ -72,7 +72,8 @@ class waypoint_manager(object):
             movegoal.target_pose= pose
             # rospy.loginfo("sending goal", self.goal)
             self.cli.send_goal(movegoal)
-            self.cli.wait_for_result(rospy.Duration(15.0))
+            # self.cli.wait_for_result(rospy.Duration(10.5))
+            self.cli.wait_for_result()
             rospy.loginfo("moving to the goal")
             action_state=self.cli.get_state()
             rospy.loginfo(action_state)
