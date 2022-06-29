@@ -17,7 +17,7 @@ sudo apt-get install ros-melodic-geometry2
  - Configure launch parameters in search_service/launch/mtsp_search.launch
  
 
-#Simulation
+## Simulation
 - Run the Gazebo world with two Spot quadrupeds (AHG world - 3 agents)
 ```
 roslaunch tmp three_spot_ahg.launch
@@ -35,6 +35,17 @@ roslaunch search_service mtsp_search.launch
 - Run action client for multisearch (Client)
 ``` 
 rosrun search_service multisearch_action_client.py
+```
+
+## Experiment (June 2022)
+- Turn on robots and Run the launch file
+```
+roslaunch nrg_mtsp_search.launch
+```
+- Ros bag records 
+- ToDo: check image topics for both robots and add them
+```
+rosbag record /jackal/amcl_pose walrus/amcl_pose /search_map walrus/fov_map jackal/fov_map /tf /clusters /walrus/search_agent_manager/waypoint_plan jackal/search_agent_manager/waypoint_plan
 ```
  
 ## Documentation
