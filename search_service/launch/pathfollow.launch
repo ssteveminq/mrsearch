@@ -28,7 +28,7 @@
     <node name="path_follow_agent_0" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_0) $(arg target_path_0)"/>
     <node name="path_follow_agent_1" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_1) $(arg target_path_1)"/>
     <node name="path_follow_agent_2" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_2) $(arg target_path_2)"/>
-    <!--<node name="path_follow_agent_3" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_3) $(arg target_path_3)"/>-->
+    <node name="path_follow_agent_3" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_3) $(arg target_path_3)"/>
     <!--<node name="path_follow_agent_4" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_4) $(arg target_path_4)"/>-->
 
 

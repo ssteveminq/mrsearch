@@ -91,7 +91,7 @@
     <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
  </node>
 
- <include file="$(find tmp)/launch/amcl_diff2.launch"/>
+ <include file="$(find tmp)/launch/amcl_diff.launch"/>
   </group>
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find tmp)/config/spot.rviz" if="$(arg rviz)"/>

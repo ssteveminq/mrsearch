@@ -14,8 +14,8 @@ def mains():
     client.wait_for_server()
     goal = search_service.msg.MultiSearchGoal()
     goal.replan=True
-    goal.num_agent=2
-    goal.fail_idx=2
+    goal.num_agent=4
+    goal.fail_idx=4
     print("call search action client")
 
     rospy.loginfo("start action")
