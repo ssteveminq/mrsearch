@@ -1,0 +1,22 @@
+#goal definition
+
+# Boundary for exploration task
+#geometry_msgs/PolygonStamped boundary
+# Starting point for exploration task, inside the boundary
+int32 num_agent
+bool use_config
+float32 agent1_pos_x
+float32 agent1_pos_y
+float32 agent1_fov
+float32 agent1_speed
+float32 agent2_pos_x
+float32 agent2_pos_y
+float32 agent2_fov
+float32 agent2_speed
+---
+#result definition
+nav_msgs/Path[] paths
+float32 cur_entropy
+---
+#feedback
+#float32 cur_entropy

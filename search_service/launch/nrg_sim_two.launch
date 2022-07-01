@@ -1,19 +1,16 @@
 <?xml version="1.0"?>
 <launch>
 
-    <!--<arg name="agent1" default="walrus"/>-->
-    <arg name="agent1" default="jackal"/>
-    <arg name="agent2" default="walrus"/>
-    <!--<arg name="agent3" default="spot"/>-->
+    <arg name="agent1" default=""/>
+    <!--<arg name="agent2" default="jackal"/>-->
+    <arg name="agent2" default="spot2"/>
 
     <rosparam file="$(find search_service)/config/ahg.yaml"/>
-    <!--<rosparam file="$(find search_service)/config/config.yaml"/>-->
-    <arg name="agent1_pose_topic" default="amcl_pose"/>
+    <arg name="agent1_pose_topic" default="$(arg agent1)/amcl_pose"/>
     <arg name="agent2_pose_topic" default="$(arg agent2)/amcl_pose"/>
     <!--<arg name="agent3_pose_topic" default="$(arg agent3)/amcl_pose"/>-->
-    <!--<arg name="agent1_map_topic" default="move_base/local_costmap/costmap"/>-->
-    <arg name="agent1_map_topic" default="jackal/fov_map"/>
-    <arg name="agent2_map_topic" default="$(arg agent2)/local_costmap/costmap/costmap2"/>
+    <arg name="agent1_map_topic" default="$(arg agent1)/local_costmap/costmap/costmap"/>
+    <arg name="agent2_map_topic" default="$(arg agent2)/local_costmap/costmap/costmap"/>
     <!--<arg name="agent3_map_topic" default="$(arg agent3)/local_costmap/costmap/costmap"/>-->
     <arg name="planner_topic" default="$(arg agent1)/move_base/make_plan"/>
     <arg name="max_x" default="12.0"/>
@@ -28,25 +25,25 @@
     <param name="MIN_Y" value="$(arg min_y)"/>
     <param name="AGENT1_POSE_TOPIC" value="$(arg agent1_pose_topic)"/>
     <param name="AGENT2_POSE_TOPIC" value="$(arg agent2_pose_topic)"/>
-    <!--<param name="AGENT3_POSE_TOPIC" value="$(arg agent3_pose_topic)"/>-->
+    <param name="AGENT3_POSE_TOPIC" value="$(arg agent3_pose_topic)"/>
     <param name="AGENT1_MAP_TOPIC" value="$(arg agent1_map_topic)"/>
     <param name="AGENT2_MAP_TOPIC" value="$(arg agent2_map_topic)"/>
-    <!--<param name="AGENT3_MAP_TOPIC" value="$(arg agent3_map_topic)"/>-->
+    <param name="AGENT3_MAP_TOPIC" value="$(arg agent3_map_topic)"/>
     <param name="PLANNER_TOPIC" value="$(arg planner_topic)"/>
     <param name="NUM_AGENT" value="$(arg num_agents)"/>
     <param name="DIR_PATH" value="$(arg num_agents)"/>
 
 
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/campus3.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/full_demo_map.yaml"/>
 
     <node name="scaled_map_converter" pkg="search_service" type="scaled_map_converter" output="screen">
         <!--<remap from="/map" to="/walrus/map"/>-->
     </node>
-    <node name="fake_multisearch_action" pkg="search_service" type="fake_mtsp_server" output="screen">
-        <remap from="/agent_0_path" to="/jackal/search_agent_manager/waypoint_plan"/>
-        <remap from="/agent_1_path" to="/walrus/search_agent_manager/waypoint_plan"/>
+    <node name="multisearch_action" pkg="search_service" type="mtsp_server" output="screen">
+        <remap from="/agent_0_path" to="/walrus/search_agent_manager/waypoint_plan"/>
+        <remap from="/agent_1_path" to="/jackal/search_agent_manager/waypoint_plan"/>
     </node>
-    <node name="getunknowns" pkg="visual_perception" type="visual_prediction_server" output="screen"/>
+    <node name="getunknowns" pkg="visual_perception" type="prediction_server" output="screen"/>
     <!--<node name="tsp_solve_action" pkg="search_service" type="tsp_server" output="screen"/>-->
     <node name="polygon_client" pkg="search_service" type="plugin_client" output="screen"/>
 

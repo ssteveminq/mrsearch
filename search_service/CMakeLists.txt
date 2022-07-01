@@ -32,6 +32,7 @@ add_action_files(
    FILES 
    Search.action
    MultiSearch.action
+   FakeMultiSearch.action
    PathFollow.action
    TSPSolve.action
    SetSearchRegion.action
@@ -88,6 +89,12 @@ add_executable(mtsp_server src/mtsp_server.cpp src/cluster.cpp
     src/map_util.cpp ${SOURCES})
 target_link_libraries(mtsp_server ${catkin_LIBRARIES})
 add_dependencies(mtsp_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+
+
+add_executable(fake_mtsp_server src/fake_mtsp_server.cpp src/cluster.cpp
+    src/map_util.cpp ${SOURCES})
+target_link_libraries(fake_mtsp_server ${catkin_LIBRARIES})
+add_dependencies(fake_mtsp_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
 add_executable(get_smooth_server src/getsmooth_server.cpp ${SOURCES})
 target_link_libraries(get_smooth_server ${catkin_LIBRARIES})

@@ -1,17 +1,17 @@
 import sys
 # sys.path.remove('/usr/lib/python2.7/dist-packages')
 
-for path_ in sys.path:
-    sys.path.remove(path_)
-sys.path.append('/home/mk/anaconda3/envs/py27/lib/python2.7/dist-packages')
-sys.path.append('/home/mk/anaconda3/envs/py2/lib/python2.7/site-packages')
-sys.path.remove('/usr/lib/python2.7/dist-packages')
+# for path_ in sys.path:
+    # sys.path.remove(path_)
+# sys.path.append('/home/mk/anaconda3/envs/py27/lib/python2.7/dist-packages')
+# sys.path.append('/home/mk/anaconda3/envs/py2/lib/python2.7/site-packages')
+# sys.path.remove('/usr/lib/python2.7/dist-packages')
 
 # sys.path.append('/usr/lib/python2.7/dist-packages')
-print("sys.pth", sys.path)
+# print("sys.pth", sys.path)
 import numpy as np
-sys.path.append('/opt/ros/melodic/lib/python2.7/dist-packages')
-sys.path.append('/usr/lib/python2.7/dist-packages')
+# sys.path.append('/opt/ros/melodic/lib/python2.7/dist-packages')
+# sys.path.append('/usr/lib/python2.7/dist-packages')
 # import matplotlib.pyplot as plt
 import random
 import math
