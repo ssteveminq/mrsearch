@@ -22,7 +22,7 @@ from search_service.msg import SetSearchRegionAction, SetSearchRegionFeedback, S
 _ORIGIN_TF ='map'
 
 def load_yamlfile():
-    with open('../config/wboundary.yaml') as file:
+    with open('../config/boundaries.yaml') as file:
         yaml_data=yaml.load(file, Loader=yaml.Loader)
         # print("yaml_data", yaml_data)
         boundaries= yaml_data['boundaries']

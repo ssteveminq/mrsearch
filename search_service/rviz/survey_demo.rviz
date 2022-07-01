@@ -368,6 +368,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         velodyne_base_link:
           Alpha: 1
           Show Axes: false
@@ -398,7 +399,7 @@ Visualization Manager:
       Marker Topic: /search_polygon_marker
       Name: Marker
       Namespaces:
-        {}
+        explore_points: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -452,7 +453,7 @@ Visualization Manager:
       Marker Topic: /clusters
       Name: MarkerArray
       Namespaces:
-        {}
+        unknowns: true
       Queue Size: 100
       Value: true
     - Class: rviz/TF
@@ -479,6 +480,8 @@ Visualization Manager:
         jackal/imu_link:
           Value: true
         jackal/imu_link_ned:
+          Value: true
+        jackal/map:
           Value: true
         jackal/mid_mount:
           Value: true
@@ -607,6 +610,44 @@ Visualization Manager:
       Show Names: true
       Tree:
         map:
+          jackal/map:
+            jackal/odom:
+              jackal/base:
+                jackal/base_link:
+                  jackal/chassis_link:
+                    jackal/front_fender_link:
+                      {}
+                    jackal/front_left_wheel_link:
+                      {}
+                    jackal/front_right_wheel_link:
+                      {}
+                    jackal/mid_mount:
+                      jackal/ark_enclosure_link:
+                        {}
+                      jackal/front_mount:
+                        {}
+                      jackal/rear_mount:
+                        {}
+                    jackal/navsat_link:
+                      {}
+                    jackal/rear_fender_link:
+                      {}
+                    jackal/rear_left_wheel_link:
+                      {}
+                    jackal/rear_right_wheel_link:
+                      {}
+                  jackal/sensor_plate_link:
+                    jackal/imu_link:
+                      jackal/imu_link_ned:
+                        {}
+                    jackal/realsense_front_link:
+                      {}
+                    jackal/tracking_camera_link:
+                      {}
+                    jackal/velodyne_link:
+                      jackal/velodyne_base_link:
+                        jackal/velodyne:
+                          {}
           walrus/map:
             walrus/odom:
               walrus/base:
@@ -714,15 +755,15 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 39.25651550292969
+      Distance: 80.7126235961914
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 5.83798360824585
-        Y: -0.303130567073822
+        X: 5.709869384765625
+        Y: -0.30392351746559143
         Z: -0.0003393035149201751
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
@@ -750,5 +791,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: 3000
-  Y: 815
+  X: 125
+  Y: 101
