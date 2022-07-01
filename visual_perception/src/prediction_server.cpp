@@ -669,7 +669,7 @@ void prediction_manager::SplitFrontiers(const frontier_exploration::Frontier& fr
 
 frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int initial_cell, unsigned int reference_, std::vector<bool>& visited_flag){
 
-    int max_size = 150;
+    int max_size = 240;
     //int max_size = 100;
     //initialize frontier structure
     frontier_exploration::Frontier output;
@@ -1199,10 +1199,11 @@ std::vector<frontier_exploration::Frontier> prediction_manager::Unknown_search(g
 
         BOOST_FOREACH(unsigned int nbr,nhood4(idx))
         {
-            if(isNewUnknown(nbr, visited_flag))
+            if(costmap_[nbr]==NO_INFORMATION && !visited_flag[nbr])
             {
-                frontier_exploration::Frontier new_frontier = buildNewUnknown(nbr, pos, visited_flag);
+
                 bfs.push(nbr);
+                frontier_exploration::Frontier new_frontier = buildNewUnknown(nbr, pos, visited_flag);
                 unknowns_list.push_back(new_frontier);
             }
 
@@ -1240,7 +1241,7 @@ void prediction_manager::FindUnknowns()
 
     //auto map_iter=goal_maps.begin();
     //for(map_iter; map_iter!=goal_maps.end();map_iter++)
-    int max_iter=100;
+    int max_iter=50;
     int iter_=0;
     boost::random::mt19937 gen;
     boost::random::uniform_real_distribution<> distx(MIN_X, MAX_X);
@@ -1265,8 +1266,8 @@ void prediction_manager::FindUnknowns()
             avg_pose.position.x=frontier.centroid.x;
             avg_pose.position.y=frontier.centroid.y;
             avg_pose.orientation.w=1.0;
+            ROS_INFO("avg_x: %.2lf, avg_y: %.2lf", avg_pose.position.x, avg_pose.position.y);
             unknown_poses.poses.push_back(avg_pose);
-        
         }
 
         true_ratio = get_visited_ratio(visited_flag);

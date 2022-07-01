@@ -53,20 +53,19 @@ def load_yamlfile():
 
 def mains():
     # Initialize
-    # boundaries = load_search_region_yamlfile()
-    # p = PolygonStamped()
-    # for boundary in boundaries:
-        # p.polygon.points.append(Point32(x=boundary[0],y=boundary[1]))
-    # print("p", p)
+    boundaries = load_search_region_yamlfile()
+    p = PolygonStamped()
+    for boundary in boundaries:
+        p.polygon.points.append(Point32(x=boundary[0],y=boundary[1]))
 
-    # client = actionlib.SimpleActionClient('set_search_region',SetSearchRegionAction)
-    # print("wait_for_server")
-    # client.wait_for_server()
-    # goal = SetSearchRegionGoal()
-    # goal.boundary=p
-    # rospy.loginfo("start action")
-    # client.send_goal(goal)
-    # client.wait_for_result()
+    client = actionlib.SimpleActionClient('set_search_region',SetSearchRegionAction)
+    print("wait_for_server")
+    client.wait_for_server()
+    goal = SetSearchRegionGoal()
+    goal.boundary=p
+    rospy.loginfo("start action")
+    client.send_goal(goal)
+    client.wait_for_result()
 
     agent1_data, agent2_data = load_yamlfile()
     print("call search action client")
@@ -87,6 +86,9 @@ def mains():
     print("call fake multi search action client")
     sclient.send_goal(sgoal)
     sclient.wait_for_result()
+    ac_result = sclient.get_result()
+    
+    print("res", ac_result )
 
     # client.send_goal(goal)
     # client.wait_for_result()

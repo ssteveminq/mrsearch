@@ -27,8 +27,10 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
 #include <std_msgs/Bool.h>
-#include <search_service/GetSmoothPathAction.h>
-#include <search_service/GetSmoothPathResult.h>
+//#include <search_service/GetSmoothPathAction.h>
+//#include <search_service/GetSmoothPathResult.h>
+#include <search_service/GetForwardPathAction.h>
+#include <search_service/GetForwardPathResult.h>
 #include <search_service/FakeMultiSearchAction.h>
 #include <search_service/FakeMultiSearchResult.h>
 #include <search_service/SetSearchRegionAction.h>
@@ -36,7 +38,7 @@
 #include <search_service/SetSearchRegionResult.h>
 #include <search_service/FakeMultiSearchResult.h>
 #include <search_service/SearchAction.h>
-#include <visual_perception/VisualUnknownSearchAction.h>
+#include <visual_perception/UnknownSearchAction.h>
 #include <search_service/TSPSolveAction.h>
 #include <search_service/TSPSolveResult.h>
 #include <search_service/SingleTSPSolveAction.h>
@@ -69,7 +71,8 @@
 
 
 typedef actionlib::SimpleActionClient<search_service::SingleTSPSolveAction>  al_stsp;
-typedef actionlib::SimpleActionClient<search_service::GetSmoothPathAction>  al_gsp;
+typedef actionlib::SimpleActionClient<search_service::GetForwardPathAction>  al_gsp;
+//typedef actionlib::SimpleActionClient<search_service::GetSmoothPathAction>  al_gsp;
 
 using namespace std;
 
@@ -253,8 +256,6 @@ public:
          stsp_vec[i]= new al_stsp("agent_"+std::to_string(i)+"_tspsolve", true);
          gsp_vec[i]= new al_gsp("agent_"+std::to_string(i)+"_getpath", true);
      }
-     ROS_INFO("hello");
-
 
      //subscribers
      global_map_sub = nh_.subscribe<nav_msgs::OccupancyGrid>("/scaled_static_map", 1, &MultiSearchManager::global_map_callback, this);
@@ -364,10 +365,14 @@ public:
     geometry_msgs::PoseStamped tmp_pose;
     tmp_pose.pose.position.x=goal->agent1_pos_x;
     tmp_pose.pose.position.y=goal->agent1_pos_y;
+    tmp_pose.pose.orientation.w=1.0;
+
+
     agent_poses.poses[0]=tmp_pose.pose;
     geometry_msgs::PoseStamped tmp_pose2;
     tmp_pose2.pose.position.x=goal->agent2_pos_x;
     tmp_pose2.pose.position.y=goal->agent2_pos_y;
+    tmp_pose2.pose.orientation.w=1.0;
     agent_poses.poses[1]=tmp_pose2.pose;
 
     tsp_paths.clear();
@@ -408,7 +413,7 @@ public:
      ROS_INFO("current_entropy: %.2lf", search_entropy);
 
      //Call Waypoint Generateion (UnknwonSearch action)
-     visual_perception::VisualUnknownSearchGoal unknwongoal;
+     visual_perception::UnknownSearchGoal unknwongoal;
      ac_.sendGoal(unknwongoal);
      bool finished_before_timeout = ac_.waitForResult(ros::Duration(30.0)); //Wait for 20s
      bool finished_before_timeout_stsp;
@@ -444,7 +449,7 @@ public:
                       //save_paths for each agents
                       agent_paths[j] = stsp_res->path;
                       tsp_paths[j] = stsp_res->path;
-                      Issmoothpath[j]=true;
+                      //Issmoothpath[j]=true;
                  }
                  else{
                     ROS_WARN("can't obtain tsp path for agent %d",j);
@@ -452,9 +457,45 @@ public:
                     return;
                  }
              }
-             result_.paths=tsp_paths;
-             as_.setSucceeded(result_);
+             //find the shortest path with connecting the waypoint which is nearest from the previous one
+             for(size_t j(0);j<NUMAGENTS;j++)
+             {
+                 search_service::GetForwardPathGoal pathgoal;
+                 pathgoal.agent_idx=j;
+                 pathgoal.start_pos= agent_poses.poses[agentvec[j]];
+                 pathgoal.input_path=agent_paths[j];
+                 pathgoal.search_map=search_map;
+                 //check IG for path
+                 gsp_vec[j]->sendGoal(pathgoal);
+                 ROS_INFO("Get Forward Path for agent %d started", j);
+             }
 
+             for(size_t j(0);j<NUMAGENTS;j++)
+             {
+                finished_before_timeout_gsp= gsp_vec[j]->waitForResult(ros::Duration(30.0));
+                 if(finished_before_timeout_gsp)
+                 {
+                      ROS_INFO("GSP solution obtained for agent %d",j);
+                      auto gsp_res=gsp_vec[j]->getResult();
+                      //agent_paths[j] = gsp_res->output_path;
+                      smooth_paths[j]=gsp_res->output_path;
+                      Issmoothpath[j]=true;
+                 }
+                 else{
+                    ROS_WARN("can't obtain smooth path for agent %d",j);
+                    //as_.setAborted(result_);
+                    //return;
+                    //
+                    //smooth_paths[j]=agent_paths[j];
+                    Issmoothpath[j]=true;
+                 }
+             }
+
+
+
+             result_.cur_entropy = search_entropy;
+             result_.paths=smooth_paths;
+             //as_.setSucceeded(result_);
              //call get_smooth_action_server (parallel)
              as_.setSucceeded(result_);
              ROS_INFO("succedded");
@@ -514,7 +555,7 @@ public:
       //ROS_INFO("agent2_callback");
       agent2_gpose.pose=msg->pose.pose;
       agent2_pose_updated=true;
-      agent_poses.poses[1]=msg->pose.pose;
+      //agent_poses.poses[1]=msg->pose.pose;
 
   }
 
@@ -524,7 +565,7 @@ public:
       //ROS_INFO("agent3_callback");
       agent3_gpose.pose=msg->pose.pose;
       agent3_pose_updated=true;
-      agent_poses.poses[2]=msg->pose.pose;
+      //agent_poses.poses[2]=msg->pose.pose;
   }
 
   void agent4_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
@@ -782,7 +823,7 @@ void publish_paths()
     {
         if(Issmoothpath[i])
         {
-            path_pubs[i].publish(tsp_paths[i]);
+            path_pubs[i].publish(smooth_paths[i]);
         }
     }
 }
@@ -1179,7 +1220,7 @@ protected:
   ros::NodeHandle nh_;
   actionlib::SimpleActionServer<search_service::FakeMultiSearchAction> as_;
   actionlib::SimpleActionServer<search_service::SetSearchRegionAction> as_region;
-  actionlib::SimpleActionClient<visual_perception::VisualUnknownSearchAction> ac_;
+  actionlib::SimpleActionClient<visual_perception::UnknownSearchAction> ac_;
   std::vector<al_stsp*> stsp_vec;
   std::vector<al_gsp*> gsp_vec;
   //actionlib::SimpleActionClient<search_service::SingleTSPSolveAction> ac_stsp;
