@@ -35,7 +35,7 @@
     <param name="DIR_PATH" value="$(arg num_agents)"/>
 
 
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/campus3.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg-alley.yaml"/>
 
     <node name="scaled_map_converter" pkg="search_service" type="scaled_map_converter" output="screen">
         <!--<remap from="/map" to="/walrus/map"/>-->
