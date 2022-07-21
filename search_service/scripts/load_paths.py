@@ -58,7 +58,7 @@ class path_manager(object):
         self.starter()
 
     def load_yamlfile(self):
-        with open('config/paths3.yaml') as file:
+        with open('config/visual_paths.yaml') as file:
             yaml_data=yaml.load(file, Loader=yaml.Loader)
             # path_info(yaml_data['walrus'])
 

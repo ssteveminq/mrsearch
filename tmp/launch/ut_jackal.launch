@@ -60,6 +60,8 @@
   </node>
 
 
+  <!--<node pkg="a1_autonomy" type="enml_hsrb" respawn="false" name="non_markov_localization_hsrb" output="screen" args="-config_dir $(find a1_autonomy)/config -robot_config hsrb_gazebo.lua -maps_dir $(find a1_autonomy)/enml/maps -d1"/>-->
+
  <!--<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">-->
 
   <!--<rosparam file="$(find jackal_navigation)/params/costmap_common_params.yaml" command="load" ns="global_costmap" />-->

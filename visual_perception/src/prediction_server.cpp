@@ -702,7 +702,6 @@ frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int 
 
         //try adding cells in 8-connected neighborhood to frontier
         BOOST_FOREACH(unsigned int nbr, nhood8(idx)){
-
             //check if neighbour is a potential frontier cell
             if(output.size>max_size)
             {
