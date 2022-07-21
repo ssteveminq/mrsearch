@@ -1,3 +1,10 @@
 *.pyc
 tags
 actor_plugin/lib
+
+third_party/bin
+third_party/lib
+third_party/amrl_msgs/build
+third_party/amrl_msgs/lib
+third_party/amrl_msgs/*_gen
+

@@ -1,0 +1,16 @@
+<package>
+  <description brief="third_party">Third Party code from UT Auonomous Mobile Robots Lab</description>
+  <author>Maintained by Ryan Gupta</author>
+  <license>LGPLv3.0</license>
+  <review status="unreviewed" notes=""/>
+  <url>https://github.com/Ryangupta8/a1_autonomy</url>
+  <depend package="roscpp"/>
+  <depend package="std_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="nav_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="tf"/>
+  <depend package="amrl_msgs"/>
+  <depend package="rosbag"/>
+</package>
+

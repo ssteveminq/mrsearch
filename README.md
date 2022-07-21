@@ -41,3 +41,17 @@ rosrun search_service multisearch_action_client.py
 See [API wiki](https://github.com/ssteveminq/mrsearch/wiki/API)
 
 
+## Third Party Code
+[1] - Biswas, Joydeep, and Manuela Veloso. "Episodic non-markov localization: Reasoning about short-term and long-term features."2014 IEEE International Conference on Robotics and Automation (ICRA). IEEE, 2014.
+Dependencies
+1. sudo apt install qt5-default libqt5websockets5-dev libgoogle-glog-dev libgflags-dev cd catkin_ws/src/a1_autonomy/enml && ./InstallPackages
+
+Build the Code
+1. cd mrsearch/third_party
+2. export ROS_PACKAGE_PATH=`pwd`:$ROS_PACKAGE_PATH 
+3. cd amrl_msgs && export ROS_PACKAGE_PATH=`pwd`:$ROS_PACKAGE_PATH 
+4. make
+5. cd .. 
+6. make 
+7. catkin build
+
