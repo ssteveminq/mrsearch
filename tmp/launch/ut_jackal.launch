@@ -29,6 +29,7 @@
     <arg name="world_name" value="$(arg world_name)" />
   </include>
 
+
   <!-- Spawn Jackal -->
   <include file="$(find jackal_gazebo)/launch/spawn_jackal.launch">
     <arg name="x" value="0" />
@@ -59,8 +60,7 @@
       <remap from="/camera_region_map" to="jackal/fov_map"/>
   </node>
 
-
-  <!--<node pkg="a1_autonomy" type="enml_hsrb" respawn="false" name="non_markov_localization_hsrb" output="screen" args="-config_dir $(find a1_autonomy)/config -robot_config hsrb_gazebo.lua -maps_dir $(find a1_autonomy)/enml/maps -d1"/>-->
+  <node pkg="a1_autonomy" type="enml_hsrb" respawn="false" name="non_markov_localization_hsrb" output="screen" args="--config_dir $(find a1_autonomy)/config --robot_config hsrb_gazebo.lua --maps_dir $(find a1_autonomy)/enml/maps -d1"/>
 
  <!--<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">-->
 
@@ -79,7 +79,7 @@
   <!--<remap from="odom" to="odometry/filtered" />-->
  <!--</node>-->
 
- <!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find jackal_viz)/rviz/robot.rviz"/>-->
+ <node name="rviz" pkg="rviz" type="rviz" args="-d $(find jackal_viz)/rviz/robot.rviz"/>
 
 
 </launch>
