@@ -1,6 +1,6 @@
 image: ahg-alley-scaled-edited.pgm
 resolution: 0.020000
-origin: [-22.60000, -66.520000, 0.000000]
+origin: [-23.60000, -65.520000, 0.000000]
 negate: 0
 occupied_thresh: 0.25
 free_thresh: 0.196
