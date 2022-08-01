@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>arl_robot_follower</name>
+  <version>0.3.1</version>
+  <description>Allows one robot to follow another.</description>
+
+  <maintainer email="blakeanderson@utexas.edu">Blake Anderson</maintainer>
+
+  <license>Proprietary</license>
+
+  <author email="blakeanderson@utexas.edu">Blake Anderson</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>actionlib_msgs</depend>
+  <depend>actionlib</depend>
+  <depend>std_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf</depend>
+  <depend>tf2</depend>
+  <depend>arl_nav_msgs</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>vision_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>robot_localization</depend>
+
+  <exec_depend>message_generation</exec_depend>
+</package>

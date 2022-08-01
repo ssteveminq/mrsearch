@@ -80,6 +80,7 @@ class path_manager(object):
             # self.agent1_path.header.frame_id="map"
             # self.agent2_path.header.stamp=rospy.Time.now()
             # self.agent2_path.header.frame_id="map"
+            rospy.loginfo("Publishing Paths")
             self.pathpub1.publish(self.agent1_path)
             self.pathpub2.publish(self.agent2_path)
             rospy.sleep(3.0)

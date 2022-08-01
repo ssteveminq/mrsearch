@@ -1,0 +1,9 @@
+#goal
+string target_frame
+float32 min_distance
+float32 max_distance
+---
+#result
+---
+#feedback
+float32 distance_to_target

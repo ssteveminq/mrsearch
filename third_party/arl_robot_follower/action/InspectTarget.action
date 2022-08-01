@@ -1,0 +1,13 @@
+#goal
+string camera_frame
+geometry_msgs/PoseStamped target_pose
+float32 min_distance
+float32 max_distance
+float32 max_angle
+---
+#result
+sensor_msgs/Image photo
+sensor_msgs/PointCloud2 pointcloud
+---
+#feedback
+float32 distance_to_target
