@@ -58,7 +58,7 @@ Build the Code
 
 
 
-## Visual coverage path planning
+## Visual coverage path planning 
 path information is saved in path.yaml file in search_service/config. To load this path information you need to command.
 ```
 cd ~/workspaces/test_ws/src/mrsearch/search_service
@@ -70,6 +70,14 @@ rosrun search_service load_paths.py
 ```
 
 
-
+## curiosity - Simulation
+Create gazebo world(jackal)
+```
+roslaunch tmp ut_jackal
+```
+Run the enml(curiosity). check the configuration file!
+```
+roslaunch tmp jackal_gazebo_curiosity.launch
+```
 
 
