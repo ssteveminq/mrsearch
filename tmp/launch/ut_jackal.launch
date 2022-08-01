@@ -77,7 +77,7 @@
   <!--<remap from="odom" to="odometry/filtered" />-->
  <!--</node>-->
 
- <!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find jackal_viz)/rviz/robot.rviz"/>-->
+ <node name="rviz" pkg="rviz" type="rviz" args="-d $(find jackal_viz)/rviz/robot.rviz"/>
 
 
 </launch>
