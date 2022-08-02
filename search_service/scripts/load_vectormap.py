@@ -13,7 +13,7 @@ from geometry_msgs.msg import PoseStamped, Pose
 
 
 _FRAME_ID = 'map'
-_FILENAME = '/home/knapsack/workspaces/test_ws/src/mrsearch/tmp/vectormaps/ahg-alley-shift.vectormap.txt'
+_FILENAME = '/home/mk/workspaces/test_ws/src/mrsearch/tmp/vectormaps/ahg-alley-sim/ahg-alley-sim.vectormap.txt'
 
 
 def vectormap_manager():    

@@ -51,8 +51,6 @@
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include "amrl_msgs/Localization2DMsg.h"
 #include "amrl_msgs/VisualizationMsg.h"
-//#include "/home/mk/workspaces/test_ws/devel/include/amrl_msgs/Localization2DMsg.h"
-//#include "/home/mk/workspaces/test_ws/devel/include/amrl_msgs/VisualizationMsg.h"
 #include "tf/transform_broadcaster.h"
 
 #include "non_markov_localization.h"
@@ -275,6 +273,7 @@ void PublishSTF(const std::vector<Eigen::Vector2f>& stfpts)
 
     geometry_msgs::PoseArray pose_arry_msg;
     pose_arry_msg.header.stamp.fromSec(GetWallTime());
+    //pose_arry_msg.header.frame_id = "map";
     pose_arry_msg.header.frame_id = "map";
     for(int i(0);i<(int)(stfpts.size());i++)
     {
@@ -297,6 +296,8 @@ void PublishLocation(
   localization_msg_.pose.y = y;
   localization_msg_.pose.theta = angle;
   localization_publisher_.publish(localization_msg_);
+
+  //std::cout<<maps_dir_<<", "<<map_name<<std::endl;
 
   //publish global pose with geometry_msgs
   /*
@@ -1538,7 +1539,7 @@ void OdometryCallback(const nav_msgs::Odometry& msg) {
 }
 
 void LaserCallback(const sensor_msgs::LaserScan& laser_message) {
-  std::cout<<"laser callback"<<std::endl;
+  //std::cout<<"laser callback"<<std::endl;
   static vector<float> normal_weights_;
   if (normal_weights_.size() == 0) {
     static const float stddev = 3;

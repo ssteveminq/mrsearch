@@ -34,9 +34,9 @@
     <param name="NUM_AGENT" value="$(arg num_agents)"/>
     <param name="DIR_PATH" value="$(arg num_agents)"/>
 
-
-    <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg-alley.yaml"/>
-
+    <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg-alley.yaml"/>-->
+    <!--<node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg-alley.yaml"/>-->
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/campus3.yaml"/>
     <node name="scaled_map_converter" pkg="search_service" type="scaled_map_converter" output="screen">
         <!--<remap from="/map" to="/walrus/map"/>-->
     </node>
@@ -49,7 +49,18 @@
     <node name="polygon_client" pkg="search_service" type="plugin_client" output="screen"/>
 
     <node name="agent_0_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
+
     <!--<node name="agent_1_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>-->
+
+    <arg name="agent_pose" default="amcl_pose"/>
+    <arg name="camera_frame" default="front_camera"/>
+    <node pkg="visual_perception" type="visible_manager" name="jackal_camera_region" output="screen" args="$(arg agent_pose) $(arg camera_frame)">
+        <remap from="/camera_region_map" to="jackal/fov_map"/>
+    </node>
+
+
+
+    
 
     <!--<arg name="target_nav_action_0" default="$(arg agent1)/move_base"/>-->
     <!--<arg name="target_nav_action_1" default="$(arg agent1)/move_base"/>-->

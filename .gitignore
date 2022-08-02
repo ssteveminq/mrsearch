@@ -2,6 +2,7 @@
 tags
 actor_plugin/lib
 
+third_party/build
 third_party/bin
 third_party/lib
 third_party/amrl_msgs/build

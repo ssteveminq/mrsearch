@@ -1,8 +1,8 @@
 RobotConfig = {
   name = "jackal";
-  scan_topic = "jackal/base_scan";
-  odometry_topic = "/jackal/odom";
+  scan_topic = "/front/scan";
+  odometry_topic = "/odometry/filtered";
   initialpose_topic = "/initialpose";
-  pointcloud_topic = "hsrb/head_rgbd_sensor/depth_registered/points";
+  pointcloud_topic = "";
 };
 
