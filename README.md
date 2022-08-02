@@ -78,6 +78,7 @@ roslaunch tmp ut_jackal
 Run the enml(curiosity). check the configuration file!
 ```
 roslaunch tmp jackal_gazebo_curiosity.launch
+roslaunch search_service jackal_nrg.launch
 ```
 
 
