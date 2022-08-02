@@ -6,10 +6,10 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1
+        - /Map1
         - /Path1
-        - /PoseWithCovariance1
-        - /Image1
-        - /Image1/Status1
+        - /LaserScan1
       Splitter Ratio: 0.5
     Tree Height: 522
   - Class: rviz/Selection
@@ -30,7 +30,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Image
+    SyncSource: LaserScan
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -61,13 +61,111 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
+        jackal/ark_enclosure_link:
+          Value: true
+        jackal/base:
+          Value: true
+        jackal/base_link:
+          Value: true
+        jackal/chassis_link:
+          Value: true
+        jackal/front_fender_link:
+          Value: true
+        jackal/front_left_wheel_link:
+          Value: true
+        jackal/front_mount:
+          Value: true
+        jackal/front_right_wheel_link:
+          Value: true
+        jackal/imu_link:
+          Value: true
+        jackal/imu_link_ned:
+          Value: true
+        jackal/map:
+          Value: true
+        jackal/mid_mount:
+          Value: true
+        jackal/navsat_link:
+          Value: true
+        jackal/odom:
+          Value: true
+        jackal/realsense_front_link:
+          Value: true
+        jackal/rear_fender_link:
+          Value: true
+        jackal/rear_left_wheel_link:
+          Value: true
+        jackal/rear_mount:
+          Value: true
+        jackal/rear_right_wheel_link:
+          Value: true
+        jackal/sensor_plate_link:
+          Value: true
+        jackal/tracking_camera_link:
+          Value: true
+        jackal/velodyne:
+          Value: true
+        jackal/velodyne_base_link:
+          Value: true
+        jackal/velodyne_link:
+          Value: true
+        jackal_color_frame:
+          Value: true
+        jackal_color_optical_frame:
+          Value: true
+        jackal_depth_frame:
+          Value: true
+        jackal_depth_optical_frame:
+          Value: true
+        jackal_link:
+          Value: true
+        map:
+          Value: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        map:
+          jackal/map:
+            jackal/odom:
+              jackal/base:
+                jackal/base_link:
+                  jackal/chassis_link:
+                    jackal/front_fender_link:
+                      {}
+                    jackal/front_left_wheel_link:
+                      {}
+                    jackal/front_right_wheel_link:
+                      {}
+                    jackal/mid_mount:
+                      jackal/ark_enclosure_link:
+                        {}
+                      jackal/front_mount:
+                        {}
+                      jackal/rear_mount:
+                        {}
+                    jackal/navsat_link:
+                      {}
+                    jackal/rear_fender_link:
+                      {}
+                    jackal/rear_left_wheel_link:
+                      {}
+                    jackal/rear_right_wheel_link:
+                      {}
+                  jackal/sensor_plate_link:
+                    jackal/imu_link:
+                      jackal/imu_link_ned:
+                        {}
+                    jackal/realsense_front_link:
+                      {}
+                    jackal/tracking_camera_link:
+                      {}
+                    jackal/velodyne_link:
+                      jackal/velodyne_base_link:
+                        jackal/velodyne:
+                          {}
       Update Interval: 0
       Value: true
     - Alpha: 0.699999988079071
@@ -76,7 +174,7 @@ Visualization Manager:
       Draw Behind: false
       Enabled: true
       Name: Map
-      Topic: /walrus/map
+      Topic: /jackal/map
       Unreliable: false
       Use Timestamp: false
       Value: true
@@ -100,7 +198,7 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.10000000149011612
       Shaft Length: 0.10000000149011612
-      Topic: /walrus/search_agent_manager/waypoint_plan
+      Topic: /jackal/search_agent_manager/waypoint_plan
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -128,54 +226,14 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.10000000149011612
       Style: Flat Squares
-      Topic: /walrus/scan
+      Topic: /jackal/scan
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
-    - Alpha: 0.699999988079071
-      Class: rviz/Map
-      Color Scheme: map
-      Draw Behind: false
-      Enabled: true
-      Name: Map
-      Topic: /walrus/local_costmap/costmap/costmap
-      Unreliable: false
-      Use Timestamp: false
-      Value: true
-    - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz/PoseWithCovariance
-      Color: 186; 15; 209
-      Covariance:
-        Orientation:
-          Alpha: 0.5
-          Color: 255; 255; 127
-          Color Style: Unique
-          Frame: Local
-          Offset: 1
-          Scale: 1
-          Value: true
-        Position:
-          Alpha: 0.30000001192092896
-          Color: 204; 51; 204
-          Scale: 1
-          Value: true
-        Value: true
-      Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: PoseWithCovariance
-      Shaft Length: 2
-      Shaft Radius: 0.10000000149011612
-      Shape: Arrow
-      Topic: /walrus/amcl_pose
-      Unreliable: false
-      Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /camera/color/image_raw
+      Image Topic: /jackal/color/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -213,25 +271,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 66.43290710449219
+      Distance: 12.562165260314941
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.066328287124634
-        Y: 0.3300354778766632
-        Z: 0.49205663800239563
+        X: 1.9340511560440063
+        Y: 4.882729530334473
+        Z: 0.0020739028695970774
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5647963285446167
+      Pitch: 0.5447973012924194
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.16540265083313
+      Yaw: 3.105403184890747
     Saved: ~
 Window Geometry:
   Displays:
@@ -251,5 +309,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 927
-  X: 67
+  X: 993
   Y: 27
