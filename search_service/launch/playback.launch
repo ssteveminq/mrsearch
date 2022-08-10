@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/full_demo_map.yaml"/>
+    <node name="scaled_map_converter" pkg="search_service" type="scaled_map_converter" output="screen"/>
+
+
+</launch>

@@ -81,4 +81,32 @@ roslaunch tmp jackal_gazebo_curiosity.launch
 roslaunch search_service jackal_nrg.launch
 ```
 
+## Playback Bag Files
+Terminal 1:
+```
+roscore
+```
+Terminal 2:
+```
+cd mrsearch/search_service
+rosrun rviz rviz -d rviz/playback.rviz
+```
+Terminal 3:
+```
+roslaunch search_service playback.launch
+```
+Terminal 4:
+```
+Need to run the search server and the cone/square fov costmap
+```
+Terminal 5:
+```
+rosbag play /path/to/walrus/bagfile.bag
+```
+Terminal 6:
+```
+rosbag play /path/to/jackal/bagfile.bag
+```
+
+
 
