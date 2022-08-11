@@ -1,8 +1,46 @@
 <?xml version="1.0"?>
 <launch>
 
+    <!-- Run the map server  -->
     <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/full_demo_map.yaml"/>
     <node name="scaled_map_converter" pkg="search_service" type="scaled_map_converter" output="screen"/>
+
+    <!-- Set variables for agent names, poses, and costmaps -->
+    <arg name="agent1" default="walrus"/>
+    <arg name="agent2" default="jackal"/>
+    <arg name="agent1_pose_topic" default="walrus/amcl_pose"/>
+    <arg name="agent2_pose_topic" default="jackal/amcl_pose"/>
+    <arg name="agent1_map_topic" default="/walrus/local_costmap/costmap/costmap"/>
+    <arg name="agent2_map_topic" default="/jackal/local_costmap/costmap/costmap"/>
+
+    <param name="AGENT1_POSE_TOPIC" value="$(arg agent1_pose_topic)"/>
+    <param name="AGENT2_POSE_TOPIC" value="$(arg agent2_pose_topic)"/>
+    <param name="AGENT1_MAP_TOPIC" value="$(arg agent1_map_topic)"/>
+    <param name="AGENT2_MAP_TOPIC" value="$(arg agent2_map_topic)"/>
+
+    <!-- Add static transform between base link and camera frames -->
+    <node pkg="tf" type="static_transform_publisher" name="walrus_camera_transform" args="0.3 0 0 0 0 0 1 /walrus/base walrus/realsense_front_link 100" />
+    <node pkg="tf" type="static_transform_publisher" name="jackal_camera_transform" args="0.1 0 0 0 0 0 1 /jackal/base jackal/realsense_front_link 100" />
+
+    <!-- mtsp_server is the search map (yellow regions for seen) -->
+    <node name="multisearch_action" pkg="search_service" type="mtsp_server" output="screen">
+        <remap from="/agent_0_path" to="/walrus/search_agent_manager/waypoint_plan"/>
+        <remap from="/agent_1_path" to="/jackal/search_agent_manager/waypoint_plan"/>
+    </node>
+
+    <arg name="agent_pose" default="$(arg agent1)/amcl_pose"/>
+    <arg name="camera_frame" default="walrus/realsense_front_link"/>
+    <!-- This is the walrus camera region node (cone FoV)  -->
+    <node pkg="visual_perception" type="visible_manager" name="walrus_camera_region" output="screen" args="$(arg agent_pose) $(arg camera_frame)">
+        <remap from="/camera_region_map" to="walrus/fov_map"/>
+    </node>
+
+    <arg name="agent_pose2" default="$(arg agent2)/amcl_pose"/>
+    <arg name="camera_frame2" default="jackal/realsense_front_link"/>
+    <!-- This is the jackal camera region node (cone FoV)  -->
+    <node pkg="visual_perception" type="visible_manager" name="jackal_camera_region" output="screen" args="$(arg agent_pose2) $(arg camera_frame2)">
+        <remap from="/camera_region_map" to="jackal/fov_map"/>
+    </node>
 
 
 </launch>
