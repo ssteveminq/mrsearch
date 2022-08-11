@@ -101,11 +101,13 @@ Need to run the search server and the cone/square fov costmap
 ```
 Terminal 5:
 ```
-rosbag play /path/to/walrus/bagfile.bag
+rosparam set use_sim_time true
+rosbag play /path/to/walrus/bagfile.bag --clock -l
 ```
 Terminal 6:
 ```
-rosbag play /path/to/jackal/bagfile.bag
+rosparam set use_sim_time true
+rosbag play /path/to/jackal/bagfile.bag  --clock -l
 ```
 
 
