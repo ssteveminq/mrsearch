@@ -1,0 +1,17 @@
+Instructions for Juliana:
+
+Main Idea:
+- Going to play back bag files from each robot simultaneously and view them in Rviz
+- Bag files need to be paired together such that the environment looks the same from robot centric view (e.g. that yellow penske truck being there or not)
+- Going to use VokoScreen to take screen captures of everything going on in Rviz
+
+
+Instructions for running:
+- Check the '''Playback Bag Files''' portion of the README.md file inside the mrsearch repo under the curiosity_nrg branch
+- Videos using vokoscreen:
+	- Use the area functionality so that you can exclude the borders and images from the videos
+	- note that we will take videos on the RGB cameras separately and we will also run them with 
+	  YOLO
+	- Link for installing Vokoscreen on Linux: https://www.howtoinstall.me/ubuntu/18-04/vokoscreen/
+
+

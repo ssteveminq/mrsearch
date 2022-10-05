@@ -631,7 +631,7 @@ void update_occ_grid_map(const nav_msgs::OccupancyGridConstPtr& msg)
 {
     //origin_point_map_en =local_map.info.origin.position
     double px, py =0.0;
-    int map_idx,search_idx =0;
+    int map_idx,search_idx = 50;
 
     for(int j(0); j< msg->info.height;j++)
         for(int i(0); i< msg->info.width;i++)

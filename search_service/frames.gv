@@ -1,0 +1,27 @@
+digraph G {
+"jackal/sensor_plate_link" -> "jackal/tracking_camera_link"[label="Broadcaster: /play_1662058146163175901\nAverage rate: 33.455 Hz\nMost recent transform: 1657283428.608 ( 4774766.848 sec old)\nBuffer length: 4.962 sec\n"];
+"jackal/odom" -> "jackal/base"[label="Broadcaster: /play_1662058146163175901\nAverage rate: 50.110 Hz\nMost recent transform: 1657283428.597 ( 4774766.860 sec old)\nBuffer length: 4.989 sec\n"];
+"jackal/map" -> "jackal/odom"[label="Broadcaster: /play_1662058146163175901\nAverage rate: 20.202 Hz\nMost recent transform: 1657283428.603 ( 4774766.854 sec old)\nBuffer length: 4.950 sec\n"];
+"walrus/odom" -> "walrus/base"[label="Broadcaster: /play_1662058148834266028\nAverage rate: 50.079 Hz\nMost recent transform: 1657283429.499 ( 4774765.958 sec old)\nBuffer length: 4.972 sec\n"];
+"walrus/map" -> "walrus/odom"[label="Broadcaster: /play_1662058148834266028\nAverage rate: 20.202 Hz\nMost recent transform: 1657283429.495 ( 4774765.962 sec old)\nBuffer length: 4.950 sec\n"];
+"walrus/base" -> "walrus/realsense_front_link"[label="Broadcaster: /walrus_camera_transform\nAverage rate: 10.192 Hz\nMost recent transform: 1662058195.494 ( -0.037 sec old)\nBuffer length: 4.906 sec\n"];
+"map" -> "walrus/map"[label="Broadcaster: /play_1662058148834266028\nAverage rate: 10.187 Hz\nMost recent transform: 1657283429.577 ( 4774765.880 sec old)\nBuffer length: 4.908 sec\n"];
+"jackal/chassis_link" -> "jackal/front_left_wheel_link"[label="Broadcaster: /play_1662058146163175901\nAverage rate: 32.258 Hz\nMost recent transform: 1657283428.601 ( 4774766.856 sec old)\nBuffer length: 4.960 sec\n"];
+"jackal/chassis_link" -> "jackal/front_right_wheel_link"[label="Broadcaster: /play_1662058146163175901\nAverage rate: 32.258 Hz\nMost recent transform: 1657283428.601 ( 4774766.856 sec old)\nBuffer length: 4.960 sec\n"];
+"jackal/chassis_link" -> "jackal/rear_left_wheel_link"[label="Broadcaster: /play_1662058146163175901\nAverage rate: 32.258 Hz\nMost recent transform: 1657283428.601 ( 4774766.856 sec old)\nBuffer length: 4.960 sec\n"];
+"jackal/chassis_link" -> "jackal/rear_right_wheel_link"[label="Broadcaster: /play_1662058146163175901\nAverage rate: 32.258 Hz\nMost recent transform: 1657283428.601 ( 4774766.856 sec old)\nBuffer length: 4.960 sec\n"];
+"jackal/base" -> "jackal/realsense_front_link"[label="Broadcaster: /jackal_camera_transform\nAverage rate: 10.195 Hz\nMost recent transform: 1662058195.501 ( -0.044 sec old)\nBuffer length: 4.905 sec\n"];
+"map" -> "jackal/map"[label="Broadcaster: /play_1662058146163175901\nAverage rate: 10.184 Hz\nMost recent transform: 1657283428.729 ( 4774766.728 sec old)\nBuffer length: 4.910 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1662058195.457"[ shape=plaintext ] ;
+ }->"jackal/sensor_plate_link";
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1662058195.457"[ shape=plaintext ] ;
+ }->"jackal/chassis_link";
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1662058195.457"[ shape=plaintext ] ;
+ }->"map";
+}

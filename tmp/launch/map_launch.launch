@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/AHG_Apartment_Sim.yaml"/>
+
+  <!-- <node type="rviz" name="rviz" pkg="rviz" args="-d $(find a1_autonomy)/rviz/map.rviz" /> -->
+</launch>
