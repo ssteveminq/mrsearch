@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="namespace" default="/hsrb"/>
+  <arg name="debug" default="false"/>
+  <arg name="gui" default="true" />
+  <arg name="rviz" default="true"/>
+  <arg name="gazebo_visualization" default="false" />
+  <arg name="use_manipulation" default="false" />
+  <arg name="use_navigation" default="true" />
+  <arg name="use_perception" default="true" />
+  <arg name="use_task" default="true" />
+  <arg name="use_teleop" default="true" />
+  <arg name="use_web" default="false" />
+  <arg name="use_laser_odom" default="false" />
+  <arg name="paused" default="true" />
+  <arg name="robot_pos"  default="-x -7.0 -y -5.8 -z 0 -Y 0" />
+  <arg name="fast_physics" default="false" />
+  <arg name="robot_name" default="hsrb" />
+  <arg name="visualization" default="true" />
+  <arg name="spot_x" default="-7.5"/>
+  <arg name="spot_y" default ="-1.5"/> 
+  <arg name="slam" default ="false"/> 
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+  <arg name="x_pos" default="-2.0"/>
+  <arg name="y_pos" default="-0.5"/>
+  <arg name="z_pos" default="0.0"/>
+ 
+
+  <arg name="map_file" default="$(find tmp)/maps/ahg_map_rev.yaml"/>
+
+ <arg name="ahg_sim" default="true" />
+  <!--<arg name="world_suffix" default="" />-->
+  <arg unless="$(arg fast_physics)" name="world_suffix" value=""/>
+  <arg     if="$(arg fast_physics)" name="world_suffix" value="_fast"/>
+  <!--<arg name="world_name" value="$(find tmp)/worlds/apartment_human.world"/>-->
+  <arg name="world_name" value="$(find tmp)/worlds/test_humantrajectory.world"/>
+  <!--<arg name="map" default="$(find tmc_potential_maps)/maps/apartment/map.yaml" />-->
+  <arg name="map" default="$(find tmp)/maps/ahg_map_rev.yaml" />
+  <param name="/use_sim_time" value="true"/>
+  <!--<arg name="param_file" default="$(optenv HOME ~)/.ros/params.yaml" />-->
+  <!--<arg name="world_name" default="worlds/empty.world" />-->
+  <rosparam file="$(find search_service)/config/ahg.yaml"/>
+
+  <group if="$(arg ahg_sim)">
+      <include file="$(find ahg_gazebo_simulation)/launch/ahg_apartment.launch">
+          <arg name="gui" value="true" />
+          <arg name="use_sim_time" value="true"/>
+      </include>
+  </group>
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg_map_rev.yaml"/>
+
+  <!-- Second Agent -->
+  <arg name="turtlebot_namespace"  default="turtlebot"/>
+  <group ns ="$(arg turtlebot_namespace)">
+
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model turtlebot3_$(arg model) -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)"/>
+
+  <include file="$(find turtlebot3_bringup)/launch/turtlebot3_remote.launch">
+    <arg name="model" value="$(arg model)"/>
+    <arg name="multi_robot_name" value="$(arg turtlebot_namespace)"/>
+  </include>
+
+  <!-- Localization -->
+  <arg name="initial_pose_x" default="-1.990"/>
+  <arg name="initial_pose_y" default="-0.508"/>
+  <arg name="initial_pose_a" default="0.0"/>
+
+  <include file="$(find tmp)/launch/turtle_amcl.launch">
+    <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+    <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+    <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
+    <arg name="robot_namespace" value="$(arg turtlebot_namespace)"/>
+  </include>
+
+ <!--<node name="move_base_flex" pkg="mbf_costmap_nav" type="mbf_costmap_nav" required="true" output="screen" clear_params="true">-->
+    <!--<rosparam file="$(find turtlebot3_navigation)/param/tb_costmap_common_params_$(arg model).yaml" command="load" ns="global_costmap" />-->
+    <!--<rosparam file="$(find turtlebot3_navigation)/param/tb_costmap_common_params_$(arg model).yaml" command="load" ns="local_costmap" />-->
+    <!--<rosparam file="$(find turtlebot3_navigation)/param/tb_local_costmap_params.yaml" command="load" />-->
+    <!--<rosparam file="$(find turtlebot3_navigation)/param/tb_global_costmap_params.yaml" command="load" />-->
+    <!--<rosparam file="$(find mbf_beginner)/param/move_base_flex.yaml" command="load"/>-->
+    <!--<param name="base_global_planner" value="global_planner/GlobalPlanner"/>-->
+  <!--</node>-->
+
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+      <rosparam file="$(find tmp)/config/turtlebot/local_costmap_params.yaml" command="load"/> 
+      <rosparam file="$(find tmp)/config/turtlebot/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find tmp)/config/turtlebot/move_base_params.yaml" command="load" />
+      <rosparam file="$(find tmp)/config/turtlebot/dwa_local_planner_params_burger.yaml" command="load" /> 
+    <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+    <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
+    <!--<remap from="cmd_vel" to="$(arg cmd_vel_topic)"/>-->
+    <!--<remap from="odom" to="$(arg odom_topic)"/>-->
+    <!--<param name="DWAPlannerROS/min_vel_x" value="0.0" if="$(arg move_forward_only)"/>-->
+ </node>
+
+ <!--<include file="$(find tmp)/launch/amcl_diff.xml">-->
+      <!--<arg name="namespace" value="$(arg spot2_namespace)"/>-->
+      <!--<arg name="pos_x" value="$(arg spot2_x)"/>-->
+      <!--<arg name="pos_y" value="$(arg spot2_y)"/>-->
+      <!--</include>-->
+
+
+  </group>
+
+
+
+  <!--<rosparam command="load" file="$(arg param_file)" />-->
+  <!--<node name ="hsrb_to_turtle2" pkg="tf" type="static_transform_publisher" args="0 0.0 0 0 0 0 /odom hsrb/odom 10"/>-->
+  <!--<node name ="hsrb_to_turtle" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom 10"/>-->
+  <!--<node name ="laser_to_hsrblaser" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 hsrb/base_range_sensor_link base_range_sensor_link 10"/>-->
+  <!--<node name ="basefoot_to_hsrb" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 base_footprint hsrb/base_footprint 10"/>-->
+  <!--<node name ="basefoot_to_hsrb" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0  map hsrb/base_footprint 10"/>-->
+<!--n $(find human_filter)/config/trained_leg_detector.yaml front" output="screen" />-->
+  <!--<node pkg="visual_perception" type="visible_manager" name="visible_region" output="screen" />-->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find tmp)/config/spot.rviz" if="$(arg rviz)"/>
+
+
+</launch>
