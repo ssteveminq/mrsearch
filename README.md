@@ -97,16 +97,24 @@ roslaunch search_service playback.launch
 ```
 Terminal 4:
 ```
-Need to run the search server and the cone/square fov costmap
+rosbag play /path/to/walrus/bagfile.bag --clock -l
 ```
 Terminal 5:
 ```
-rosbag play /path/to/walrus/bagfile.bag
-```
-Terminal 6:
-```
-rosbag play /path/to/jackal/bagfile.bag
+rosbag play /path/to/jackal/bagfile.bag  --clock -l
 ```
 
+Note that we can also generate paths for real search:
+```
+roslaunch search_service run mtsp_search_nrg.launch
+```
+and then we can set the search region using this action client:
+```
+rosrun search_service multisearch_action_client.py
+```
+and we can load a predefined search region using the following:
+```
+roscd search_service && rosrun search_service sr_client.py
+```
 
 
