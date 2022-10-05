@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+ <node pkg="third_party" type="enml_hsrb" respawn="false" name="non_markov_localization_hsrb" output="screen" args="--config_dir $(find third_party)/config --robot_config turtlebot_gazebo.lua --maps_dir $(find tmp)/vectormaps -d1"/>
+
+</launch>

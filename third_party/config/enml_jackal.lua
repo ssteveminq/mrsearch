@@ -7,7 +7,7 @@
 --   };
   
   enml = {
-    map_name = "AHG_Apartment_Sim";
+    map_name = "ahg-alley-sim";
     starting_loc_x = 0;
     starting_loc_y = 0;
     starting_angle = deg2rad(0);
