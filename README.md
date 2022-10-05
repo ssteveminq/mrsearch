@@ -97,10 +97,12 @@ roslaunch search_service playback.launch
 ```
 Terminal 4:
 ```
+rosparam set use_sim_time true
 rosbag play /path/to/walrus/bagfile.bag --clock -l
 ```
 Terminal 5:
 ```
+rosparam set use_sim_time true
 rosbag play /path/to/jackal/bagfile.bag  --clock -l
 ```
 
