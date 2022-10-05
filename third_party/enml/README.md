@@ -1,6 +1,6 @@
 # Episodic non-Markov Localization
 
-[![Build Status](https://travis-ci.com/ut-amrl/enml.svg?token=rBLDT1qXfkKmkTerGLzY&branch=master)](https://travis-ci.com/ut-amrl/enml)
+[![Build Status](https://github.com/ut-amrl/enml/actions/workflows/buildTest.yml/badge.svg)](https://github.com/ut-amrl/enml/actions)
 
 Implementation in C++ of Episodic non-Markov Localization [[pdf]](https://www.joydeepb.com/Publications/ras_episodic_nonmarkov_localization.pdf).
 Please cite this work using the following bibtex:
@@ -18,6 +18,11 @@ Please cite this work using the following bibtex:
 }
 ```
 
+## ROS Dependencies
+1. [ROS](https://www.ros.org/)
+1. [AMRL Maps](https://github.com/ut-amrl/amrl_maps)
+1. [AMRL ROS Messages](https://github.com/ut-amrl/amrl_msgs)
+
 ## Compiling
 1. Run `./InstallPackages` to install the dependencies on *ubuntu >=14.04 .
 1. Add the working directory to the `ROS_PACKAGE_PATH` environment variable with:
@@ -25,6 +30,7 @@ Please cite this work using the following bibtex:
    ```
     export ROS_PACKAGE_PATH=`pwd`:$ROS_PACKAGE_PATH
     ```
+1. Install [amrl_msgs](https://github.com/ut-amrl/amrl_msgs) and add it to the `ROS_PACKAGE_PATH` variable.
 1. Run `make`
 
 ## Configuration

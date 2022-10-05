@@ -40,7 +40,7 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src/config-reader/include)
 INCLUDE_DIRECTORIES(${LUA_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${CERES_INCLUDE_DIRS})
 
-SET(libs roslib roscpp ncurses popt pthread glut boost_system
+SET(libs roslib roscpp ncurses popt pthread boost_system
     ${LUA_LIBRARIES} rt glog rosbag amrl_shared_lib
     ${BUILD_SPECIFIC_LIBRARIES})
 
@@ -63,3 +63,7 @@ TARGET_LINK_LIBRARIES(enml enml_support_lib)
 ROSBUILD_ADD_EXECUTABLE(add_initialization
     src/add_initialization.cpp)
 TARGET_LINK_LIBRARIES(add_initialization console_bridge enml_support_lib)
+
+ROSBUILD_ADD_EXECUTABLE(scene_render_test
+    src/scene_render_test.cc)
+TARGET_LINK_LIBRARIES(scene_render_test enml_support_lib)

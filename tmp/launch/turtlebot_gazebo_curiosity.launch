@@ -1,5 +1,10 @@
 <?xml version="1.0"?>
 <launch>
- <node pkg="third_party" type="enml_hsrb" respawn="false" name="non_markov_localization_hsrb" output="screen" args="--config_dir $(find third_party)/config --robot_config turtlebot_gazebo.lua --maps_dir $(find tmp)/vectormaps -d1"/>
+  <!-- Curiosity node (ENML) -->
+  <node pkg="third_party" type="curiosity" respawn="false" name="curiosity" output="screen" 
+        args="--config_dir $(find third_party)/config --robot_config turtlebot_gazebo.lua --maps_dir $(find tmp)/vectormaps -d1"/>
+  <!-- Vector Display -->
+  <node pkg="third_party" type="vector_display" respawn="false" name="vector_display" output="screen" 
+     args="--maps_dir $(find tmp)/vectormaps --map AHG_Apartment_Sim"/>
 
 </launch>

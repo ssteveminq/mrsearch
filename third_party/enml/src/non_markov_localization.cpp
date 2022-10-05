@@ -35,14 +35,14 @@
 #include "ceres/ceres.h"
 #include "ceres/dynamic_autodiff_cost_function.h"
 #include "perception_2d.h"
-#include "shared/util/helpers.h"
-#include "shared/util/pthread_utils.h"
-#include "shared/util/random.h"
-#include "shared/util/timer.h"
-#include "shared/math/geometry.h"
-#include "shared/math/line2d.h"
-#include "shared/math/math_util.h"
-#include "shared/math/statistics.h"
+#include "util/helpers.h"
+#include "util/pthread_utils.h"
+#include "util/random.h"
+#include "util/timer.h"
+#include "math/geometry.h"
+#include "math/line2d.h"
+#include "math/math_util.h"
+#include "math/statistics.h"
 #include "residual_functors.h"
 #include "vector_map/vector_map.h"
 
@@ -85,29 +85,46 @@ typedef Eigen::Translation<float, 2> Translation2Df;
 namespace {
 
 struct EnmlTiming {
-  double find_ltfs;
-  double find_stfs;
-  double add_constraints;
-  double solver;
-  int ceres_iterations;
-  int enml_iterations;
-  EnmlTiming() :
-      find_ltfs(0),
-      find_stfs(0),
-      add_constraints(0),
-      solver(0),
-      ceres_iterations(0),
-      enml_iterations(0) {}
+  double find_ltfs = 0.0;
+  double find_stfs = 0.0;
+  double add_constraints = 0.0;
+  double solver = 0.0;
+  double update = 0.0;
+  double residuals = 0.0;
+  double jacobians = 0.0;
+  double linear_solver = 0.0;
+  double preprocessor = 0.0;
+  int ceres_iterations = 0;
+  int enml_iterations = 0;
+  string ceres_full_report;
+  EnmlTiming() {}
   ~EnmlTiming() {
-    if (false) {
-      printf("ENML Iters:%3d Ceres Iters: %3d"
-            " LTFs:%6.3f STFs:%6.3f Constraints:%6.3f Solver:%6.3f\n",
+    if (true) {
+      printf("========================================================\n");
+      printf("  Ceres Full Report:\n%s\n", ceres_full_report.c_str());
+      printf("========================================================\n");
+      printf("ENML Iters:                          %6d\n"
+             "  Ceres Iters:                       %6d\n"
+             "  Find LTFs:                         %6.3f\n"
+             "  Find STFs:                         %6.3f\n"
+             "  Add Constraints:                   %6.3f\n"
+             "  Ceres Solve:                       %6.3f\n"
+             "    Preprocessor:                    %6.3f\n"
+             "    Residual only eval:              %6.3f\n"
+             "    Jacobian & residual eval:        %6.3f\n"
+             "    Linear solver:                   %6.3f\n"
+             "  Total Update:                      %6.3f\n",
             enml_iterations,
             ceres_iterations,
             find_ltfs,
             find_stfs,
             add_constraints,
-            solver);
+            solver,
+            preprocessor,
+            residuals,
+            jacobians,
+            linear_solver,
+            update);
     }
   }
 };
@@ -129,14 +146,15 @@ void SetSolverOptions(
     ceres::Solver::Options* options_ptr) {
   ceres::Solver::Options& solver_options = *options_ptr;
 
-  solver_options.linear_solver_type = ceres::SPARSE_SCHUR;
+  // solver_options.linear_solver_type = ceres::SPARSE_SCHUR;
+  solver_options.linear_solver_type = ceres::DENSE_NORMAL_CHOLESKY;
+  solver_options.dense_linear_algebra_library_type = ceres::EIGEN;
   solver_options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
   solver_options.minimizer_type = ceres::TRUST_REGION;
 
   // solver_options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
   solver_options.minimizer_progress_to_stdout = false;
   solver_options.num_threads = localization_options.kNumThreads;
-  solver_options.num_linear_solver_threads = localization_options.kNumThreads;
   solver_options.max_num_iterations =
       localization_options.max_solver_iterations;
   solver_options.function_tolerance = 1e-7;
@@ -357,7 +375,7 @@ void NonMarkovLocalization::AddSTFConstraints(ceres::Problem* problem) {
 
 void NonMarkovLocalization::FindSTFCorrespondences(
     const size_t min_poses, const size_t max_poses) {
-  static const size_t kMinInterPoseCorrespondence = 30;
+  static const size_t kMinInterPoseCorrespondence = 10;
   const float min_cosine_angle = cos(localization_options_.kMaxStfAngleError);
   // const float kMaxPoseSqDistance = sq(100.0);
   static const int kPointMatchSeparation = 4;
@@ -445,6 +463,8 @@ void NonMarkovLocalization::FindSinglePoseLtfCorrespondences(
     vector<int>* line_correspondences_ptr,
     vector<Line2f>* ray_cast_ptr,
     vector<ObservationType>* observation_classes_ptr) {
+  static CumulativeFunctionTimer ft_(__FUNCTION__);
+  CumulativeFunctionTimer::Invocation invocation(&ft_);
   vector<int>& line_correspondences = *line_correspondences_ptr;
   vector<Line2f>& ray_cast = *ray_cast_ptr;
   vector<ObservationType>& observation_classes = * observation_classes_ptr;
@@ -452,18 +472,28 @@ void NonMarkovLocalization::FindSinglePoseLtfCorrespondences(
       Rotation2Df(pose_array[2]) *
       Vector2f(localization_options_.sensor_offset.x(),
                localization_options_.sensor_offset.y());
+  float sq_max_observed_range = Sq(0.1);
+  for (size_t j = 0; j < point_cloud.size();
+      j += localization_options_.num_skip_readings) {
+    sq_max_observed_range = max<float>(
+        point_cloud[j].squaredNorm(),
+        sq_max_observed_range);
+  }
+  const float ray_cast_range =
+      min<float>(localization_options_.kMaxRange, sqrt(sq_max_observed_range));
   vector_map_.GetRayToLineCorrespondences(
       sensor_loc,
       pose_array[2],
       point_cloud,
       0.0,
-      localization_options_.kMaxRange,
+      ray_cast_range,
       ray_cast_ptr,
       line_correspondences_ptr);
   CHECK_EQ(line_correspondences.size(), point_cloud.size());
   int num_ltfs = 0;
   int num_vltfs = 0;
-  for (size_t j = 0; j < point_cloud.size(); ++j) {
+  for (size_t j = 0; j < point_cloud.size();
+      j += localization_options_.num_skip_readings) {
     const int correspondence = line_correspondences[j];
     if (correspondence >= 0) {
       const Line2f& line = ray_cast[correspondence];
@@ -752,7 +782,6 @@ void NonMarkovLocalization::SensorResettingResample(
     solver_options.linear_solver_type = ceres::SPARSE_SCHUR;
     solver_options.minimizer_progress_to_stdout = false;
     solver_options.num_threads = localization_options_.kNumThreads;
-    solver_options.num_linear_solver_threads = localization_options_.kNumThreads;
     solver_options.max_num_iterations = 2;
     solver_options.function_tolerance = 0.001;
     // solver_options.update_state_every_iteration = true;
@@ -1065,7 +1094,8 @@ float NonMarkovLocalization::GetLostMetric() const {
 void NonMarkovLocalization::Update() {
   // FunctionTimer ft(__FUNCTION__);
   static const bool debug = false;
-  EnmlTiming timing;
+  static EnmlTiming timing;
+  const double t_update_start = GetMonotonicTime();
   // Accepts:
   //  1. Non-Markov Localization paramters.
   //  2. Vector map.
@@ -1209,11 +1239,16 @@ void NonMarkovLocalization::Update() {
         covariances[i](1, 1) = values[4];
       }
     }
+    timing.residuals += summary.residual_evaluation_time_in_seconds;
+    timing.jacobians += summary.jacobian_evaluation_time_in_seconds;
+    timing.preprocessor += summary.preprocessor_time_in_seconds;
+    timing.linear_solver += summary.linear_solver_time_in_seconds;
     if (summary.termination_type == ceres::FAILURE ||
         summary.termination_type == ceres::USER_FAILURE) {
       std::cout << "\nEnML Ceres failure, report follows:\n"
                 << summary.FullReport();
     }
+    timing.ceres_full_report = summary.FullReport();
     if (converged || i + 1 == localization_options_.kMaxRepeatIterations) {
       // This is the final iteration of the EnML solver.
       ComputeLostMetric();
@@ -1243,6 +1278,8 @@ void NonMarkovLocalization::Update() {
     TrimEpisode(episode_start);
   }
   latest_mle_pose_.Set(poses_.back());
+  const double t_update_end = GetMonotonicTime();
+  timing.update += (t_update_end - t_update_start);
 }
 
 void NonMarkovLocalization::SaveEpisodeData() {
@@ -1328,15 +1365,18 @@ void NonMarkovLocalization::TrimEpisode(const int pose_index) {
 
   if (localization_options_.log_poses) {
     vector<Pose2Df>& logged_poses = logged_poses_.GetLock();
+    vector<timespec> &logged_stamps = logged_stamps_.GetLock();
     logged_poses.insert(logged_poses.end(), poses_.begin(),
                         poses_.begin() + pose_index);
-    // logged_poses_.SetUnlock(logged_poses);
+    logged_stamps.insert(logged_stamps.end(), timestamps_.begin(), timestamps_.begin() + pose_index);
+    logged_stamps_.Unlock();
     logged_poses_.Unlock();
   }
 
   // Need to trim the nodes list to the latest episode.
   pose_ids_.erase(pose_ids_.begin(), pose_ids_.begin() + pose_index);
   poses_.erase(poses_.begin(), poses_.begin() + pose_index);
+  timestamps_.erase(timestamps_.begin(), timestamps_.begin() + pose_index);
   kdtrees_.erase(kdtrees_.begin(), kdtrees_.begin() + pose_index);
   normal_clouds_.erase(normal_clouds_.begin(),
                          normal_clouds_.begin() + pose_index);
@@ -1352,7 +1392,7 @@ void NonMarkovLocalization::TrimEpisode(const int pose_index) {
 
 
 void NonMarkovLocalization::SensorUpdate(
-    const PointCloudf& point_cloud, const NormalCloudf& normal_cloud) {
+    const PointCloudf& point_cloud, const NormalCloudf& normal_cloud, const timespec& laser_time) {
   static const bool debug = false;
   const double t_now = GetMonotonicTime();
   const bool has_moved =
@@ -1363,7 +1403,7 @@ void NonMarkovLocalization::SensorUpdate(
       pending_translation_ > localization_options_.minimum_node_translation ||
       force_update) {
     // Add to Pending nodes.
-    AddPose(point_cloud, normal_cloud, pending_relative_pose_);
+    AddPose(point_cloud, normal_cloud, pending_relative_pose_, laser_time);
     t_last_update_ = t_now;
   } else if (debug) {
     printf("Ignoring sensor data, trans:%f rot:%f\n",
@@ -1385,6 +1425,7 @@ void NonMarkovLocalization::OdometryUpdate(
 void NonMarkovLocalization::ClearPoses() {
   pose_array_.clear();
   poses_.clear();
+  timestamps_.clear();
   pose_ids_.clear();
   point_clouds_.clear();
   normal_clouds_.clear();
@@ -1398,6 +1439,7 @@ void NonMarkovLocalization::ClearPoses() {
   pending_normal_clouds_.clear();
   pending_point_clouds_.clear();
   pending_relative_poses_.clear();
+  pending_stamps_.clear();
   latest_pending_pose_.Set(Pose2Df(0.0, Vector2f(0.0, 0.0)));
   latest_mle_pose_.Set(Pose2Df(0.0, Vector2f(0.0, 0.0)));
 }
@@ -1450,6 +1492,7 @@ void NonMarkovLocalization::AddPendingPoseNodes()
   for (size_t i = 0; i < pending_relative_poses_.size(); ++i) {
     latest_pose.ApplyPose(pending_relative_poses_[i]);
     poses_.push_back(latest_pose);
+    timestamps_.push_back(pending_stamps_[i]);
   }
   latest_mle_pose_.SetUnlock(latest_pose);
 
@@ -1468,12 +1511,14 @@ void NonMarkovLocalization::AddPendingPoseNodes()
   pending_point_clouds_.clear();
   pending_normal_clouds_.clear();
   pending_relative_poses_.clear();
+  pending_stamps_.clear();
 }
 
 void NonMarkovLocalization::AddPose(
     const PointCloudf& point_cloud,
     const NormalCloudf& normal_cloud,
-    const Pose2Df& relative_pose) {
+    const Pose2Df& relative_pose,
+    const timespec& laser_time) {
   // Add point_cloud, normal_cloud, relative_pose to pending buffer.
   // Reset distance traversed since last node.
   // If (number of pending nodes > threshold) and (update is not in progress) :
@@ -1484,6 +1529,7 @@ void NonMarkovLocalization::AddPose(
   pending_point_clouds_.push_back(point_cloud);
   pending_normal_clouds_.push_back(normal_cloud);
   pending_relative_poses_.push_back(relative_pose);
+  pending_stamps_.push_back(laser_time);
   CHECK_GT(pending_point_clouds_.size(), 0);
 
   Pose2Df latest_pending_pose = latest_pending_pose_.GetLock();
@@ -1571,6 +1617,10 @@ bool NonMarkovLocalization::RunningSolver() const {
 
 vector<Pose2Df> NonMarkovLocalization::GetLoggedPoses() const {
   return (logged_poses_.Get());
+}
+
+vector<timespec> NonMarkovLocalization::GetLoggedStamps() const {
+    return (logged_stamps_.Get());
 }
 
 std::vector<int> NonMarkovLocalization::GetLoggedEpisodeLengths() const {

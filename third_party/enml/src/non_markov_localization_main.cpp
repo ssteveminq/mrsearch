@@ -42,24 +42,23 @@
 #include "rosbag/view.h"
 #include "sensor_msgs/LaserScan.h"
 #include "sensor_msgs/PointCloud2.h"
-
-#include "geometry_msgs/Quaternion.h"
 #include "geometry_msgs/PoseStamped.h"
-#include "geometry_msgs/PoseWithCovarianceStamped.h" 
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+
 #include "amrl_msgs/Localization2DMsg.h"
 #include "amrl_msgs/VisualizationMsg.h"
-#include "tf/transform_broadcaster.h"
 
 #include "non_markov_localization.h"
 #include "perception_2d.h"
 #include "popt_pp/popt_pp.h"
-#include "shared/math/geometry.h"
-#include "shared/math/math_util.h"
-#include "shared/ros/ros_helpers.h"
-#include "shared/util/helpers.h"
-#include "shared/util/pthread_utils.h"
-#include "shared/util/random.h"
-#include "shared/util/timer.h"
+#include "math/geometry.h"
+#include "math/math_util.h"
+#include "ros/ros_helpers.h"
+#include "util/helpers.h"
+#include "util/pthread_utils.h"
+#include "util/random.h"
+#include "util/timer.h"
 #include "vector_map/vector_map.h"
 #include "residual_functors.h"
 #include "config_reader/config_reader.h"
@@ -113,7 +112,6 @@ CONFIG_STRING(initialpose_topic, "RobotConfig.initialpose_topic");
 
 // ROS message for publishing SE(2) pose with map name.
 amrl_msgs::Localization2DMsg localization_msg_;
-geometry_msgs::PoseStamped pose_msg_;     //added by mk, ryan
 
 // ROS message for visualization with WebViz.
 amrl_msgs::VisualizationMsg visualization_msg_;
@@ -146,7 +144,7 @@ float kMaxOdometryDeltaAngle = DegToRad(15.0);
 pthread_mutex_t relocalization_mutex_ = PTHREAD_MUTEX_INITIALIZER;
 
 // The directory where all the maps are stored.
-const char* maps_dir_ = "maps";
+string maps_dir_ = ros::package::getPath("amrl_maps");
 
 // Directory containing all config files, including `common.lua` and `enml.lua`
 const char* config_dir_ = "config";
@@ -182,9 +180,11 @@ int debug_level_ = -1;
 // ROS publisher to publish visualization messages.
 ros::Publisher visualization_publisher_;
 
-// ROS publisher to publish the latest robot localization.
-ros::Publisher localization_publisher_;
-ros::Publisher pose_publisher_;
+// ROS publisher to publish the latest robot localization w/ amrl_msgs.
+ros::Publisher localization_publisher_amrl_;
+
+// ROS publisher to publish the latest robot localization w/ ros geometry_msgs.
+ros::Publisher localization_publisher_ros_;
 
 // Parameters and settings for Non-Markov Localization.
 NonMarkovLocalization::LocalizationOptions localization_options_;
@@ -256,55 +256,33 @@ void ApplyNoiseModel(
   *da_n = delta_noisy(2);
 }
 
+geometry_msgs::PoseStamped ConvertAMRLmsgToROSmsg(const amrl_msgs::Localization2DMsg& pose_amrl){
+  geometry_msgs::PoseStamped pose_ros;
+  // Header information
+  pose_ros.header.stamp = pose_amrl.header.stamp;
+  pose_ros.header.frame_id = pose_amrl.map;
+  // Position
+  pose_ros.pose.position.x = pose_amrl.pose.x;
+  pose_ros.pose.position.y = pose_amrl.pose.y;
+  pose_ros.pose.position.z = 0.0;
+  // Orientation
+  tf2::Quaternion q;
+  q.setRPY( 0, 0, pose_amrl.pose.theta );
+  q.normalize();  // Handles numerical error from RPY conversion
+  pose_ros.pose.orientation = tf2::toMsg(q);
+
+  return pose_ros;
+}
+
 void PublishLocation(
     const string& map_name, const float x, const float y, const float angle) {
-  localization_msg_.header.stamp.fromSec(GetWallTime());
+  localization_msg_.header.stamp = ros::Time::now();
   localization_msg_.map = map_name;
   localization_msg_.pose.x = x;
   localization_msg_.pose.y = y;
   localization_msg_.pose.theta = angle;
-  localization_publisher_.publish(localization_msg_);
-
-  //publish global pose with geometry_msgs
-  pose_msg_.header.stamp.fromSec(GetWallTime());
-  pose_msg_.header.frame_id= "map_en";
-  pose_msg_.pose.position.x = x;
-  pose_msg_.pose.position.y = y;
-  geometry_msgs::Quaternion q;
-  //tf::Quaternion q;
-  //q.setRPY(0,0,angle);
-
-  double temp_roll=0.0;
-  double temp_pitch=0.0;
-  double t0 = cos(angle* 0.5);
-  double t1 = sin(angle* 0.5);
-  double t2 = cos(temp_roll * 0.5);
-  double t3 = sin(temp_roll * 0.5);
-  double t4 = cos(temp_pitch * 0.5);
-  double t5 = sin(temp_pitch * 0.5);
-  q.w = t0 * t2 * t4 + t1 * t3 * t5;
-  q.x = t0 * t3 * t4 - t1 * t2 * t5;
-  q.y = t0 * t2 * t5 + t1 * t3 * t4;
-  q.z = t1 * t2 * t4 - t0 * t3 * t5;
-
-  pose_msg_.pose.orientation.x =q.x;
-  pose_msg_.pose.orientation.y =q.y;
-  pose_msg_.pose.orientation.z =q.z;
-  pose_msg_.pose.orientation.w =q.w;
-
-  pose_publisher_.publish(pose_msg_);
-
-  //publish tf frames
-  static tf::TransformBroadcaster br;
-  tf::Transform transform;
-  transform.setOrigin(tf::Vector3(x, y,0.0));
-  tf::Quaternion quat;
-  quat.setRPY(0,0,angle);
-  transform.setRotation(quat);
-  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "map_en", "base"));
-
-
-
+  localization_publisher_amrl_.publish(localization_msg_);
+  localization_publisher_ros_.publish(ConvertAMRLmsgToROSmsg(localization_msg_));
 }
 
 void PublishLocation() {
@@ -324,7 +302,6 @@ void PublishTrace() {
     trace.push_back(curLoc);
     lastLoc = curLoc;
     initialized = true;
-    printf("Init trace\n");
     return;
   }
   if((curLoc-lastLoc).squaredNorm()>Sq(0.05)){
@@ -437,8 +414,7 @@ bool LoadConfiguration(NonMarkovLocalization::LocalizationOptions* options) {
   ENML_STRING_CONFIG(map_name);
   config_reader::ConfigReader reader({
     std::string(config_dir_) + "/common.lua",
-    std::string(config_dir_) + "/" + std::string(robot_config_),
-    std::string(config_dir_) + "/enml.lua"
+    std::string(config_dir_) + "/" + std::string(robot_config_)
   });
   options->kMinRange = CONFIG_min_point_cloud_range;
   options->kMaxRange = CONFIG_max_point_cloud_range;
@@ -525,6 +501,23 @@ bool LoadConfiguration(NonMarkovLocalization::LocalizationOptions* options) {
   return true;
 }
 
+void OutputPosesAndStamps(const std::string& poses_file,
+                          const std::vector<Pose2Df>& poses,
+                          const std::vector<timespec>& stamps) {
+    std::ofstream csv_file(poses_file, std::ios::trunc);
+    csv_file << "secs" << ", " << "nsecs" << ", " << "transl_x"
+             << ", " << "transl_y" << ", " << "theta" << "\n";
+
+    for (size_t i = 0; i < poses.size(); i++) {
+        Pose2Df pose = poses[i];
+        timespec stamp = stamps[i];
+        csv_file << stamp.tv_sec << ", " << stamp.tv_nsec << ", " << pose.translation.x()
+                 << ", " << pose.translation.y() << ", " << pose.angle << "\n";
+    }
+
+    csv_file.close();
+}
+
 void SaveStfs(
     const string& map_name,
     const vector<Pose2Df>& poses,
@@ -541,7 +534,7 @@ void SaveStfs(
   ScopedFile fid(stfs_file, "w");
   fprintf(fid(), "%s\n", map_name.c_str());
   fprintf(fid(), "%lf\n", timestamp);
-  VectorMap map(std::string(maps_dir_) + "/" + map_name + ".txt");
+  VectorMap map(maps_dir_ + "/" + map_name + ".txt");
   if (kDisplaySteps) {
     visualization::ClearVisualizationMsg(visualization_msg_);
     nonblock(true);
@@ -1312,7 +1305,7 @@ void SaveSensorErrors(
     const vector<PointCloudf>& point_clouds,
     const vector<vector<NonMarkovLocalization::ObservationType> >&
         classifications) {
-  VectorMap map(std::string(maps_dir_) + "/" + kMapName + ".txt");
+  VectorMap map(maps_dir_ + "/" + kMapName + ".txt");
   ScopedFile fid("results/sensor_errors.txt", "w");
   printf("Saving sensor errors... ");
   fflush(stdout);
@@ -1394,6 +1387,9 @@ void OdometryCallback(const nav_msgs::Odometry& msg) {
   const Vector2f new_pos(msg.pose.pose.position.x, msg.pose.pose.position.y);
   if ((new_pos - last_pos).squaredNorm() < Sq(kMaxDist)) {
     StandardOdometryCallback(last_msg_, msg);
+  } else if (debug_level_ > 0) {
+    printf("\nWARNING: Large odometry change (%.3f) ignored!\n\n",
+        (new_pos - last_pos).norm());
   }
   last_pos = new_pos;
   last_msg_ = msg;
@@ -1431,7 +1427,10 @@ void LaserCallback(const sensor_msgs::LaserScan& laser_message) {
     if (debug_level_ > 1) {
       printf("Sensor update, t=%f\n", laser_message.header.stamp.toSec());
     }
-    localization_->SensorUpdate(point_cloud, normal_cloud);
+    timespec timestamp;
+    timestamp.tv_sec = laser_message.header.stamp.sec;
+    timestamp.tv_nsec = laser_message.header.stamp.nsec;
+    localization_->SensorUpdate(point_cloud, normal_cloud, timestamp);
   }
   last_laser_scan_ = laser_message;
 }
@@ -1619,7 +1618,8 @@ void PlayBagFile(const string& bag_file,
                  bool use_point_constraints,
                  double time_skip,
                  ros::NodeHandle* node_handle,
-                 double* observation_error_ptr) {
+                 double* observation_error_ptr,
+                 char* keyframes_file) {
   const bool compute_error = (observation_error_ptr != NULL);
   double& observation_error = *observation_error_ptr;
   double num_observed_points = 0.0;
@@ -1635,6 +1635,10 @@ void PlayBagFile(const string& bag_file,
                            kMapName);
 
   rosbag::Bag bag;
+  timespec first_laser_stamp;
+  first_laser_stamp.tv_sec = 0;
+  first_laser_stamp.tv_nsec = 0;
+  bool had_laser_stamp_yet = false;
   if (!quiet_) printf("Processing bag file %s\n", bag_file.c_str());
   bag.open(bag_file.c_str(), rosbag::bagmode::Read);
   const double t_start = GetMonotonicTime();
@@ -1722,9 +1726,14 @@ void PlayBagFile(const string& bag_file,
       if (laser_message != NULL &&
           message.getTopic() == CONFIG_scan_topic) {
         ++num_laser_scans;
+        if (!had_laser_stamp_yet) {
+            first_laser_stamp.tv_sec = laser_message->header.stamp.sec;
+            first_laser_stamp.tv_nsec = laser_message->header.stamp.nsec;
+            had_laser_stamp_yet = true;
+        }
         LaserCallback(*laser_message);
         while(localization_->RunningSolver()) {
-          Sleep(0.01);
+          Sleep(0.001);
         }
         last_laser_scan = *laser_message;
         last_laser_pose = localization_->GetLatestPose();
@@ -1776,6 +1785,17 @@ void PlayBagFile(const string& bag_file,
   printf("%d laser scans, %lu logged poses\n",
         num_laser_scans, logged_poses.size());
 
+  if (keyframes_file != nullptr) {
+      std::vector<Pose2Df> poses_to_out;
+      poses_to_out.emplace_back(Pose2Df(0, 0, 0));
+      poses_to_out.insert(poses_to_out.end(), logged_poses.begin(), logged_poses.end());
+      std::vector<timespec> stamps_to_out;
+      stamps_to_out.emplace_back(first_laser_stamp);
+      std::vector<timespec> logged_stamps = localization_->GetLoggedStamps();
+      stamps_to_out.insert(stamps_to_out.end(), logged_stamps.begin(), logged_stamps.end());
+      OutputPosesAndStamps(std::string(keyframes_file), poses_to_out, stamps_to_out);
+  }
+
   if (statistical_test_index_ >= 0) {
     const string file_name = StringPrintf(
         "results/enml/non_markov_test_%d.txt", statistical_test_index_);
@@ -1794,24 +1814,29 @@ void PlayBagFile(const string& bag_file,
   }
 }
 
-void InitializeCallback(const geometry_msgs::PoseWithCovarianceStamped& msg) {
-  // if (debug_level_ > -1) {
-  //   printf("Initialize %s %f,%f %f\u00b0\n",
-  //       msg.map.c_str(), msg.pose.x, msg.pose.y, RadToDeg(msg.pose.theta));
-  // }
-  // localization_->Initialize(
-  //     Pose2Df(msg.pose.theta, Vector2f(msg.pose.x, msg.pose.y)), msg.map);
-  // localization_publisher_.publish(msg);
-  //From this intiial_pose we have to set the 
-  double yaw = atan2(2.0*(msg.pose.pose.orientation.y*msg.pose.pose.orientation.z + msg.pose.pose.orientation.w*msg.pose.pose.orientation.x), msg.pose.pose.orientation.w*msg.pose.pose.orientation.w - msg.pose.pose.orientation.x*msg.pose.pose.orientation.x - msg.pose.pose.orientation.y*msg.pose.pose.orientation.y + msg.pose.pose.orientation.z*msg.pose.pose.orientation.z);
+void InitializeCallback(const amrl_msgs::Localization2DMsg& msg) {
+  if (debug_level_ > -1) {
+    printf("Initialize %s %f,%f %f\u00b0\n",
+        msg.map.c_str(), msg.pose.x, msg.pose.y, RadToDeg(msg.pose.theta));
+  }
   localization_->Initialize(
-                        Pose2Df(yaw, Vector2f(msg.pose.pose.position.x, msg.pose.pose.position.y)), "AHG2");
-  amrl_msgs::Localization2DMsg loc_msg_local;
-  loc_msg_local.header = msg.header;
-  loc_msg_local.pose.x = msg.pose.pose.position.x;
-  loc_msg_local.pose.y = msg.pose.pose.position.y;
-  loc_msg_local.pose.theta = yaw;
-  localization_publisher_.publish(loc_msg_local);
+      Pose2Df(msg.pose.theta, Vector2f(msg.pose.x, msg.pose.y)), msg.map);
+  localization_publisher_amrl_.publish(msg);
+  localization_publisher_ros_.publish(ConvertAMRLmsgToROSmsg(msg));
+
+  if (false) {
+    const string map_file = StringPrintf(
+        "%s/%s/%s.vectormap.txt",
+        maps_dir_.c_str(), msg.map.c_str(), msg.map.c_str());
+    VectorMap map(map_file);
+    const Vector2f d(1, 1);
+    for (const Line2f& l : map.lines) {
+      visualization::DrawLine(l.p0 + d, l.p1 + d, 0xFFFFc0c0, visualization_msg_);
+    }
+    map.Save(map_file);
+    PublishDisplay();
+    ClearDisplay();
+  }
 }
 
 void OnlineLocalize(bool use_point_constraints, ros::NodeHandle* node) {
@@ -1829,7 +1854,7 @@ void OnlineLocalize(bool use_point_constraints, ros::NodeHandle* node) {
   Subscriber odom_subscriber =
       node->subscribe(CONFIG_odom_topic, 1, OdometryCallback);
   Subscriber initialize_subscriber =
-      node->subscribe("/initialpose", 1, InitializeCallback); // /set_pose
+      node->subscribe("/set_pose", 1, InitializeCallback);
 
   ClearDisplay();
   PublishDisplay();
@@ -1871,7 +1896,6 @@ void HandleStop(int i) {
 
 void InitializeMessages() {
   ros_helpers::InitRosHeader("map", &localization_msg_.header);
-  ros_helpers::InitRosHeader("map", &pose_msg_.header);
 }
 
 int main(int argc, char** argv) {
@@ -1891,14 +1915,13 @@ int main(int argc, char** argv) {
   double time_skip = 0;
   bool unique_node_name = false;
   bool return_initial_poses = false;
-  char* robot_config_opt = NULL;
 
 
-
+  char* user_maps_dir = nullptr;
   static struct poptOption options[] = {
     { "config_dir", 'c', POPT_ARG_STRING, &config_dir_, 1, "Config directory", "STRING"},
     { "robot_config", 'r', POPT_ARG_STRING, &robot_config_, 1, "Robot configuration file", "STRING"},
-    { "maps_dir", 'm', POPT_ARG_STRING, &maps_dir_, 1, "Maps directory", "STRING"},
+    { "maps_dir", 'm', POPT_ARG_STRING, &user_maps_dir, 1, "Maps directory", "STRING"},
     { "debug" , 'd', POPT_ARG_INT, &debug_level_, 1, "Debug level", "NUM" },
     { "bag-file", 'b', POPT_ARG_STRING, &bag_file, 1, "ROS bagfile to use",
         "STRING"},
@@ -1926,8 +1949,6 @@ int main(int argc, char** argv) {
         "Save LTFs", "NONE"},
     { "quiet", 'q', POPT_ARG_NONE, &quiet_, 0,
         "Quiet", "NONE"},
-    { "robot_config", 'r', POPT_ARG_STRING, &robot_config_opt, 0,
-        "Robot config file", "STRING"},
     POPT_AUTOHELP
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
@@ -1935,7 +1956,11 @@ int main(int argc, char** argv) {
   int c;
   while((c = popt.getNextOpt()) >= 0){
   }
-  
+
+  if (maps_dir_.empty() && user_maps_dir == nullptr) {
+    fprintf(stderr, "Error: amrl_maps not found, must either specify the maps directory with `--maps`, or add the amrl_maps package to ROS_PACKAGE_PATH\n");
+    exit(1);
+  }
   localization_ = new NonMarkovLocalization(maps_dir_);
   CHECK(LoadConfiguration(&localization_options_));
 
@@ -1955,23 +1980,22 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, node_name, ros::init_options::NoSigintHandler);
   ros::NodeHandle ros_node;
   InitializeMessages();
-  localization_publisher_ =
+  localization_publisher_amrl_ =
       ros_node.advertise<amrl_msgs::Localization2DMsg>(
       "localization", 1, true);
+  localization_publisher_ros_ =
+      ros_node.advertise<geometry_msgs::PoseStamped>(
+      "localization_ros", 1, true);
   {
     visualization_publisher_ =
         ros_node.advertise<amrl_msgs::VisualizationMsg>(
         "visualization", 1, true);
     visualization_msg_ = visualization::NewVisualizationMessage("map", "enml");
   }
-  pose_publisher_ =
-      ros_node.advertise<geometry_msgs::PoseStamped>(
-      "global_pose", 1, true);
-
 
   if (bag_file != NULL) {
     PlayBagFile(
-        bag_file, max_laser_poses, !disable_stfs, time_skip, &ros_node, NULL);
+        bag_file, max_laser_poses, !disable_stfs, time_skip, &ros_node, NULL, keyframes_file);
   } else {
     OnlineLocalize(!disable_stfs, &ros_node);
   }

@@ -26,7 +26,7 @@ set(CMAKE_AUTOMOC on)
 set(CMAKE_AUTORCC on)
 set(CMAKE_AUTOUIC on)
 set(CMAKE_INCLUDE_CURRENT_DIR on)
-find_package(Qt5 COMPONENTS Core Widgets WebSockets REQUIRED)
+find_package(Qt5 COMPONENTS Core Widgets WebSockets Gui OpenGL REQUIRED)
 
 FIND_PACKAGE(Lua51 REQUIRED)
 FIND_PACKAGE(Eigen3 REQUIRED)
@@ -37,21 +37,43 @@ ROSBUILD_INIT()
 SET(ROS_BUILD_STATIC_LIBS true)
 SET(ROS_BUILD_SHARED_LIBS false)
 
+ROSBUILD_GENMSG()
+ROSBUILD_GENSRV()
+
+INCLUDE_DIRECTORIES(vector_display)
+INCLUDE_DIRECTORIES(vector_display/src)
+INCLUDE_DIRECTORIES(vector_display/src/gui)
+INCLUDE_DIRECTORIES(vector_display/src/vector_display)
+INCLUDE_DIRECTORIES(vector_display/src/third_party)
+INCLUDE_DIRECTORIES(vector_display/src/config_reader/include)
+
+
+INCLUDE_DIRECTORIES(${Qt5Widgets_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(${Qt5Gui_INCLUDE_DIRS})
+
+
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 
 ADD_SUBDIRECTORY(amrl_shared_lib)
-ROSBUILD_ADD_EXECUTABLE(enml_hsrb
-    enml/src/non_markov_localization_main_hsrb.cpp
+
+SET(libs roslib roscpp pthread glut gflags
+    Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL
+    ${LUA_LIBRARIES} rt GL GLU
+    glog X11 roscpp roslib amrl_shared_lib)
+
+
+ROSBUILD_ADD_EXECUTABLE(curiosity
+    enml/src/curiosity_main.cpp
     enml/src/non_markov_localization.cpp
     enml/src/kdtree.cpp
     enml/src/perception_2d.cpp
     enml/src/vector_map/vector_map.cc
     enml/src/visualization/visualization.cc
     enml/src/visualization/gui_helpers.cc)
-TARGET_INCLUDE_DIRECTORIES(enml_hsrb PRIVATE
+TARGET_INCLUDE_DIRECTORIES(curiosity PRIVATE
     amrl_shared_lib
     config-reader/include
     enml/src
@@ -59,40 +81,26 @@ TARGET_INCLUDE_DIRECTORIES(enml_hsrb PRIVATE
     enml/src/config-reader/include
     ${LUA_INCLUDE_DIR}
     ${CERES_INCLUDE_DIRS})
-ADD_DEPENDENCIES(enml_hsrb rosbuild_precompile)
-TARGET_LINK_LIBRARIES(enml_hsrb ceres roslib roscpp ncurses pthread boost_system
-    ${LUA_LIBRARIES} rt popt glog rosbag amrl_shared_lib
+ADD_DEPENDENCIES(curiosity rosbuild_precompile)
+TARGET_LINK_LIBRARIES(curiosity ceres roslib roscpp ncurses pthread
+    boost_system ${LUA_LIBRARIES} rt popt glog rosbag amrl_shared_lib
     ${BUILD_SPECIFIC_LIBRARIES})
 
+SET(target vector_display)
+ROSBUILD_ADD_EXECUTABLE(${target}
+    vector_display/src/gui/vector_display_main.cpp
+    vector_display/src/gui/vector_display_thread.cpp
+    vector_display/src/gui/vector_display.cpp
+    vector_display/src/gui/gltext.cpp
+    vector_display/src/vector_map/vector_map.cc
+    ${THIRD_PARTY_MOC_SRCS})
+TARGET_INCLUDE_DIRECTORIES(${target} PRIVATE
+    vector_display/src
+    vector_display/src/shared
+    vector_display/src/vector_map
+    vector_display/src/gui)
+    TARGET_LINK_LIBRARIES(${target} ${libs} ${QT_LIBRARIES})
 
-#ROSBUILD_ADD_EXECUTABLE(websocket_hsrb
-     #webviz/src/websocket/websocket_main_hsrb.cc
-     #webviz/src/websocket/websocket.cc)
- #TARGET_INCLUDE_DIRECTORIES(websocket_hsrb PRIVATE
-     #amrl_shared_lib
-     #webviz/src)
- #TARGET_LINK_LIBRARIES(websocket_hsrb
-     #Qt5::Core
-     #Qt5::Widgets
-     #Qt5::WebSockets
-     #glog
-     #gflags
-     #amrl_shared_lib
-     #${BUILD_SPECIFIC_LIBRARIES})
 
-
-#ROSBUILD_ADD_EXECUTABLE(pointcloud_to_laserscan
-    #pointcloud_to_laserscan/pointcloud_to_laserscan_main.cc)
-#TARGET_INCLUDE_DIRECTORIES(pointcloud_to_laserscan PRIVATE
-    #config-reader/include
-    #amrl_shared_lib
-    #${LUA_INCLUDE_DIR})
-#TARGET_LINK_LIBRARIES(pointcloud_to_laserscan
-    #glog
-    #gflags
-    #amrl_shared_lib
-    #roscpp
-    #${LUA_LIBRARIES}
-    #${BUILD_SPECIFIC_LIBRARIES})
 
 
