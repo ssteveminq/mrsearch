@@ -43,5 +43,22 @@
         <remap from="/camera_region_map" to="/jackal/fov_map"/>
     </node>
 
+   
+    <!-- node for setting search polygon"/>-->
+    <node name="polygon_client" pkg="search_service" type="plugin_client" output="screen"/>
+
+    <!-- path planner for each robot"/>-->
+    <node name="agent_0_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
+    <node name="agent_1_tspsolve" pkg="search_service" type="stsp_server" output="screen"/>
+
+
+    <!-- path smoother for each robot"/>-->
+    <node name="agent_0_getpath" pkg="search_service" type="get_forwardpath_server" output="screen"/>
+    <node name="agent_1_getpath" pkg="search_service" type="get_forwardpath_server" output="screen"/>
+
+
+
+
+
 
 </launch>

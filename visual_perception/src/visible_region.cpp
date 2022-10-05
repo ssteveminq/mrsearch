@@ -15,7 +15,7 @@ static const double       tracker_init_dist          = 4.0;
 bool IsNotInitilized = true;
 
 // constructor
-visible_manager::visible_manager(ros::NodeHandle nh, std::string pose_topic_="amcl_pose", std::string camera_frame_="spot/camera_link")
+visible_manager::visible_manager(ros::NodeHandle nh, std::string pose_topic_="amcl_pose", std::string camera_frame_="front_camera")
   : nh_(nh),
     robot_state_()
 {

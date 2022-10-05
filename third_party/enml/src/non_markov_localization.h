@@ -51,6 +51,7 @@ class NonMarkovLocalization {
     kLtfObservation = 0,
     kStfObservation = 1,
     kDfObservation = 2,
+    kSLtfObservation = 3,
   };
 
   // Struct to keep track of the correspondence between a pair of observed
