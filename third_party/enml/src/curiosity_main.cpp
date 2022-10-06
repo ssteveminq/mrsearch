@@ -2131,6 +2131,8 @@ int main(int argc, char** argv) {
     visualization_msg_ = visualization::NewVisualizationMessage("map", "enml");
   }
 
+  stf_poses_publisher_ =ros_node.advertise<geometry_msgs::PoseArray>("stf_poses", 1, true);
+
   if (bag_file != NULL) {
     PlayBagFile(
         bag_file, max_laser_poses, !disable_stfs, time_skip, &ros_node, NULL, keyframes_file);

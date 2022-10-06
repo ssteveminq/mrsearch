@@ -1,8 +1,8 @@
 RobotConfig = {
     name = "turtlebot";
-    scan_topic = "scan";
+    scan_topic = "/turtlebot/scan";
     pointcloud_topic = "";
-    odometry_topic = "/odom";
+    odometry_topic = "/turtlebot/odom";
     initialpose_topic = "/initialpose";
   };
   
