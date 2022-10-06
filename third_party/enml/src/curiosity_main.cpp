@@ -153,7 +153,7 @@ float kMaxOdometryDeltaAngle = DegToRad(15.0);
 pthread_mutex_t relocalization_mutex_ = PTHREAD_MUTEX_INITIALIZER;
 
 // The directory where all the maps are stored.
-string maps_dir_header_ = ros::package::getPath("a1_autonomy");
+string maps_dir_header_ = ros::package::getPath("tmp");
 string tmp_path_ = "/vectormaps";
 string maps_dir_ = maps_dir_header_ + tmp_path_;
 
