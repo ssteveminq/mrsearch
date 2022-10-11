@@ -1865,8 +1865,8 @@ void PlayBagFile(const string& bag_file,
           &init_map)) {
         if (debug_level_ > 0) {
           printf("Initializing location to %s: %f,%f, %f\u00b0\n",
-                 init_map.c_str(), init_location.x(), init_location.y(),
-                 DegToRad(init_angle));
+              init_map.c_str(), init_location.x(), init_location.y(),
+              DegToRad(init_angle));
         }
         const Pose2Df init_pose(init_angle, init_location.x(),
                                 init_location.y());
@@ -1992,7 +1992,7 @@ void OnlineLocalize(bool use_point_constraints, ros::NodeHandle* node) {
   Subscriber odom_subscriber =
       node->subscribe(CONFIG_odom_topic, 1, OdometryCallback);
   Subscriber initialize_subscriber =
-      node->subscribe("/initialpose", 1, InitializeCallback);
+      node->subscribe(CONFIG_initialpose_topic, 1, InitializeCallback);
 
   ClearDisplay();
   PublishDisplay();

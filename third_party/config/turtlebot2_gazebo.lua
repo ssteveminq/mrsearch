@@ -3,7 +3,7 @@ RobotConfig = {
     scan_topic = "/tb2/scan";
     pointcloud_topic = "";
     odometry_topic = "/tb2/odom";
-    initialpose_topic = "/initialpose";
+    initialpose_topic = "/tb2/initialpose";
   };
   
   enml = {

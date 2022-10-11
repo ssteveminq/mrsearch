@@ -1,18 +1,21 @@
 <?xml version="1.0"?>
 <launch>
   <!-- Curiosity node (ENML) -->
-  <node pkg="third_party" type="curiosity" respawn="false" name="curiosity" output="screen" 
-        args="--config_dir $(find third_party)/config --robot_config turtlebot_gazebo.lua --maps_dir $(find tmp)/vectormaps -d1"/>
-  <!-- Vector Display -->
-  <node pkg="third_party" type="vector_display" respawn="false" name="vector_display" output="screen" 
-     args="--maps_dir $(find tmp)/vectormaps --map AHG_Apartment_Sim"/>
+  <group ns="turtlebot">
+    <node pkg="third_party" type="curiosity" respawn="false" name="curiosity" output="screen" 
+            args="--config_dir $(find third_party)/config --robot_config turtlebot_gazebo.lua --maps_dir $(find tmp)/vectormaps -d1"/>
+    <!-- Vector Display -->
+    <node pkg="third_party" type="vector_display_turtlebot" respawn="false" name="vector_display_turtlebot" output="screen" 
+         args="--maps_dir $(find tmp)/vectormaps --map AHG_Apartment_Sim"/>
+  </group>
 
-  <node pkg="third_party" type="curiosity" respawn="false" name="curiosity_second" output="screen" 
-        args="--config_dir $(find third_party)/config --robot_config turtlebot2_gazebo.lua --maps_dir $(find tmp)/vectormaps -d1"/>
-  <!-- Vector Display -->
-  <node pkg="third_party" type="vector_display" respawn="false" name="vector_display_second" output="screen" 
-     args="--maps_dir $(find tmp)/vectormaps --map AHG_Apartment_Sim"/>
-
+  <group ns="tb2">
+    <node pkg="third_party" type="curiosity" respawn="false" name="curiosity_second" output="screen" 
+          args="--config_dir $(find third_party)/config --robot_config turtlebot2_gazebo.lua --maps_dir $(find tmp)/vectormaps -d1"/>
+    <!-- Vector Display -->
+    <node pkg="third_party" type="vector_display_tb2" respawn="false" name="vector_display_tb2" output="screen"
+          args="--maps_dir $(find tmp)/vectormaps --map AHG_Apartment_Sim"/>
+  </group>
 
 
 </launch>

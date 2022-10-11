@@ -3,7 +3,7 @@ RobotConfig = {
     scan_topic = "/turtlebot/scan";
     pointcloud_topic = "";
     odometry_topic = "/turtlebot/odom";
-    initialpose_topic = "/initialpose";
+    initialpose_topic = "/turtlebot/initialpose";
   };
   
   enml = {
