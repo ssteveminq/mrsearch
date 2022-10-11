@@ -118,3 +118,20 @@ roscd search_service && rosrun search_service sr_client.py
 ```
 
 
+## curiosity - Simulation Fall 2022 - path generation
+Create gazebo world ( two turtlebots with ahg_sim)
+```
+roslaunch tmp turtlebot_two_ahg.launch
+```
+Run the search server. Define a search region using rviz (clicked_point)
+```
+roslaunch search_service mtsp_search_curiosity.launch
+```
+Run the search client to get search plan (clusters)
+```
+rosrun search_service multisearch_action_client.py
+```
+Run the curioisty node
+```
+roslaunch tmp turtlebot_two_gazebo_curiosity.launch
+```
