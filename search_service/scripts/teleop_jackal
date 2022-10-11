@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
     keyTranslator = None
 
-    velPub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+    velPub = rospy.Publisher('turtlebot/cmd_vel', Twist, queue_size=1)
 
     x = 0
     th = 0

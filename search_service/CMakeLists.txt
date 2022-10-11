@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   roslib
   rospy
-  arl_robot_follower
   geometry_msgs
   sensor_msgs
   std_msgs
@@ -92,10 +91,10 @@ add_executable(mtsp_server src/mtsp_server.cpp src/cluster.cpp
 target_link_libraries(mtsp_server ${catkin_LIBRARIES})
 add_dependencies(mtsp_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
-add_executable(inspection_client src/inspection_client.cpp ${SOURCES})
-target_link_libraries(inspection_client ${catkin_LIBRARIES})
-add_dependencies(inspection_client ${catkin_EXPORTED_TARGETS}
-    ${PROJECT_NAME}_generate_messages_cpp)
+#add_executable(inspection_client src/inspection_client.cpp ${SOURCES})
+#target_link_libraries(inspection_client ${catkin_LIBRARIES})
+#add_dependencies(inspection_client ${catkin_EXPORTED_TARGETS}
+    #${PROJECT_NAME}_generate_messages_cpp)
 
 add_executable(fake_mtsp_server src/fake_mtsp_server.cpp src/cluster.cpp
     src/map_util.cpp ${SOURCES})
