@@ -259,7 +259,7 @@ public:
             {
                 double dev_x=smooth_path.poses[i+1].pose.position.x-smooth_path.poses[i].pose.position.x;
                 double dev_y=smooth_path.poses[i+1].pose.position.y-smooth_path.poses[i].pose.position.y;
-                double yaw = atan2(dev_y,dev_x);
+                double yaw = 0.75*atan2(dev_y,dev_x);
             geometry_msgs::Quaternion q;
 
               double t0 = cos(yaw * 0.5);

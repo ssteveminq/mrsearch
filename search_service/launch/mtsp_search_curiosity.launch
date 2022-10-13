@@ -34,7 +34,7 @@
     <node name="scaled_map_converter" pkg="search_service" type="scaled_map_converter" output="screen">
         <!--<remap from="/map" to="/walrus/map"/>-->
     </node>
-    <node name="multisearch_action" pkg="search_service" type="mtsp_server" output="screen">
+    <node name="multisearch_action" pkg="search_service" type="mtsp_server_forward" output="screen">
         <remap from="/agent_0_path" to="/turtlebot/search_agent_manager/waypoint_plan"/>
         <remap from="/agent_1_path" to="/tb2/search_agent_manager/waypoint_plan"/>
     </node>
@@ -55,8 +55,12 @@
     <arg name="get_plan_agent0" default="turtlebot/move_base/make_plan"/>
     <arg name="get_plan_agent1" default="tb2/move_base/make_plan"/>
 
-    <node name="agent_0_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent0)"/>
-    <node name="agent_1_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent1)"/>
+    <!--<node name="agent_0_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent0)"/>-->
+    <!--<node name="agent_1_getpath" pkg="search_service" type="get_smooth_server" output="screen" args="$(arg get_plan_agent1)"/>-->
+
+    <node name="agent_0_getpath" pkg="search_service" type="get_forwardpath_server" output="screen"/>
+    <node name="agent_1_getpath" pkg="search_service" type="get_forwardpath_server" output="screen"/>
+
     <!--<arg name="target_path_0" default="agent_0_path"/>-->
     <!--<arg name="target_path_1" default="agent_1_path"/>-->
     <!--<node name="path_follow_agent_0" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_0) $(arg target_path_0)"/>-->

@@ -91,6 +91,13 @@ add_executable(mtsp_server src/mtsp_server.cpp src/cluster.cpp
 target_link_libraries(mtsp_server ${catkin_LIBRARIES})
 add_dependencies(mtsp_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
+add_executable(mtsp_server_forward src/mtsp_server_forward_path.cpp src/cluster.cpp
+    src/map_util.cpp ${SOURCES})
+target_link_libraries(mtsp_server_forward ${catkin_LIBRARIES})
+add_dependencies(mtsp_server_forward ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+
+
+
 #add_executable(inspection_client src/inspection_client.cpp ${SOURCES})
 #target_link_libraries(inspection_client ${catkin_LIBRARIES})
 #add_dependencies(inspection_client ${catkin_EXPORTED_TARGETS}
