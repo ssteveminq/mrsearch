@@ -208,6 +208,32 @@ bool prediction_manager::check_staticObs(float x_pos,float y_pos)
   }
 
 }
+bool prediction_manager::check_staticObs_dist(float x_pos,float y_pos, float radius)
+{
+  //return true if it is occupied with obstacles
+  if (Target_Search_map.data.size()>0)
+  {   
+      int nums=8;
+      int ang_res=2*MATH_PI/nums;
+      for(int j(1);j<=2;j++){
+      for(int i(0);i<8;i++)
+      {
+          double theta_=ang_res*i;
+          double test_x=x_pos+radius/j*cos(theta_);
+          double test_y=y_pos+radius/j*sin(theta_);
+          if(check_staticObs(test_x,test_y))
+              return true;
+      }
+
+      }
+      return false;
+
+  }
+
+}
+
+
+
 
 int prediction_manager::Coord2CellNum(double _x, double _y, const nav_msgs::OccupancyGrid& inputmap_)
 {	
@@ -669,7 +695,7 @@ void prediction_manager::SplitFrontiers(const frontier_exploration::Frontier& fr
 
 frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int initial_cell, unsigned int reference_, std::vector<bool>& visited_flag){
 
-    int max_size = 240;
+    int max_size = 100;
     //int max_size = 100;
     //initialize frontier structure
     frontier_exploration::Frontier output;
@@ -706,15 +732,25 @@ frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int 
             //check if neighbour is a potential frontier cell
             if(output.size>max_size)
             {
+                //among output.points. find the least distace from static obstacles
                 output.centroid.x /= (output.size-1);
                 output.centroid.y /= (output.size-1);
-                //output.centroid.x+=0.05;
-                //output.centroid.y+=0.05;
                 output.centroid.x+=0.05;
                 output.centroid.y+=0.05;
-                //output.centroid.x = output.points[static_cast<int>(max_size/2*3)].x;
-                //output.centroid.y = output.points[static_cast<int>(max_size/2*3)].y;
                 output.travel_point = output.centroid;
+
+                //check if the distance between centroid and any static obstacles
+                int posidx=0;
+                while(check_staticObs_dist(output.centroid.x, output.centroid.y, 1.0))
+                {
+                    output.centroid.x=output.points[posidx].x;
+                    output.centroid.y=output.points[posidx].y;
+                    //output.points.push_back(point);
+                    posidx++;
+                    if(posidx>=output.points.size())
+                        break;
+                }
+
                 return output;
 
             }

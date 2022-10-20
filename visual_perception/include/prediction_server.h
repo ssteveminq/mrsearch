@@ -100,6 +100,7 @@ public:
   
   bool Comparetwopoistions(std::vector<double> pos,std::vector<double> pos2,double criterion);
   bool check_staticObs(float x_pos,float y_pos);
+  bool check_staticObs_dist(float x_pos,float y_pos, float dist);
   //bool getlinevalue(int line_type,double input_x, double input_y);
   double getDistance_from_Vec(std::vector<double> origin, double _x, double _y);
   //bool check_cameraregion(float x_pos,float y_pos);
