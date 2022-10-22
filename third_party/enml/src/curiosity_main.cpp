@@ -1401,7 +1401,7 @@ void CorrespondenceCallback(
   SaveLtfsObservations(start_pose, end_pose, poses, point_clouds, normal_clouds,
           classifications, localization_->ltf_points_);
   SaveStfsObservations(start_pose, end_pose, poses, point_clouds, normal_clouds,
-          classifications, localization_->stf_points_, localization_->stf_points_);
+          classifications, localization_->ltf_points_, localization_->stf_points_);
   DrawObservations(start_pose, end_pose, poses, point_clouds, normal_clouds,
                    classifications);
   DrawVisibilityConstraints(visibility_constraints, poses);
