@@ -572,6 +572,7 @@ class NonMarkovLocalization {
 
 public:
   std::vector<Eigen::Vector2f> stf_points_;
+  std::vector<Eigen::Vector2f> ltf_points_;
 };
 
 }  // namespace vector_localization

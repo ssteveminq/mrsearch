@@ -1103,7 +1103,7 @@ void SaveStfsObservations(
         const vector<vector< Vector2f> >& point_clouds,
         const std::vector< NormalCloudf >& normal_clouds,
         const vector<vector<NonMarkovLocalization::ObservationType> >&
-                classifications, std::vector<Vector2f>& stfpoints) {
+                classifications, std::vector<Vector2f>& ltfpoints, std::vector<Vector2f>& stfpoints) {
   stfpoints.clear();
   for (size_t i = 0; i <= end_pose; ++i) {
     const vector<Vector2f> &point_cloud = point_clouds[i];
@@ -1121,7 +1121,19 @@ void SaveStfsObservations(
           } break;
           case NonMarkovLocalization::kStfObservation : {
             if(j%10==0)
-                stfpoints.push_back(point);
+            {
+                //get_min_distance_from_
+                double min_dist=1000.0;
+                int  size_ltf= static_cast<int>(ltfpoints.size());
+                for(int k(0);k<size_ltf;k++)
+                {
+                    double tmp_dist = sqrt(pow(ltfpoints[k][0]-point[0],2)+pow(ltfpoints[k][1]-point[1],2));
+                    if(tmp_dist<min_dist)
+                        min_dist=tmp_dist;
+                }
+                if(min_dist>2.0)
+                    stfpoints.push_back(point);
+            }
             } break;
           case NonMarkovLocalization::kDfObservation : {
             continue;
@@ -1132,6 +1144,43 @@ void SaveStfsObservations(
     }
   }
 }
+
+
+void SaveLtfsObservations(
+        const size_t start_pose, const size_t end_pose,
+        const vector<double>& poses,
+        const vector<vector< Vector2f> >& point_clouds,
+        const std::vector< NormalCloudf >& normal_clouds,
+        const vector<vector<NonMarkovLocalization::ObservationType> >&
+                classifications, std::vector<Vector2f>& ltfpoints) {
+  ltfpoints.clear();
+  for (size_t i = 0; i <= end_pose; ++i) {
+    const vector<Vector2f> &point_cloud = point_clouds[i];
+    const Vector2f pose_location(poses[3 * i + 0], poses[3 * i + 1]);
+    const float pose_angle = poses[3 * i + 2];
+    const Rotation2Df pose_rotation(pose_angle);
+    const Affine2f pose_transform =
+        Translation2f(pose_location) * pose_rotation;
+    for (size_t j = 0; j < point_cloud.size(); ++j) {
+      const Vector2f point = pose_transform * point_cloud[j];
+      if (i >= start_pose) {
+        switch (classifications[i][j]) {
+          case NonMarkovLocalization::kLtfObservation : {
+                ltfpoints.push_back(point);
+          } break;
+          case NonMarkovLocalization::kStfObservation : {
+            continue;
+            } break;
+          case NonMarkovLocalization::kDfObservation : {
+            continue;
+            if (i == end_pose) continue;
+          } break;
+        }
+      }
+    }
+  }
+}
+
 
 
 
@@ -1349,8 +1398,10 @@ void CorrespondenceCallback(
   }
   DrawPoses(start_pose, end_pose, odometry_poses, poses, covariances);
   DrawGradients(start_pose, end_pose, gradients, poses);
+  SaveLtfsObservations(start_pose, end_pose, poses, point_clouds, normal_clouds,
+          classifications, localization_->ltf_points_);
   SaveStfsObservations(start_pose, end_pose, poses, point_clouds, normal_clouds,
-          classifications, localization_->stf_points_);
+          classifications, localization_->stf_points_, localization_->stf_points_);
   DrawObservations(start_pose, end_pose, poses, point_clouds, normal_clouds,
                    classifications);
   DrawVisibilityConstraints(visibility_constraints, poses);
