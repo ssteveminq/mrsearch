@@ -135,3 +135,20 @@ Run the curioisty node
 ```
 roslaunch tmp turtlebot_two_gazebo_curiosity.launch
 ```
+
+## Experiment Running - Fall 2022 - HSR & A1
+1) Vanilla CONCERTS
+Start both robots, localize them and connect them to robofleet
+Start knapsack and connect it to robofleet
+At this moment we should be receiving costmap and pose information from each robot.
+Once verified that the knapsack rosmaster is receiving pose and costmap information, we want to start the Search Server and define the search region
+```
+roslaunch search_serivce ahg-real-search-server.launch
+```
+USe /clicked_point to define the polygon and then click inside
+Next we need to call the search action client.
+```
+rosrun search_service multisearch_action_client.py
+```
+
+

@@ -1,0 +1,6 @@
+image: ahg-apartment.pgm
+resolution: 0.050000
+origin: [-14.5, -9.0, 0.0]
+negate: 0
+occupied_thresh: 0.35
+free_thresh: 0.196
