@@ -140,13 +140,13 @@ target_link_libraries(plugin_client
 # target_link_libraries(fastapproach_client ${catkin_LIBRARIES})
 # add_dependencies(fastapproach_client  ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
-#add_executable(tb1_pose_publisher src/tb1_publisher.cpp ${SOURCES})
-#target_link_libraries(tb1_pose_publisher ${catkin_LIBRARIES})
-#add_dependencies(tb1_pose_publisher ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+add_executable(tb1_pose_publisher src/tb1_publisher.cpp ${SOURCES})
+target_link_libraries(tb1_pose_publisher ${catkin_LIBRARIES})
+add_dependencies(tb1_pose_publisher ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
-#add_executable(tb2_pose_publisher src/tb2_publisher.cpp ${SOURCES})
-#target_link_libraries(tb2_pose_publisher ${catkin_LIBRARIES})
-#add_dependencies(tb2_pose_publisher ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+add_executable(tb2_pose_publisher src/tb2_publisher.cpp ${SOURCES})
+target_link_libraries(tb2_pose_publisher ${catkin_LIBRARIES})
+add_dependencies(tb2_pose_publisher ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
 #add_executable(tb3_pose_publisher src/tb3_publisher.cpp ${SOURCES})
 #target_link_libraries(tb3_pose_publisher ${catkin_LIBRARIES})

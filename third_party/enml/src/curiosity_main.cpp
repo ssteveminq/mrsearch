@@ -1122,7 +1122,7 @@ void SaveStfsObservations(
           case NonMarkovLocalization::kStfObservation : {
             if(j%10==0)
             {
-                //get_min_distance_from_
+              //get_min_distance_from_
                 double min_dist=1000.0;
                 int  size_ltf= static_cast<int>(ltfpoints.size());
                 for(int k(0);k<size_ltf;k++)
@@ -1131,8 +1131,8 @@ void SaveStfsObservations(
                     if(tmp_dist<min_dist)
                         min_dist=tmp_dist;
                 }
-                if(min_dist>2.0)
-                    stfpoints.push_back(point);
+                if(min_dist>0.3)
+                     stfpoints.push_back(point);
             }
             } break;
           case NonMarkovLocalization::kDfObservation : {
