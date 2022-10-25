@@ -135,6 +135,15 @@ Run the curioisty node
 ```
 roslaunch tmp turtlebot_two_gazebo_curiosity.launch
 ```
+To get turtlebots to follow the paths, path follow server
+```
+roslaunch search_service pathfollow.launch
+```
+Then, start the path follow server
+```
+roslaunch search_service pathfollow_client.launch
+```
+
 
 ## Experiment Running - Fall 2022 - HSR & A1
 1) Vanilla CONCERTS
