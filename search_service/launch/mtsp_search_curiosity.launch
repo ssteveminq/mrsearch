@@ -7,8 +7,14 @@
     <rosparam file="$(find search_service)/config/ahg.yaml"/>
     <arg name="agent1_pose_topic" default="$(arg agent1)/amcl_pose"/>
     <arg name="agent2_pose_topic" default="$(arg agent2)/amcl_pose"/>
+    
+    <!-- /turtlebox/fov_map and /tb2/fov_map -->
+    <!-- $(arg agent1)/move_base/local_costmap/costmap 
+         $(arg agent2)/move_base/local_costmap/costmap-->
     <arg name="agent1_map_topic" default="$(arg agent1)/move_base/local_costmap/costmap"/>
     <arg name="agent2_map_topic" default="$(arg agent2)/move_base/local_costmap/costmap"/>
+    <!-- Above Lines for FOV Map or sqaure FOV -->
+
     <arg name="planner_topic" default="$(arg agent1)/move_base/make_plan"/>
     <arg name="max_x" default="12.0"/>
     <arg name="min_x" default="-10.0"/>
@@ -65,5 +71,18 @@
     <!--<arg name="target_path_1" default="agent_1_path"/>-->
     <!--<node name="path_follow_agent_0" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_0) $(arg target_path_0)"/>-->
     <!--<node name="path_follow_agent_1" pkg="search_service" type="path_follow_server" output="screen" args="$(arg target_nav_action_1) $(arg target_path_1)"/>-->
+
+
+    <!-- For FoV Map instead of square type -->
+    <arg name="camera_frame" default="turtlebot/base_link"/>
+    <node pkg="visual_perception" type="visible_manager" name="turtlebot_camera_region" output="screen" args="$(arg agent1_pose_topic) $(arg camera_frame)">
+        <remap from="/camera_region_map" to="turtlebot/fov_map"/>
+    </node>
+    <arg name="camera_frame2" default="tb2/base_link"/>
+    <node pkg="visual_perception" type="visible_manager" name="tb2_camera_region" output="screen" args="$(arg agent2_pose_topic) $(arg camera_frame2)">
+        <remap from="/camera_region_map" to="tb2/fov_map"/>
+    </node>
+
+
 
 </launch>

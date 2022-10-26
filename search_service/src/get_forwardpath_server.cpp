@@ -247,11 +247,11 @@ public:
         int path_len = smooth_path.poses.size();
         //for(int k(path_len-2);k<smooth_path.poses.size();k--)
             //smooth_path.poses.push_back(smooth_path.poses[k]);
-        for(int k(path_len-2);k>=0;k--)
-        {
-            back_poses[k].header.stamp=ros::Time::now();
-            smooth_path.poses.push_back(back_poses[k]);
-        }
+        //for(int k(path_len-2);k>=0;k--)
+        //{
+        //    back_poses[k].header.stamp=ros::Time::now();
+        //    smooth_path.poses.push_back(back_poses[k]);
+        //}
 
         for(int i(1);i<smooth_path.poses.size();i++)
         {

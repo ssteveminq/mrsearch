@@ -695,7 +695,7 @@ void prediction_manager::SplitFrontiers(const frontier_exploration::Frontier& fr
 
 frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int initial_cell, unsigned int reference_, std::vector<bool>& visited_flag){
 
-    int max_size = 100;
+    int max_size = 30; //100
     //int max_size = 100;
     //initialize frontier structure
     frontier_exploration::Frontier output;
@@ -741,7 +741,7 @@ frontier_exploration::Frontier prediction_manager::buildNewUnknown(unsigned int 
 
                 //check if the distance between centroid and any static obstacles
                 int posidx=0;
-                while(check_staticObs_dist(output.centroid.x, output.centroid.y, 1.0))
+                while(check_staticObs_dist(output.centroid.x, output.centroid.y, 0.2))
                 {
                     output.centroid.x=output.points[posidx].x;
                     output.centroid.y=output.points[posidx].y;
