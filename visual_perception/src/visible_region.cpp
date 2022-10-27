@@ -32,8 +32,8 @@ visible_manager::visible_manager(ros::NodeHandle nh, std::string pose_topic_="am
   camera_visible_region.info.width=10; //30
   camera_visible_region.info.height= 10; //30
   camera_visible_region.info.resolution=0.5;
-  camera_visible_region.info.origin.position.x=-5.0; // -7.5
-  camera_visible_region.info.origin.position.y=-5.0; //-7.5
+  camera_visible_region.info.origin.position.x=-2.5; // -7.5
+  camera_visible_region.info.origin.position.y=-2.5; //-7.5
   camera_visible_region.data.resize(camera_visible_region.info.width*camera_visible_region.info.height,0.0);
 
 }
@@ -66,8 +66,8 @@ void visible_manager::getCameraregion()
   double global_robot_y= global_pose[1];
   double global_robot_theta = global_pose[2]; //base_yaw+head_yaw
 
-  camera_visible_region.info.origin.position.x=global_robot_x-5.0;//7.5
-  camera_visible_region.info.origin.position.y=global_robot_y-5.0;//7.5
+  camera_visible_region.info.origin.position.x=global_robot_x-2.5;//7.5
+  camera_visible_region.info.origin.position.y=global_robot_y-2.5;//7.5
 
 
 
