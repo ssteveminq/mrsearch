@@ -404,7 +404,7 @@ int inspection_manager::Coord2CellNum(double _x, double _y, const nav_msgs::Occu
 bool inspection_manager::checked_with_search_map(const geometry_msgs::Pose& input )
 {
 
-    listener.waitForTransform("map_en", "map", ros::Time(0), ros::Duration(2.0));
+    // listener.waitForTransform("map_en", "map", ros::Time(0), ros::Duration(2.0));
     geometry_msgs::PoseStamped pose_in;     //added by mk, ryan
     geometry_msgs::PoseStamped pose_out;     //added by mk, ryan
       //pose_in.header.stamp=ros::Time(0);
