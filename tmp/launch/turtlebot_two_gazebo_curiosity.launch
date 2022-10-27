@@ -7,6 +7,8 @@
     <!-- Vector Display -->
     <node pkg="third_party" type="vector_display_turtlebot" respawn="false" name="vector_display_turtlebot" output="screen" 
          args="--maps_dir $(find tmp)/vectormaps --map AHG_Apartment_Sim"/>
+     <!-- noe for filtering stf poses (nearby stf poses and those that are covered by search map -->
+    <node pkg="visual_perception" type="inspection_manager" respawn="false" name="inspection_manager" output="screen" />
   </group>
 
   <group ns="tb2">
@@ -15,6 +17,9 @@
     <!-- Vector Display -->
     <node pkg="third_party" type="vector_display_tb2" respawn="false" name="vector_display_tb2" output="screen"
           args="--maps_dir $(find tmp)/vectormaps --map AHG_Apartment_Sim"/>
+    <!-- noe for filtering stf poses (nearby stf poses and those that are covered by search map -->
+    <node pkg="visual_perception" type="inspection_manager" respawn="false" name="inspection_manager" output="screen" />
+
   </group>
 
 

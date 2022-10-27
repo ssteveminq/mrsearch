@@ -11,8 +11,10 @@
     <!-- /turtlebox/fov_map and /tb2/fov_map -->
     <!-- $(arg agent1)/move_base/local_costmap/costmap 
          $(arg agent2)/move_base/local_costmap/costmap-->
-    <arg name="agent1_map_topic" default="$(arg agent1)/move_base/local_costmap/costmap"/>
-    <arg name="agent2_map_topic" default="$(arg agent2)/move_base/local_costmap/costmap"/>
+    <arg name="agent1_map_topic" default="$(arg agent1)/fov_map"/>
+    <arg name="agent2_map_topic" default="$(arg agent2)/fov_map"/>
+    <!-- <arg name="agent1_map_topic" default="$(arg agent1)/move_base/local_costmap/costmap"/>
+    <arg name="agent2_map_topic" default="$(arg agent2)/move_base/local_costmap/costmap"/> -->
     <!-- Above Lines for FOV Map or sqaure FOV -->
 
     <arg name="planner_topic" default="$(arg agent1)/move_base/make_plan"/>
