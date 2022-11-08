@@ -16,7 +16,7 @@
     <param name="AGENT2_MAP_TOPIC" value="$(arg agent2_map_topic)"/>
     <param name="NUM_AGENT" value="$(arg num_agents)"/>
 
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/ahg-apartment.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/map.yaml"/>
 
     <node name="scaled_map_converter" pkg="search_service" type="scaled_map_converter" output="screen">
         <!--<remap from="/map" to="/walrus/map"/>-->
@@ -41,5 +41,16 @@
 
     <node name="agent_0_getpath" pkg="search_service" type="get_forwardpath_server" output="screen"/>
     <node name="agent_1_getpath" pkg="search_service" type="get_forwardpath_server" output="screen"/>
+
+    <!-- Run move_base for getting global plans in forwardpath_server -->
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+        <!-- <rosparam file="$(find tmp)/config/turtlebot/local_costmap_params.yaml" command="load"/>
+        <rosparam file="$(find tmp)/config/turtlebot/global_costmap_params.yaml" command="load"/>
+        <rosparam file="$(find tmp)/config/turtlebot/move_base_params.yaml" command="load" />
+        <rosparam file="$(find tmp)/config/turtlebot/dwa_local_planner_params_burger.yaml" command="load" />
+        <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+        <param name="base_global_planner" value="global_planner/GlobalPlanner"/> -->
+    </node>
+
 
 </launch>
