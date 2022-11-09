@@ -409,8 +409,6 @@ public:
             output_path.header.frame_id="map";
 
         }
-        int jj = smooth_path.poses.size();
-        output_path.poses.push_back(smooth_path.poses[jj]);
 
         ROS_INFO("smooth_path size: %d", output_path.poses.size());
 
