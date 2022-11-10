@@ -40,7 +40,7 @@ class visible_manager
 {
 public:
   /// constructor
-  visible_manager(ros::NodeHandle nh, std::string pose_topic_, std::string camera_frame);
+  visible_manager(ros::NodeHandle nh, std::string pose_topic_, std::string camera_frame, std::string local_map_name);
 
   /// destructor
   virtual ~visible_manager();
@@ -51,6 +51,7 @@ public:
   //void global_pose_callback(const geometry_msgs::PoseStamped::ConstPtr& msg);
   void global_pose_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
   void scaled_static_map_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg);
+  void agent_localmap_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg);
   
   bool Comparetwopoistions(std::vector<double> pos,std::vector<double> pos2,double criterion);
   bool check_staticObs(float x_pos,float y_pos);
@@ -62,6 +63,7 @@ public:
   int  CoordinateTransform_Global2_staticMap(float global_x, float global_y);
     
   void getCameraregion();
+  void FilterwithLaserCostmap();
   void spin();
 
 
@@ -75,6 +77,7 @@ private:
   ros::Subscriber globalpose_sub;
   ros::Subscriber Scaled_static_map_sub;
   ros::Subscriber joint_state_sub;
+  ros::Subscriber laser_costmap_sub;
   
   // tf listener
   tf::TransformListener     robot_state_;
@@ -90,10 +93,14 @@ private:
   int num_of_detected_human;
   nav_msgs::OccupancyGrid Scaled_map;
   nav_msgs::OccupancyGrid camera_visible_region;
+  nav_msgs::OccupancyGrid agent_local_map;
 
   std::string agent_pose_topic;
   std::string camera_frame;
-  
+  std::string lasermap_name;
+
+
+  bool agent_local_map_updated;
   
 
 }; // class

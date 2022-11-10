@@ -77,11 +77,13 @@
 
     <!-- For FoV Map instead of square type -->
     <arg name="camera_frame" default="turtlebot/base_link"/>
-    <node pkg="visual_perception" type="visible_manager" name="turtlebot_camera_region" output="screen" args="$(arg agent1_pose_topic) $(arg camera_frame)">
+    <arg name="laser_costmap" default=" turtlebot/move_base/local_costmap/costmap"/>
+    <node pkg="visual_perception" type="visible_manager" name="turtlebot_camera_region" output="screen" args="$(arg agent1_pose_topic) $(arg camera_frame) $(arg laser_costmap)">
         <remap from="/camera_region_map" to="turtlebot/fov_map"/>
     </node>
     <arg name="camera_frame2" default="tb2/base_link"/>
-    <node pkg="visual_perception" type="visible_manager" name="tb2_camera_region" output="screen" args="$(arg agent2_pose_topic) $(arg camera_frame2)">
+    <arg name="laser_costmap2" default=" tb2/move_base/local_costmap/costmap"/>
+    <node pkg="visual_perception" type="visible_manager" name="tb2_camera_region" output="screen" args="$(arg agent2_pose_topic) $(arg camera_frame2) $(arg laser_costmap2)">
         <remap from="/camera_region_map" to="tb2/fov_map"/>
     </node>
 
