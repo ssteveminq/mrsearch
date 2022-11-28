@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Curiosity Node -->
+  <node pkg="third_party" type="curiosity" respawn="false" name="curiosity" output="screen"
+      args="--config_dir $(find a1_autonomy)/config --robot_config a1-950.lua --maps_dir $(find a1_autonomy)/enml/maps -d1" />
+
+  <!-- Inspection Manager -->
+  <node pkg="visual_perception" type="inspection_manager" respawn="false" name="inspection_manager" output="screen" />
+</launch>

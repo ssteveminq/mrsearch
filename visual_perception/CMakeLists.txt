@@ -85,17 +85,21 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_executable(prediction_server src/prediction_server.cpp)
 add_executable(visible_manager src/visible_region.cpp)
 add_executable(visual_prediction_server src/visual_prediction_server.cpp)
+add_executable(inspection_manager src/inspection_manager.cpp)
 
 ## Add cmake target dependencies of the executable/library
 
 add_dependencies(prediction_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 add_dependencies(visible_manager visual_perception ${catkin_EXPORTED_TARGETS})
 add_dependencies(visual_prediction_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
+add_dependencies(inspection_manager ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(visual_prediction_server ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
 target_link_libraries(prediction_server ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
 target_link_libraries(visible_manager ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${BFL_LIBRARIES})
+target_link_libraries(inspection_manager ${catkin_LIBRARIES} ${Boost_LIBRARIES}
+    ${BFL_LIBRARIES})
 
 #install(TARGETS ${PROJECT_NAME}
   #ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

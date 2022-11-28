@@ -86,35 +86,35 @@ TARGET_LINK_LIBRARIES(curiosity ceres roslib roscpp ncurses pthread
     boost_system ${LUA_LIBRARIES} rt popt glog rosbag amrl_shared_lib
     ${BUILD_SPECIFIC_LIBRARIES})
 
-SET(target vector_display_turtlebot)
-ROSBUILD_ADD_EXECUTABLE(${target}
-    vector_display/src/gui/vector_display_main.cpp
-    vector_display/src/gui/vector_display_thread_turtlebot.cpp
-    vector_display/src/gui/vector_display.cpp
-    vector_display/src/gui/gltext.cpp
-    vector_display/src/vector_map/vector_map.cc
-    ${THIRD_PARTY_MOC_SRCS})
-TARGET_INCLUDE_DIRECTORIES(${target} PRIVATE
-    vector_display/src
-    vector_display/src/shared
-    vector_display/src/vector_map
-    vector_display/src/gui)
-    TARGET_LINK_LIBRARIES(${target} ${libs} ${QT_LIBRARIES})
+# SET(target vector_display_turtlebot)
+# ROSBUILD_ADD_EXECUTABLE(${target}
+#     vector_display/src/gui/vector_display_main.cpp
+#     vector_display/src/gui/vector_display_thread_turtlebot.cpp
+#     vector_display/src/gui/vector_display.cpp
+#     vector_display/src/gui/gltext.cpp
+#     vector_display/src/vector_map/vector_map.cc
+#     ${THIRD_PARTY_MOC_SRCS})
+# TARGET_INCLUDE_DIRECTORIES(${target} PRIVATE
+#     vector_display/src
+#     vector_display/src/shared
+#     vector_display/src/vector_map
+#     vector_display/src/gui)
+#     TARGET_LINK_LIBRARIES(${target} ${libs} ${QT_LIBRARIES})
 
-SET(target2 vector_display_tb2)
-ROSBUILD_ADD_EXECUTABLE(${target2}
-    vector_display/src/gui/vector_display_main.cpp
-    vector_display/src/gui/vector_display_thread_tb2.cpp
-    vector_display/src/gui/vector_display.cpp
-    vector_display/src/gui/gltext.cpp
-    vector_display/src/vector_map/vector_map.cc
-    ${THIRD_PARTY_MOC_SRCS})
-TARGET_INCLUDE_DIRECTORIES(${target2} PRIVATE
-    vector_display/src
-    vector_display/src/shared
-    vector_display/src/vector_map
-    vector_display/src/gui)
-    TARGET_LINK_LIBRARIES(${target2} ${libs} ${QT_LIBRARIES})
+# SET(target2 vector_display_tb2)
+# ROSBUILD_ADD_EXECUTABLE(${target2}
+#     vector_display/src/gui/vector_display_main.cpp
+#     vector_display/src/gui/vector_display_thread_tb2.cpp
+#     vector_display/src/gui/vector_display.cpp
+#     vector_display/src/gui/gltext.cpp
+#     vector_display/src/vector_map/vector_map.cc
+#     ${THIRD_PARTY_MOC_SRCS})
+# TARGET_INCLUDE_DIRECTORIES(${target2} PRIVATE
+#     vector_display/src
+#     vector_display/src/shared
+#     vector_display/src/vector_map
+#     vector_display/src/gui)
+#     TARGET_LINK_LIBRARIES(${target2} ${libs} ${QT_LIBRARIES})
 
 
 

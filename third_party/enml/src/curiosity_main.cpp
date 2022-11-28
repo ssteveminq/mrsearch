@@ -153,7 +153,7 @@ float kMaxOdometryDeltaAngle = DegToRad(15.0);
 pthread_mutex_t relocalization_mutex_ = PTHREAD_MUTEX_INITIALIZER;
 
 // The directory where all the maps are stored.
-string maps_dir_header_ = ros::package::getPath("tmp");
+string maps_dir_header_ = ros::package::getPath("a1_autonomy");
 string tmp_path_ = "/vectormaps";
 string maps_dir_ = maps_dir_header_ + tmp_path_;
 
@@ -296,8 +296,8 @@ void PublishLocation(
   localization_msg_.pose.x = x;
   localization_msg_.pose.y = y;
   localization_msg_.pose.theta = angle;
-  localization_publisher_amrl_.publish(localization_msg_);
-  localization_publisher_ros_.publish(ConvertAMRLmsgToROSmsg(localization_msg_));
+  // localization_publisher_amrl_.publish(localization_msg_);
+  // localization_publisher_ros_.publish(ConvertAMRLmsgToROSmsg(localization_msg_));
 
   ////////////////////////////////////////
   // In addition we need map-base transform
@@ -1971,8 +1971,8 @@ void InitializeCallback(const amrl_msgs::Localization2DMsg& msg) {
   }
   localization_->Initialize(
       Pose2Df(msg.pose.theta, Vector2f(msg.pose.x, msg.pose.y)), msg.map);
-  localization_publisher_amrl_.publish(msg);
-  localization_publisher_ros_.publish(ConvertAMRLmsgToROSmsg(msg));
+  // localization_publisher_amrl_.publish(msg);
+  // localization_publisher_ros_.publish(ConvertAMRLmsgToROSmsg(msg));
   ////////////////////////////////////////
   // In addition we need map-base transform
   static tf2_ros::TransformBroadcaster br;
@@ -2171,10 +2171,10 @@ int main(int argc, char** argv) {
   InitializeMessages();
   localization_publisher_amrl_ =
       ros_node.advertise<amrl_msgs::Localization2DMsg>(
-      "localization", 1, true);
+      "curiosity_localization", 1, true);
   localization_publisher_ros_ =
       ros_node.advertise<geometry_msgs::PoseStamped>(
-      "localization_ros", 1, true);
+      "curiosity_localization_ros", 1, true);
   {
     visualization_publisher_ =
         ros_node.advertise<amrl_msgs::VisualizationMsg>(

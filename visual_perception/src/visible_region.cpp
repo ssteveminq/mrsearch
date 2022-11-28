@@ -15,26 +15,33 @@ static const double       tracker_init_dist          = 4.0;
 bool IsNotInitilized = true;
 
 // constructor
-visible_manager::visible_manager(ros::NodeHandle nh, std::string pose_topic_="amcl_pose", std::string camera_frame_="front_camera")
+visible_manager::visible_manager(ros::NodeHandle nh, std::string pose_topic_="amcl_pose", std::string camera_frame_="front_camera", std::string map_name_="local_costmap")
   : nh_(nh),
-    robot_state_()
+    robot_state_(),
+    agent_local_map_updated(false)
 {
 
   agent_pose_topic = pose_topic_;
   camera_frame=camera_frame_;
+  lasermap_name=map_name_;
+
   cout<<"agent_pose_toic: "<<agent_pose_topic <<std::endl;
+  cout<<"agent_map_laser_toic: "<<lasermap_name<<std::endl;
   cout<<"CAMERA_frame: "<<camera_frame<<std::endl;
+
   camera_visible_region_pub=nh_.advertise<nav_msgs::OccupancyGrid>("/camera_region_map", 10, true);
   globalpose_sub=nh_.subscribe<geometry_msgs::PoseWithCovarianceStamped>(agent_pose_topic,10,&visible_manager::global_pose_callback,this);
+  laser_costmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(lasermap_name,10,&visible_manager::agent_localmap_callback,this);
   global_pose.resize(3,0.0);
 
   //camera region
-  camera_visible_region.info.width=10; //30
+  camera_visible_region.info.width=10;
   camera_visible_region.info.height= 10; //30
   camera_visible_region.info.resolution=0.5;
   camera_visible_region.info.origin.position.x=-2.5; // -7.5
   camera_visible_region.info.origin.position.y=-2.5; //-7.5
   camera_visible_region.data.resize(camera_visible_region.info.width*camera_visible_region.info.height,0.0);
+
 
 }
 
@@ -51,10 +58,28 @@ void visible_manager::publish_cameraregion()
 {
 
    getCameraregion();
+   FilterwithLaserCostmap();
    camera_visible_region.header.stamp =  ros::Time::now();
    camera_visible_region.header.frame_id = "map"; 
    camera_visible_region_pub.publish(camera_visible_region);
 
+
+}
+
+
+void visible_manager::FilterwithLaserCostmap()
+{
+
+
+  size_t fov_size = camera_visible_region.data.size();
+  if(agent_local_map_updated){
+  
+      for(int i(0);i<fov_size;i++)
+      {
+          if((agent_local_map.data[i]<0) && (camera_visible_region.data[i]>1))
+              camera_visible_region.data[i]=-1;
+      }
+  }
 
 }
 
@@ -342,6 +367,15 @@ int visible_manager::CoordinateTransform_Global2_staticMap(float global_x, float
    
 }
 
+void visible_manager::agent_localmap_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
+{
+    agent_local_map=*msg;
+    //ROS_INFO("laser_map_received");
+    agent_local_map_updated = true;
+    //update_occ_grid_map(msg);
+    //publish search map
+}
+
 bool visible_manager::Comparetwopoistions(std::vector<double> pos,std::vector<double> pos2, double criterion)
 {
   //return true if there are in criterion distance 
@@ -394,8 +428,9 @@ int main(int argc, char **argv)
 
   std::cout<<"pose_topic: "<<argv[1]<<std::endl;
   std::cout<<"camera_frame: "<<argv[2]<<std::endl;
+  std::cout<<"laser_costmap: "<<argv[3]<<std::endl;
   // create tracker node
-  visible_manager visible_region_node(nh, argv[1],argv[2]);
+  visible_manager visible_region_node(nh, argv[1],argv[2], argv[3]);
 
   // wait for filter to finish
   visible_region_node.spin();
