@@ -112,6 +112,10 @@ add_executable(get_smooth_server src/getsmooth_server.cpp ${SOURCES})
 target_link_libraries(get_smooth_server ${catkin_LIBRARIES})
 add_dependencies(get_smooth_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 
+add_executable(get_visualpath_server src/get_visualpath_server.cpp ${SOURCES})
+target_link_libraries(get_visualpath_server ${catkin_LIBRARIES})
+add_dependencies(get_visualpath_server ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+
 
 add_executable(get_forwardpath_server src/get_forwardpath_server.cpp ${SOURCES})
 target_link_libraries(get_forwardpath_server ${catkin_LIBRARIES})

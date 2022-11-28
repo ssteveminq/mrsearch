@@ -411,6 +411,18 @@ public:
         }
 
         ROS_INFO("smooth_path size: %d", output_path.poses.size());
+        auto back_poses = output_path.poses;
+        ROS_INFO("return_path size: %d", back_poses.size());
+
+        // for(int i(0);i<back_poses.size();i++) cout<<back_poses[i].pose.position.x<<", "<<back_poses[i].pose.position.y<<endl;
+        // cout<<"------------------------"<<endl;
+
+        for(int k(output_path.poses.size()-2);k>=0;k--)
+        {
+            back_poses[k].header.stamp=ros::Time::now();
+            output_path.poses.push_back(back_poses[k]);
+        }
+
 
         // for(int i(0);i<output_path.poses.size();i++)
         //     cout<<output_path.poses[i].pose.position.x<<", "<<output_path.poses[i].pose.position.y<<endl;

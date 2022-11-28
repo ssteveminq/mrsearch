@@ -256,7 +256,7 @@ public:
      }
 
 
-     //subscribers
+    //subscribers
      global_map_sub = nh_.subscribe<nav_msgs::OccupancyGrid>("/scaled_static_map", 1, &MultiSearchManager::global_map_callback, this);
      agent1_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent1_map_topic,10,&MultiSearchManager::agent1_localmap_callback,this);
      agent2_localmap_sub= nh_.subscribe<nav_msgs::OccupancyGrid>(agent2_map_topic, 10,&MultiSearchManager::agent2_localmap_callback,this);
@@ -608,6 +608,7 @@ public:
 {
     agent1_local_map=*msg;
     agent1_local_map_updated = true;
+    //  std::cout << "agent1 costmap grid received" << std::endl;
     update_occ_grid_map(msg);
     //publish search map
     std_msgs::Float32 entropy_msg;
@@ -681,7 +682,7 @@ void update_occ_grid_map(const nav_msgs::OccupancyGridConstPtr& msg)
             {
                 if(msg->data[map_idx]!=-1 and search_map.data[search_idx]!=int(L_SOCC)) 
                     //if local measurment is not unknown and not filled with static obstacle//
-                    if(msg->data[map_idx]==0)
+                    if(msg->data[map_idx]!= -1)
                         search_map.data[search_idx]= int(L_FREE);
                     else
                     {
