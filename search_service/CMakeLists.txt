@@ -85,6 +85,11 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 #add_executable(tf_odom_switcher src/hsrb_odom_switcher.cpp ${SOURCES})
 #target_link_libraries(tf_odom_switcher ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 #add_dependencies(tf_odom_switcher ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
+add_executable(marl_map_manager src/marl_costmap_manager.cpp
+    src/map_util.cpp ${SOURCES})
+target_link_libraries(marl_map_manager ${catkin_LIBRARIES})
+add_dependencies(marl_map_manager ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
+
 
 add_executable(mtsp_server src/mtsp_server.cpp src/cluster.cpp
     src/map_util.cpp ${SOURCES})

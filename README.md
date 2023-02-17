@@ -160,4 +160,17 @@ Next we need to call the search action client.
 rosrun search_service multisearch_action_client.py
 ```
 
+## MARL IG Search
+search_service package is used to manage and update the global costmap.
+
+1) Run the map server, map converter, and marl map manager node
+```
+roslaunch search_service marl-map-manager.launch
+```
+2) Run the search region client to set the search map boundaries
+```
+rosrun search_service sr_client.py
+```
+3) rosrun rviz rviz -d ~/workspaces/test_ws/src/mrsearch/mrsearch-real.rviz
+
 

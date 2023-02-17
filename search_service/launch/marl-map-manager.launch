@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="agent1" default="a1_950"/>
+    <arg name="agent2" default="hsr"/>
+
+    <arg name="agent1_pose_topic" default="$(arg agent1)/global_pose"/>
+    <arg name="agent2_pose_topic" default="$(arg agent2)/global_pose"/>
+    <arg name="agent1_map_topic" default="$(arg agent1)/fov_map"/>
+    <arg name="agent2_map_topic" default="$(arg agent2)/fov_map"/>
+    <arg name="num_agents" default="2"/>
+
+    <param name="AGENT1_POSE_TOPIC" value="$(arg agent1_pose_topic)"/>
+    <param name="AGENT2_POSE_TOPIC" value="$(arg agent2_pose_topic)"/>
+    <param name="AGENT1_MAP_TOPIC" value="$(arg agent1_map_topic)"/>
+    <param name="AGENT2_MAP_TOPIC" value="$(arg agent2_map_topic)"/>
+    <param name="NUM_AGENT" value="$(arg num_agents)"/>
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find tmp)/maps/map.yaml"/>
+
+  <node name="scaled_map_converter" pkg="search_service" type="scaled_map_converter" output="screen">
+    </node> 
+    <!-- The global search map manager -->
+    <node name="marl_map_manager" pkg="search_service" type="marl_map_manager" output="screen">
+    </node>
+    <!-- Sets the search map region -->
+    <node name="polygon_client" pkg="search_service" type="plugin_client" output="screen"/>
+
+</launch>

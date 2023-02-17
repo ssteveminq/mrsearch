@@ -9,14 +9,14 @@ Map_params::Map_params():xyreso(0.5),yawreso(0.2), xmin(-12.0),xmax(12.0),ymin(-
         xw = int(round((xmax - xmin) / xyreso));
         yw = int(round((ymax - ymin) / xyreso));
     }
-Map_params::Map_params(double maxx, double maxy, double minx, double miny):xyreso(0.5),yawreso(0.2), xmin(minx),xmax(maxx),ymin(miny),
+Map_params::Map_params(double maxx, double maxy, double minx, double miny):xyreso(0.05),yawreso(0.02), xmin(minx),xmax(maxx),ymin(miny),
     ymax(maxy), sensor_range(10.0)
     {
         xw = int(round((xmax - xmin) / xyreso));
         yw = int(round((ymax - ymin) / xyreso));
     }
 
-Map_params::Map_params(double maxx, double maxy, double minx, double miny, double xy_reso):xyreso(xy_reso),yawreso(0.2), xmin(minx),xmax(maxx),ymin(miny),
+Map_params::Map_params(double maxx, double maxy, double minx, double miny, double xy_reso):xyreso(xy_reso),yawreso(0.02), xmin(minx),xmax(maxx),ymin(miny),
     ymax(maxy), sensor_range(10.0)
     {
         xw = int(round((xmax - xmin) / xyreso));
