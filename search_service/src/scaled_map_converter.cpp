@@ -26,24 +26,24 @@ public:
 
     Listener(){
 
-        m_node.param("MAX_X", MAX_X, {16.0});
-        m_node.param("MIN_X", MIN_X, {-15.0});
-        m_node.param("MAX_Y", MAX_Y, {20.0});
-        m_node.param("MIN_Y", MIN_Y, {-30.0});
+        m_node.param("MAX_X", MAX_X, {25.0});
+        m_node.param("MIN_X", MIN_X, {-1.0});
+        m_node.param("MAX_Y", MAX_Y, {10.25});
+        m_node.param("MIN_Y", MIN_Y, {0.0});
         m_node.getParam("MAX_X", MAX_X);
         m_node.getParam("MIN_X", MIN_X);
         m_node.getParam("MAX_Y", MAX_Y);
         m_node.getParam("MIN_Y", MIN_Y);
 
-        m_node.param("XY_RES_SCALED", XY_RES_SCALED, {0.5});
+        m_node.param("XY_RES_SCALED", XY_RES_SCALED, {0.05});
 
         m_params= new Map_params(MAX_X, MAX_Y, MIN_X, MIN_Y, XY_RES_SCALED);
 
         Scaled_static_map.info.resolution = m_params->xyreso;
-        Scaled_static_map.info.width= m_params->xw;
-        Scaled_static_map.info.height= m_params->yw;
-        Scaled_static_map.info.origin.position.x= m_params->xmin;
-        Scaled_static_map.info.origin.position.y= m_params->ymin;
+        Scaled_static_map.info.width = m_params->xw;
+        Scaled_static_map.info.height = m_params->yw;
+        Scaled_static_map.info.origin.position.x = m_params->xmin;
+        Scaled_static_map.info.origin.position.y = m_params->ymin;
         Scaled_static_map.data.resize((Scaled_static_map.info.width * Scaled_static_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
 
         int map_size_ =Scaled_static_map.info.width * Scaled_static_map.info.height;
@@ -87,7 +87,9 @@ public:
 
 		//for static space map
 		std::map<int,int> occupancyCountMap;
-		int scaled_res=(int)(XY_RES_SCALED/original_res);
+		int scaled_res= 1; //(XY_RES_SCALED/original_res);
+        // std::cout << "xy_scaled, original res = " << XY_RES_SCALED << ", " << original_res << std::endl;
+        // std::cout << "SCALED RESOLUTION OF STATIC MAP = " << scaled_res << std::endl;
 		int map_idx=0;
 		int scaled_result=0;
 
@@ -112,16 +114,18 @@ public:
 				
 				int map_data_index=original_width*map_coord_j+map_coord_i;
 				float temp_occupancy= msg->data[map_data_index];
-				 if(temp_occupancy>0)
-				    numcount++;
+				if(temp_occupancy>0)
+                   numcount++;
 			    }
 
-			    if(numcount>2)
+			    if(numcount)
 				scaled_result=100;
 			    else
 				scaled_result=0;
 
 			    Scaled_static_map.data[map_idx]=scaled_result;
+                // if(Scaled_static_map.data[map_idx]) 
+                    //std::cout << "SCALED MAP DATA = " << Scaled_static_map.data[map_idx] << std::endl;
 		}
 
 		 //find index from

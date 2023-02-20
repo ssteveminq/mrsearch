@@ -43,9 +43,9 @@
 #define Max_Dist 30.0
 #define Dist_GOAL 4.0
 #define RAND_RANGE 1.0
-#define L_SOCC 99.//4.595 // np.log(0.99/0.01)
-#define L_DOCC 2.19 // np.log(0.9/0.1)
-#define L_FREE -10000// np.log(0.01/0.99)
+#define L_SOCC 100. // np.log(0.99/0.01)
+#define L_DOCC 99. // np.log(0.95/0.05)
+#define L_FREE -100. // np.log(0.01/0.99)
 #define CELL_MAX_ENTROPY 0.693147
 #define GOAL_THRESHOLD 2.0
 
@@ -169,9 +169,28 @@ public:
      search_map.info.origin.position.y = m_params->ymin;
      search_map.data.resize((search_map.info.width * search_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
 
+     viz_map.info.resolution = m_params->xyreso;
+     viz_map.info.width = m_params->xw;
+     viz_map.info.height = m_params->yw;
+     viz_map.info.origin.position.x = m_params->xmin;
+     viz_map.info.origin.position.y = m_params->ymin;
+     viz_map.data.resize((viz_map.info.width * viz_map.info.height), 0.0);
+     // int _idx = 0;
+     // double _x, _y = 0.;
+     // for(int j(0); j< search_map.info.height;j++){
+     //    for(int i(0); i< search_map.info.width;i++)
+     //    {
+     //        _x = search_map.info.origin.position.x+(i+0.05)*search_map.info.resolution;
+     //        _y = search_map.info.origin.position.y+(j+0.05)*search_map.info.resolution;
+     //        _idx = Coord2CellNum(_x,_y, search_map);
+     //        std::cout << "1 = " << search_map.data[_idx] << std::endl;
+     //    }
+     // }
+
      // initially the entropy can be computed as #of cells in serchmap * uncertainty
      // set size for member variables
      agent_poses.poses.resize(NUMAGENTS);
+     rg_count = 0;
 
      // publishers
      search_map_pub=nh_.advertise<nav_msgs::OccupancyGrid>("/search_map",50,true);
@@ -323,8 +342,11 @@ void update_occ_grid_map(const nav_msgs::OccupancyGridConstPtr& msg)
 {
     double px, py = 0.0;
     int map_idx,search_idx = 0;
+    rg_count++;
 
-    for(int j(0); j< msg->info.height;j++)
+
+    // First update the search map from obervation
+    for(int j(0); j< msg->info.height;j++){
         for(int i(0); i< msg->info.width;i++)
         {
             map_idx = j*msg->info.width+i;
@@ -337,17 +359,70 @@ void update_occ_grid_map(const nav_msgs::OccupancyGridConstPtr& msg)
             {
                 if(msg->data[map_idx]!=-1 and search_map.data[search_idx]!=int(L_SOCC)) 
                     //if local measurment is not unknown and not filled with static obstacle//
-                    if(msg->data[map_idx]!= -1)
-                        search_map.data[search_idx]= int(L_FREE);
+                    if(msg->data[map_idx]!= -1){
+                        // std::cout << "int(L_FREE) = " << int(L_FREE) << std::endl;
+                        search_map.data[search_idx] = int(L_FREE);
+                        viz_map.data[search_idx] = 0;
+                        // ROS_INFO("search_map.data[search_idx] %i", search_map.data[search_idx]);
+                    }
                     else
                     {
                         //not unknown, not static obstacle, not free --> dynamic obstacle
+                        // std::cout << "dynamic obs" << std::endl;
                         search_map.data[search_idx]= int(L_DOCC);
+                        viz_map.data[search_idx] = 98;
                     }
             }
+            //ROS_INFO("search_idx %d", search_idx);
+            //if(search_idx < search_map.data.size()) 
+            //   ROS_INFO("search_map.data[search_idx] %d", search_map.data[search_idx]);
+            // std::cout << "1 = " << search_map.data[search_idx] << std::endl;
         }
+    }
 
+    double gx, gy;
+    int global_idx = 0;
+    double prob = 0.;
+    double rate = 0.01;
+    double tstep = 0.5;
+    // Second decay points over the full search map
+    for(int k(0); k<search_map.info.height; ++k){
+        for(int s(0); s<search_map.info.width; ++s){
+            //global_idx = k*search_map.info.width+s;
+            gx = search_map.info.origin.position.x+(s+0.05)*search_map.info.resolution;
+            gy = search_map.info.origin.position.y+(k+0.05)*search_map.info.resolution;
+            global_idx = Coord2CellNum(gx, gy, search_map);
 
+            if(global_idx < search_map.data.size()){
+                // ROS_INFO("search_map.data[global_idx] %d", search_map.data[global_idx]);
+                // std::cout << "int(L_SOCC) = " << int(L_SOCC) << std::endl;
+                if(search_map.data[global_idx]!=int(L_SOCC)){
+                    if (search_map.data[global_idx] < 0){
+                        int temp_temp = search_map.data[global_idx];
+                        // update = orig + rate * timestep
+                        search_map.data[global_idx] = temp_temp + 1;
+                        ROS_INFO("search map data = %i", search_map.data[global_idx]);
+                        double holder = (double)temp_temp + 1.;
+                        //ROS_INFO("holder data = %f", holder);
+                        holder = ((holder + 1000.) / (2000.))*100;
+                        viz_map.data[global_idx] = int(holder);
+                        ROS_INFO("viz map data = %i", int(holder));
+                    } else if (search_map.data[global_idx] > 0){
+                        int temp_temp = search_map.data[global_idx];
+                        // update = orig + rate * timestep
+                        search_map.data[global_idx] = temp_temp - 1;
+                        double holder2 = (double)search_map.data[global_idx];
+                        holder2 = ((holder2 + 1000.) / (2000.))*100;
+                        viz_map.data[global_idx] = min(98, int(holder2));
+
+                    }
+                }
+            }
+        }
+    }
+    ROS_INFO("search_map.data.size() %d", search_map.data.size());
+    std::cout << "publish costmap" << std::endl;
+    std::cout << "rg count = " << rg_count << std::endl;
     search_map_pub.publish(search_map);
 }
 
@@ -390,16 +465,20 @@ void crop_globalmap(const nav_msgs::OccupancyGrid global_map, const geometry_msg
             if(global_map.data[global_idx] != 0)
             {
                     search_map.data[search_idx]= int(L_SOCC);// rg here
+                    viz_map.data[search_idx]= 99;
                     count++;
             }
             else{
-                    search_map.data[search_idx]= 1;
+                    search_map.data[search_idx]= 0;
+                    viz_map.data[search_idx] = 50;
             }
 
             tmp_pnt.x=px;
             tmp_pnt.y=py;
-            if(!pointInPolygon(tmp_pnt, _polygon))
+            if(!pointInPolygon(tmp_pnt, _polygon)){
                 search_map.data[search_idx]=int(L_SOCC); //rg here L_SOCC
+                viz_map.data[search_idx]= 99;
+            }
             //Update searchmap according to local measurement
             // if local_map is known (occ or free) and global_map is not occupied by static obstacle 
         }
@@ -486,6 +565,8 @@ protected:
   ros::Publisher polygon_pub;
   int direction_z;
 
+  int rg_count;
+
   std::vector<geometry_msgs::PoseStamped> agents_gpose;
   std::vector<nav_msgs::OccupancyGrid> agents_maps;
 
@@ -499,6 +580,7 @@ protected:
   nav_msgs::OccupancyGrid scaled_global_map;
   nav_msgs::OccupancyGrid global_map;
   nav_msgs::OccupancyGrid search_map;
+  nav_msgs::OccupancyGrid viz_map;
 
   std::vector<nav_msgs::Path> agent_paths;
   geometry_msgs::PolygonStamped polygon_;
