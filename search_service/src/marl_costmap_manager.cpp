@@ -194,6 +194,7 @@ public:
 
      // publishers
      search_map_pub=nh_.advertise<nav_msgs::OccupancyGrid>("/search_map",50,true);
+     viz_map_pub = nh_.advertise<nav_msgs::OccupancyGrid>("/viz_map",50,true);
      search_entropy_pub=nh_.advertise<std_msgs::Float32>("/search_entropy",50,true);
      polygon_pub = nh_.advertise<geometry_msgs::PolygonStamped>("/current_polygon", 10, true);
 
@@ -236,8 +237,15 @@ public:
      search_map.data.resize((search_map.info.width * search_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
      ROS_INFO("width: %.2lf, height: %.2lf ", m_params->xw, m_params->yw);
 
-     nav_msgs::OccupancyGrid::ConstPtr shared_map;
-     shared_map= ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("/scaled_static_map",nh_);
+     viz_map.info.resolution = m_params->xyreso;
+     viz_map.info.width= m_params->xw;
+     viz_map.info.height= m_params->yw;
+     viz_map.info.origin.position.x= m_params->xmin;
+     viz_map.info.origin.position.y= m_params->ymin;
+     viz_map.data.resize((viz_map.info.width * viz_map.info.height), 0.0);  //unknown ==> 0 ==> we calculate number of 0 in search map to calculate IG
+
+     nav_msgs::OccupancyGrid::ConstPtr shared_map;// scaled_static_map below
+     shared_map= ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("/map",nh_);
      if(shared_map!= NULL){
          scaled_global_map= *shared_map;
          crop_globalmap(*shared_map, goal->boundary.polygon);
@@ -259,6 +267,7 @@ public:
      polygon_pub.publish(polygon_);
      total_entropy=get_searchmap_entropy();
      search_map_pub.publish(search_map);
+     viz_map_pub.publish(viz_map);
      result_region.success=true;
      as_region.setSucceeded(result_region);
 
@@ -304,7 +313,7 @@ public:
       global_pose_a1_updated=true;
 
       agent_poses.poses[0]=msg->pose.pose;
-      search_map_pub.publish(search_map);
+      //search_map_pub.publish(search_map);
 
   }
 
@@ -401,18 +410,18 @@ void update_occ_grid_map(const nav_msgs::OccupancyGridConstPtr& msg)
                         int temp_temp = search_map.data[global_idx];
                         // update = orig + rate * timestep
                         search_map.data[global_idx] = temp_temp + 1;
-                        ROS_INFO("search map data = %i", search_map.data[global_idx]);
+                        // ROS_INFO("search map data = %i", search_map.data[global_idx]);
                         double holder = (double)temp_temp + 1.;
                         //ROS_INFO("holder data = %f", holder);
-                        holder = ((holder + 1000.) / (2000.))*100;
+                        holder = ((holder + 100.) / (200.))*100;
                         viz_map.data[global_idx] = int(holder);
-                        ROS_INFO("viz map data = %i", int(holder));
+                        // ROS_INFO("viz map data = %i", int(holder));
                     } else if (search_map.data[global_idx] > 0){
                         int temp_temp = search_map.data[global_idx];
                         // update = orig + rate * timestep
                         search_map.data[global_idx] = temp_temp - 1;
                         double holder2 = (double)search_map.data[global_idx];
-                        holder2 = ((holder2 + 1000.) / (2000.))*100;
+                        holder2 = ((holder2 + 100.) / (200.))*100;
                         viz_map.data[global_idx] = min(98, int(holder2));
 
                     }
@@ -423,6 +432,7 @@ void update_occ_grid_map(const nav_msgs::OccupancyGridConstPtr& msg)
     ROS_INFO("search_map.data.size() %d", search_map.data.size());
     std::cout << "publish costmap" << std::endl;
     std::cout << "rg count = " << rg_count << std::endl;
+    viz_map_pub.publish(viz_map);
     search_map_pub.publish(search_map);
 }
 
@@ -561,6 +571,7 @@ protected:
 
   //Publishers
   ros::Publisher search_map_pub;
+  ros::Publisher viz_map_pub;
   ros::Publisher search_entropy_pub;
   ros::Publisher polygon_pub;
   int direction_z;
